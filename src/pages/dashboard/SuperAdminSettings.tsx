@@ -22,7 +22,8 @@ import {
   Phone,
   MapPin,
   Image,
-  FileSignature
+  FileSignature,
+  CheckCircle2
 } from "lucide-react";
 
 const SuperAdminSettings = () => {
@@ -40,11 +41,9 @@ const SuperAdminSettings = () => {
   const [faviconUrl, setFaviconUrl] = useState("");
   const [signatureUrl, setSignatureUrl] = useState("");
 
-  // Payment settings state
+  // Payment settings state - only toggles, keys are in secrets
   const [paystackEnabled, setPaystackEnabled] = useState(false);
-  const [paystackPublicKey, setPaystackPublicKey] = useState("");
   const [flutterwaveEnabled, setFlutterwaveEnabled] = useState(false);
-  const [flutterwavePublicKey, setFlutterwavePublicKey] = useState("");
 
   const [saving, setSaving] = useState(false);
 
@@ -64,9 +63,7 @@ const SuperAdminSettings = () => {
   useEffect(() => {
     if (paymentSettings) {
       setPaystackEnabled(paymentSettings.paystack_enabled || false);
-      setPaystackPublicKey(paymentSettings.paystack_public_key || "");
       setFlutterwaveEnabled(paymentSettings.flutterwave_enabled || false);
-      setFlutterwavePublicKey(paymentSettings.flutterwave_public_key || "");
     }
   }, [paymentSettings]);
 
@@ -114,9 +111,7 @@ const SuperAdminSettings = () => {
         .upsert({
           id: paymentSettings?.id || undefined,
           paystack_enabled: paystackEnabled,
-          paystack_public_key: paystackPublicKey,
           flutterwave_enabled: flutterwaveEnabled,
-          flutterwave_public_key: flutterwavePublicKey,
           updated_at: new Date().toISOString(),
         });
 
@@ -413,6 +408,12 @@ const SuperAdminSettings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="p-4 bg-info/10 rounded-lg text-sm">
+                <p className="text-muted-foreground">
+                  API keys are securely stored in environment secrets. Use the toggles below to enable or disable each payment provider.
+                </p>
+              </div>
+
               {/* Paystack */}
               <div className="space-y-4 p-4 border border-border rounded-lg">
                 <div className="flex items-center justify-between">
@@ -431,18 +432,10 @@ const SuperAdminSettings = () => {
                   />
                 </div>
                 {paystackEnabled && (
-                  <div className="space-y-2 pt-2">
-                    <Label htmlFor="paystackPublicKey">Public Key</Label>
-                    <Input
-                      id="paystackPublicKey"
-                      value={paystackPublicKey}
-                      onChange={(e) => setPaystackPublicKey(e.target.value)}
-                      placeholder="pk_live_xxxxxxxxxxxx"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Secret key is stored securely. Contact support to update.
-                    </p>
-                  </div>
+                  <p className="text-xs text-success flex items-center gap-1 pt-2">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Paystack is enabled and API keys are configured in secrets
+                  </p>
                 )}
               </div>
 
@@ -464,18 +457,10 @@ const SuperAdminSettings = () => {
                   />
                 </div>
                 {flutterwaveEnabled && (
-                  <div className="space-y-2 pt-2">
-                    <Label htmlFor="flutterwavePublicKey">Public Key</Label>
-                    <Input
-                      id="flutterwavePublicKey"
-                      value={flutterwavePublicKey}
-                      onChange={(e) => setFlutterwavePublicKey(e.target.value)}
-                      placeholder="FLWPUBK-xxxxxxxxxxxx"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Secret key is stored securely. Contact support to update.
-                    </p>
-                  </div>
+                  <p className="text-xs text-success flex items-center gap-1 pt-2">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Flutterwave is enabled and API keys are configured in secrets
+                  </p>
                 )}
               </div>
 

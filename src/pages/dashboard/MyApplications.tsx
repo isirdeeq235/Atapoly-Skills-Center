@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { usePaymentSettings } from "@/hooks/usePaymentSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { 
   FileText, 
   Loader2, 
@@ -33,7 +36,10 @@ interface Application {
 }
 
 const MyApplications = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const { data: paymentSettings } = usePaymentSettings();
+  const [payingFor, setPayingFor] = useState<string | null>(null);
 
   const { data: applications, isLoading, refetch } = useQuery({
     queryKey: ['my-applications', user?.id],
@@ -72,8 +78,55 @@ const MyApplications = () => {
   };
 
   const handlePayRegistrationFee = async (application: Application) => {
-    // Implement registration fee payment
-    console.log("Pay registration fee for:", application.id);
+    if (!user || !profile) return;
+
+    setPayingFor(application.id);
+    try {
+      // Determine payment provider
+      const provider = paymentSettings?.paystack_enabled ? "paystack" : 
+                       paymentSettings?.flutterwave_enabled ? "flutterwave" : null;
+
+      if (!provider) {
+        toast({
+          title: "Payment not available",
+          description: "No payment provider is currently configured. Please contact support.",
+          variant: "destructive",
+        });
+        setPayingFor(null);
+        return;
+      }
+
+      // Initialize payment for registration fee
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+        "initialize-payment",
+        {
+          body: {
+            provider,
+            amount: application.programs?.registration_fee || 0,
+            email: profile?.email || user.email,
+            payment_type: "registration_fee",
+            application_id: application.id,
+            trainee_id: user.id,
+            callback_url: `${window.location.origin}/dashboard/applications?payment=registration_success`,
+          },
+        }
+      );
+
+      if (paymentError) throw paymentError;
+
+      if (paymentData?.authorization_url) {
+        window.location.href = paymentData.authorization_url;
+      } else {
+        throw new Error("Failed to get payment URL");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Payment failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setPayingFor(null);
+    }
   };
 
   if (isLoading) {
@@ -184,8 +237,16 @@ const MyApplications = () => {
                       {/* Pay Registration Fee Button */}
                       {application.status === 'approved' && 
                        !application.registration_fee_paid && (
-                        <Button size="sm" onClick={() => handlePayRegistrationFee(application)}>
-                          <CreditCard className="w-4 h-4 mr-1" />
+                        <Button 
+                          size="sm" 
+                          onClick={() => handlePayRegistrationFee(application)}
+                          disabled={payingFor === application.id}
+                        >
+                          {payingFor === application.id ? (
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                          ) : (
+                            <CreditCard className="w-4 h-4 mr-1" />
+                          )}
                           Pay ₦{application.programs?.registration_fee?.toLocaleString()}
                         </Button>
                       )}
