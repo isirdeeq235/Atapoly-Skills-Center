@@ -507,16 +507,6 @@ const AdminPrograms = () => {
                   placeholder="Leave empty for unlimited"
                 />
               </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="start_date">Start Date (optional)</Label>
-                <Input
-                  id="start_date"
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                />
-              </div>
             </div>
           </div>
 
