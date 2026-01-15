@@ -202,30 +202,57 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
+          country: string | null
           created_at: string
+          date_of_birth: string | null
           email: string
+          emergency_contact: string | null
           full_name: string
+          gender: string | null
           id: string
+          next_of_kin_name: string | null
+          next_of_kin_phone: string | null
+          onboarding_completed: boolean | null
           phone: string | null
+          state: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email: string
+          emergency_contact?: string | null
           full_name: string
+          gender?: string | null
           id: string
+          next_of_kin_name?: string | null
+          next_of_kin_phone?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
+          state?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string
+          emergency_contact?: string | null
           full_name?: string
+          gender?: string | null
           id?: string
+          next_of_kin_name?: string | null
+          next_of_kin_phone?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
+          state?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -396,6 +423,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_registration_number: {
+        Args: { program_title: string }
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

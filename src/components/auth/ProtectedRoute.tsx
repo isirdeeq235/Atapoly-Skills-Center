@@ -22,12 +22,14 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Redirect to appropriate login based on intended role
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    return <Navigate to={isAdminRoute ? "/admin-login" : "/login"} state={{ from: location }} replace />;
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     // Redirect to appropriate dashboard based on role
-    const dashboardPath = role === 'trainee' ? '/dashboard' : '/admin';
+    const dashboardPath = role === 'trainee' ? '/dashboard/complete-profile' : '/admin';
     return <Navigate to={dashboardPath} replace />;
   }
 
