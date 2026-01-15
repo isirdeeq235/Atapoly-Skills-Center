@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 interface NavItem {
   label: string;
   href: string;
@@ -67,6 +67,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const navItems = roleNavItems[role] || roleNavItems.trainee;
+  const { data: siteConfig } = useSiteConfig();
 
   return (
     <aside 
@@ -78,11 +79,15 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-            <GraduationCap className="w-6 h-6 text-sidebar-primary-foreground" />
-          </div>
+          {siteConfig?.logo_url ? (
+            <img src={siteConfig.logo_url} alt={siteConfig.site_name} className="w-10 h-10 rounded-lg object-contain flex-shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-6 h-6 text-sidebar-primary-foreground" />
+            </div>
+          )}
           {!collapsed && (
-            <span className="font-bold text-lg text-sidebar-foreground">TrainHub</span>
+            <span className="font-bold text-lg text-sidebar-foreground">{siteConfig?.site_name || 'TrainHub'}</span>
           )}
         </Link>
         <button

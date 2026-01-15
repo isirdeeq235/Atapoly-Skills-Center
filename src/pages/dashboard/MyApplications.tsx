@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { 
   FileText, 
@@ -38,6 +38,7 @@ interface Application {
 const MyApplications = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { provider, hasActiveProvider } = useActivePaymentProvider();
   const [payingFor, setPayingFor] = useState<string | null>(null);
 
@@ -58,6 +59,30 @@ const MyApplications = () => {
     },
     enabled: !!user,
   });
+
+  // Handle payment success query params
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    if (payment === 'success') {
+      toast({
+        title: "Payment Successful!",
+        description: "Your application fee has been paid. Your application is now under review.",
+      });
+      // Clear the query param
+      setSearchParams({});
+      // Refetch applications
+      refetch();
+    } else if (payment === 'registration_success') {
+      toast({
+        title: "Registration Complete!",
+        description: "Congratulations! You are now fully enrolled. Check your email for your ID card.",
+      });
+      // Clear the query param
+      setSearchParams({});
+      // Refetch applications
+      refetch();
+    }
+  }, [searchParams, toast, setSearchParams, refetch]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
