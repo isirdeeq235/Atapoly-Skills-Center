@@ -400,6 +400,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      increment_enrolled_count: {
+        Args: { program_id: string }
+        Returns: undefined
+      }
       is_admin_or_higher: { Args: { user_id: string }; Returns: boolean }
       is_instructor: { Args: { user_id: string }; Returns: boolean }
       is_super_admin: { Args: { user_id: string }; Returns: boolean }
