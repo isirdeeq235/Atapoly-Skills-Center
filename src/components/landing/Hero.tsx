@@ -35,9 +35,9 @@ export function Hero() {
   const currentSlideData = activeSlides[currentSlide];
 
   return (
-    <section className="relative min-h-[100vh] flex items-center overflow-hidden">
-      {/* Full Background Image with Dark Overlay */}
-      <div className="absolute inset-0">
+    <section className="relative min-h-screen flex items-center overflow-hidden -mt-16 pt-16">
+      {/* Full Background Image with Dark Overlay - covers navbar */}
+      <div className="absolute inset-0 -top-16">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000"
           style={{ backgroundImage: `url(${currentSlideData?.image_url || heroBackground})` }}

@@ -12,7 +12,8 @@ import {
   BarChart3,
   Bell,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Image
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Users", href: "/admin/users", icon: Users },
     { label: "Payments", href: "/admin/payments", icon: CreditCard },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { label: "Hero Slides", href: "/admin/hero-slides", icon: Image },
     { label: "Settings", href: "/admin/settings", icon: Settings },
   ],
 };

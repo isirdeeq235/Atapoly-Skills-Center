@@ -22,6 +22,7 @@ import AdminReports from "./pages/dashboard/AdminReports";
 import TraineeIDCard from "./pages/dashboard/TraineeIDCard";
 import ProfileSettings from "./pages/dashboard/ProfileSettings";
 import AdminUsers from "./pages/dashboard/AdminUsers";
+import AdminHeroSlides from "./pages/dashboard/AdminHeroSlides";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -102,6 +103,11 @@ const App = () => (
             <Route path="/admin/users" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                 <AdminUsers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/hero-slides" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminHeroSlides />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
