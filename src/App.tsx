@@ -20,6 +20,8 @@ import AdminApplications from "./pages/dashboard/AdminApplications";
 import AdminPrograms from "./pages/dashboard/AdminPrograms";
 import AdminReports from "./pages/dashboard/AdminReports";
 import TraineeIDCard from "./pages/dashboard/TraineeIDCard";
+import ProfileSettings from "./pages/dashboard/ProfileSettings";
+import AdminUsers from "./pages/dashboard/AdminUsers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -90,6 +92,16 @@ const App = () => (
             <Route path="/dashboard/id-card" element={
               <ProtectedRoute allowedRoles={['trainee']}>
                 <TraineeIDCard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/profile" element={
+              <ProtectedRoute allowedRoles={['trainee', 'admin', 'super_admin', 'instructor']}>
+                <ProfileSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/users" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <AdminUsers />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

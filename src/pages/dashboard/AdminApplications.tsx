@@ -99,8 +99,9 @@ const AdminApplications = () => {
   });
 
   const updateApplicationMutation = useMutation({
-    mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
+    mutationFn: async ({ id, status, notes, application }: { id: string; status: string; notes?: string; application: Application }) => {
       const updateData: Record<string, unknown> = { status };
+      let regNumber = '';
       
       if (notes) {
         updateData.admin_notes = notes;
@@ -108,7 +109,7 @@ const AdminApplications = () => {
       
       // Generate registration number for approved applications
       if (status === 'approved') {
-        const regNumber = `REG-${Date.now().toString(36).toUpperCase()}`;
+        regNumber = `REG-${Date.now().toString(36).toUpperCase()}`;
         updateData.registration_number = regNumber;
       }
 
@@ -119,12 +120,35 @@ const AdminApplications = () => {
 
       if (error) throw error;
 
-      // TODO: Send email notification to trainee about status change
+      // Send email notification to trainee about status change
+      try {
+        const dashboardUrl = `${window.location.origin}/dashboard/applications`;
+        
+        await supabase.functions.invoke("send-email", {
+          body: {
+            to: application.profiles?.email,
+            template: status === 'approved' ? 'application_approved' : 'application_rejected',
+            data: {
+              name: application.profiles?.full_name,
+              program: application.programs?.title,
+              registration_number: regNumber,
+              registration_fee: application.programs?.registration_fee?.toLocaleString() || '0',
+              admin_notes: notes || '',
+              dashboard_url: dashboardUrl,
+            },
+          },
+        });
+        console.log("Email notification sent successfully");
+      } catch (emailError) {
+        console.error("Failed to send email notification:", emailError);
+        // Don't throw - email failure shouldn't block the approval
+      }
+
       return { status };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
-      toast.success(`Application ${data.status} successfully`);
+      toast.success(`Application ${data.status} successfully. Email notification sent.`);
       setIsReviewDialogOpen(false);
       setSelectedApplication(null);
       setReviewNotes("");
@@ -147,6 +171,7 @@ const AdminApplications = () => {
       id: selectedApplication.id,
       status: 'approved',
       notes: reviewNotes,
+      application: selectedApplication,
     });
   };
 
@@ -156,6 +181,7 @@ const AdminApplications = () => {
       id: selectedApplication.id,
       status: 'rejected',
       notes: reviewNotes,
+      application: selectedApplication,
     });
   };
 
