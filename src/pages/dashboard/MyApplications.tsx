@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { usePaymentSettings } from "@/hooks/usePaymentSettings";
+import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -38,7 +38,7 @@ interface Application {
 const MyApplications = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const { data: paymentSettings } = usePaymentSettings();
+  const { provider, hasActiveProvider } = useActivePaymentProvider();
   const [payingFor, setPayingFor] = useState<string | null>(null);
 
   const { data: applications, isLoading, refetch } = useQuery({
@@ -82,11 +82,7 @@ const MyApplications = () => {
 
     setPayingFor(application.id);
     try {
-      // Determine payment provider
-      const provider = paymentSettings?.paystack_enabled ? "paystack" : 
-                       paymentSettings?.flutterwave_enabled ? "flutterwave" : null;
-
-      if (!provider) {
+      if (!hasActiveProvider || !provider) {
         toast({
           title: "Payment not available",
           description: "No payment provider is currently configured. Please contact support.",

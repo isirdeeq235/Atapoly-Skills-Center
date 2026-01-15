@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { usePrograms } from "@/hooks/usePrograms";
-import { usePaymentSettings } from "@/hooks/usePaymentSettings";
+import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Clock, 
@@ -26,7 +26,7 @@ const ApplyForProgram = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { data: programs, isLoading: programsLoading } = usePrograms();
-  const { data: paymentSettings } = usePaymentSettings();
+  const { provider, hasActiveProvider } = useActivePaymentProvider();
   
   const [selectedProgram, setSelectedProgram] = useState<string | null>(programId || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,11 +57,7 @@ const ApplyForProgram = () => {
 
       if (appError) throw appError;
 
-      // Determine payment provider
-      const provider = paymentSettings?.paystack_enabled ? "paystack" : 
-                       paymentSettings?.flutterwave_enabled ? "flutterwave" : null;
-
-      if (!provider) {
+      if (!hasActiveProvider || !provider) {
         toast({
           title: "Payment not available",
           description: "No payment provider is currently configured. Please contact support.",
