@@ -13,6 +13,9 @@ import Programs from "./pages/Programs";
 import TraineeDashboard from "./pages/dashboard/TraineeDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import SuperAdminSettings from "./pages/dashboard/SuperAdminSettings";
+import ApplyForProgram from "./pages/dashboard/ApplyForProgram";
+import MyApplications from "./pages/dashboard/MyApplications";
+import PaymentHistory from "./pages/dashboard/PaymentHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +36,26 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute allowedRoles={['trainee']}>
                 <TraineeDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/apply" element={
+              <ProtectedRoute allowedRoles={['trainee']}>
+                <ApplyForProgram />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/apply/:programId" element={
+              <ProtectedRoute allowedRoles={['trainee']}>
+                <ApplyForProgram />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/applications" element={
+              <ProtectedRoute allowedRoles={['trainee']}>
+                <MyApplications />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/payments" element={
+              <ProtectedRoute allowedRoles={['trainee', 'admin', 'super_admin', 'instructor']}>
+                <PaymentHistory />
               </ProtectedRoute>
             } />
             <Route path="/admin" element={
