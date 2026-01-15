@@ -81,20 +81,60 @@ serve(async (req: Request) => {
           .update({ application_fee_paid: true, updated_at: new Date().toISOString() })
           .eq("id", metadata.application_id);
       } else if (metadata.payment_type === "registration_fee") {
-        await supabase
-          .from("applications")
-          .update({ registration_fee_paid: true, updated_at: new Date().toISOString() })
-          .eq("id", metadata.application_id);
-
-        // Update program enrolled count
+        // Get application details including registration number and trainee info
         const { data: application } = await supabase
           .from("applications")
-          .select("program_id")
+          .select(`
+            *,
+            profiles!applications_trainee_id_fkey(full_name, email),
+            programs(id, title)
+          `)
           .eq("id", metadata.application_id)
           .single();
 
         if (application) {
+          // Update application as registration paid
+          await supabase
+            .from("applications")
+            .update({ registration_fee_paid: true, updated_at: new Date().toISOString() })
+            .eq("id", metadata.application_id);
+
+          // Update program enrolled count
           await supabase.rpc("increment_enrolled_count", { program_id: application.program_id });
+
+          // Send registration complete email with ID card
+          const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '') || '';
+          const dashboardUrl = baseUrl ? `${baseUrl.replace('.supabase.co', '')}/dashboard` : '';
+          
+          try {
+            // Call the send-email function
+            const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                to: application.profiles?.email || metadata.trainee_email,
+                template: 'registration_complete',
+                data: {
+                  name: application.profiles?.full_name || 'Trainee',
+                  program: application.programs?.title || 'Training Program',
+                  registration_number: application.registration_number || '',
+                  dashboard_url: `${metadata.callback_url?.split('/dashboard')[0] || ''}/dashboard`,
+                  id_card_url: `${metadata.callback_url?.split('/dashboard')[0] || ''}/dashboard/id-card`,
+                },
+              }),
+            });
+            
+            if (!emailResponse.ok) {
+              console.error("Failed to send registration email:", await emailResponse.text());
+            } else {
+              console.log("Registration complete email sent successfully");
+            }
+          } catch (emailError) {
+            console.error("Error sending registration email:", emailError);
+          }
         }
       }
 
@@ -105,13 +145,6 @@ serve(async (req: Request) => {
         trainee_id: metadata.trainee_id,
         receipt_number: receiptNumber,
       });
-
-      // Send confirmation email via SMTP
-      try {
-        await sendEmailNotification(metadata.trainee_email, metadata.payment_type, data.amount / 100);
-      } catch (emailError) {
-        console.error("Error sending email:", emailError);
-      }
 
       console.log("Payment processed successfully:", reference);
     }
@@ -129,19 +162,3 @@ serve(async (req: Request) => {
   }
 });
 
-async function sendEmailNotification(to: string, paymentType: string, amount: number) {
-  const smtpHost = Deno.env.get("SMTP_HOST");
-  const smtpPort = Deno.env.get("SMTP_PORT");
-  const smtpUser = Deno.env.get("SMTP_USER");
-  const smtpPass = Deno.env.get("SMTP_PASS");
-  const fromEmail = Deno.env.get("SMTP_FROM_EMAIL");
-
-  if (!smtpHost || !smtpUser || !smtpPass) {
-    console.log("SMTP not configured, skipping email");
-    return;
-  }
-
-  console.log(`Email would be sent to ${to} for ${paymentType} payment of ₦${amount}`);
-  // Note: Deno doesn't have native SMTP support, would need external service
-  // For production, consider using a service like SendGrid, Mailgun, or AWS SES
-}

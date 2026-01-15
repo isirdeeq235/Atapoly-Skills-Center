@@ -107,9 +107,17 @@ const AdminApplications = () => {
         updateData.admin_notes = notes;
       }
       
-      // Generate registration number for approved applications
+      // Generate registration number using database function for approved applications
       if (status === 'approved') {
-        regNumber = `REG-${Date.now().toString(36).toUpperCase()}`;
+        const { data: regData, error: regError } = await supabase
+          .rpc('generate_registration_number', { program_title: application.programs?.title || 'PRG' });
+        
+        if (regError) {
+          console.error('Error generating registration number:', regError);
+          regNumber = `REG-${Date.now().toString(36).toUpperCase()}`;
+        } else {
+          regNumber = regData;
+        }
         updateData.registration_number = regNumber;
       }
 
