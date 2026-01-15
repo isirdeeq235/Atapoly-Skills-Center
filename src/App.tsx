@@ -7,10 +7,12 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import AdminLogin from "./pages/AdminLogin";
 import Register from "./pages/Register";
 import Programs from "./pages/Programs";
 import TraineeDashboard from "./pages/dashboard/TraineeDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
+import SuperAdminSettings from "./pages/dashboard/SuperAdminSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/register" element={<Register />} />
             <Route path="/programs" element={<Programs />} />
             <Route path="/dashboard" element={
@@ -35,6 +38,11 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin', 'instructor']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <SuperAdminSettings />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
