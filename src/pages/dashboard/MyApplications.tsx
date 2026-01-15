@@ -117,6 +117,8 @@ const MyApplications = () => {
         return;
       }
 
+      console.log("Initializing registration fee payment with provider:", provider);
+
       // Initialize payment for registration fee
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         "initialize-payment",
@@ -133,12 +135,17 @@ const MyApplications = () => {
         }
       );
 
-      if (paymentError) throw paymentError;
+      console.log("Payment initialization response:", paymentData);
+
+      if (paymentError) {
+        console.error("Payment error:", paymentError);
+        throw new Error(paymentError.message || "Payment initialization failed");
+      }
 
       if (paymentData?.authorization_url) {
         window.location.href = paymentData.authorization_url;
       } else {
-        throw new Error("Failed to get payment URL");
+        throw new Error("Failed to get payment URL from provider");
       }
     } catch (error: any) {
       toast({
@@ -288,6 +295,16 @@ const MyApplications = () => {
                     <p className="text-success">
                       Congratulations! Your application has been approved. Please pay the registration fee to complete enrollment.
                     </p>
+                  </div>
+                )}
+                {application.status === 'approved' && application.registration_fee_paid && (
+                  <div className="mt-4 p-3 bg-success/10 rounded-lg text-sm flex items-center justify-between">
+                    <p className="text-success">
+                      🎉 You are fully enrolled! Your registration number is: <strong>{application.registration_number}</strong>
+                    </p>
+                    <Link to="/dashboard/id-card">
+                      <Button variant="outline" size="sm">View ID Card</Button>
+                    </Link>
                   </div>
                 )}
                 {application.status === 'rejected' && (

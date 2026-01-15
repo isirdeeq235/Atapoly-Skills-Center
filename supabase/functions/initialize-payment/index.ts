@@ -24,6 +24,7 @@ serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("No authorization header provided");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -35,7 +36,19 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { provider, amount, email, payment_type, application_id, trainee_id, callback_url }: PaymentRequest = await req.json();
+    const body = await req.json();
+    console.log("Payment request received:", JSON.stringify(body));
+    
+    const { provider, amount, email, payment_type, application_id, trainee_id, callback_url }: PaymentRequest = body;
+
+    // Validate required fields
+    if (!provider || !amount || !email || !payment_type || !application_id || !trainee_id) {
+      console.error("Missing required fields:", { provider, amount, email, payment_type, application_id, trainee_id });
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Create payment record first
     const { data: payment, error: paymentError } = await supabase
@@ -52,9 +65,11 @@ serve(async (req: Request) => {
       .single();
 
     if (paymentError) {
-      console.error("Error creating payment:", paymentError);
+      console.error("Error creating payment record:", JSON.stringify(paymentError));
       throw paymentError;
     }
+
+    console.log("Payment record created:", payment.id);
 
     const reference = `PAY-${payment.id}-${Date.now()}`;
 
@@ -64,6 +79,8 @@ serve(async (req: Request) => {
         throw new Error("Paystack not configured");
       }
 
+      console.log("Initializing Paystack payment for:", email, "amount:", amount);
+      
       const response = await fetch("https://api.paystack.co/transaction/initialize", {
         method: "POST",
         headers: {
@@ -72,7 +89,7 @@ serve(async (req: Request) => {
         },
         body: JSON.stringify({
           email,
-          amount: amount * 100, // Paystack uses kobo
+          amount: Math.round(amount * 100), // Paystack uses kobo
           reference,
           callback_url,
           metadata: {
@@ -81,16 +98,20 @@ serve(async (req: Request) => {
             application_id,
             trainee_id,
             trainee_email: email,
+            callback_url,
           },
         }),
       });
 
       const data = await response.json();
+      console.log("Paystack response:", JSON.stringify(data));
 
       if (!data.status) {
+        console.error("Paystack initialization failed:", data.message);
         throw new Error(data.message || "Paystack initialization failed");
       }
 
+      console.log("Paystack payment initialized successfully, URL:", data.data.authorization_url);
       return new Response(JSON.stringify({
         success: true,
         authorization_url: data.data.authorization_url,
@@ -103,8 +124,11 @@ serve(async (req: Request) => {
     } else if (provider === "flutterwave") {
       const flutterwaveSecretKey = Deno.env.get("FLUTTERWAVE_SECRET_KEY");
       if (!flutterwaveSecretKey) {
+        console.error("FLUTTERWAVE_SECRET_KEY not configured");
         throw new Error("Flutterwave not configured");
       }
+
+      console.log("Initializing Flutterwave payment for:", email, "amount:", amount);
 
       const response = await fetch("https://api.flutterwave.com/v3/payments", {
         method: "POST",
@@ -126,6 +150,7 @@ serve(async (req: Request) => {
             application_id,
             trainee_id,
             trainee_email: email,
+            callback_url,
           },
           customizations: {
             title: "Training Program Payment",
@@ -135,10 +160,14 @@ serve(async (req: Request) => {
       });
 
       const data = await response.json();
+      console.log("Flutterwave response:", JSON.stringify(data));
 
       if (data.status !== "success") {
+        console.error("Flutterwave initialization failed:", data.message);
         throw new Error(data.message || "Flutterwave initialization failed");
       }
+
+      console.log("Flutterwave payment initialized successfully, URL:", data.data.link);
 
       return new Response(JSON.stringify({
         success: true,
