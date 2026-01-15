@@ -16,6 +16,7 @@ import SuperAdminSettings from "./pages/dashboard/SuperAdminSettings";
 import ApplyForProgram from "./pages/dashboard/ApplyForProgram";
 import MyApplications from "./pages/dashboard/MyApplications";
 import PaymentHistory from "./pages/dashboard/PaymentHistory";
+import AdminApplications from "./pages/dashboard/AdminApplications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,11 @@ const App = () => (
             <Route path="/admin" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin', 'instructor']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/applications" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <AdminApplications />
               </ProtectedRoute>
             } />
             <Route path="/admin/settings" element={
