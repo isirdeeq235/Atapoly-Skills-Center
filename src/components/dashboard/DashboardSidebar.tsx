@@ -40,7 +40,6 @@ const roleNavItems: Record<string, NavItem[]> = {
   instructor: [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Programs", href: "/admin/programs", icon: BookOpen },
-    { label: "Trainees", href: "/admin/trainees", icon: Users },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   ],
   admin: [
