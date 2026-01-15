@@ -125,6 +125,50 @@ const templates: Record<string, (data: Record<string, string>) => { subject: str
       </html>
     `,
   }),
+
+  registration_complete: (data) => ({
+    subject: "🎓 Registration Complete - Your ID Card is Ready!",
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"></head>
+      <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
+        <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #0d9488; margin: 0;">Registration Complete! 🎓</h1>
+          </div>
+          <p style="color: #333; font-size: 16px;">Dear <strong>${data.name}</strong>,</p>
+          <p style="color: #666; line-height: 1.6;">Congratulations! You are now officially enrolled in <strong>${data.program}</strong>.</p>
+          
+          <div style="background: linear-gradient(135deg, #0d9488, #14b8a6); padding: 25px; border-radius: 12px; margin: 25px 0; color: white; text-align: center;">
+            <p style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Your Trainee ID</p>
+            <p style="margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 2px;">${data.registration_number}</p>
+          </div>
+          
+          <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #166534; margin: 0 0 15px 0; font-size: 16px;">What's Next?</h3>
+            <ul style="color: #166534; margin: 0; padding-left: 20px; line-height: 1.8;">
+              <li>Download your Digital ID Card from your dashboard</li>
+              <li>Check your training schedule for upcoming sessions</li>
+              <li>Access your program resources and materials</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${data.dashboard_url}" style="background: #0d9488; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Access Your Dashboard</a>
+          </div>
+          
+          <div style="text-align: center; margin: 20px 0;">
+            <a href="${data.id_card_url}" style="color: #0d9488; text-decoration: underline; font-weight: 500;">Download ID Card →</a>
+          </div>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="color: #999; font-size: 12px; text-align: center;">© ${new Date().getFullYear()} Training Platform. All rights reserved.</p>
+        </div>
+      </body>
+      </html>
+    `,
+  }),
 };
 
 serve(async (req: Request) => {

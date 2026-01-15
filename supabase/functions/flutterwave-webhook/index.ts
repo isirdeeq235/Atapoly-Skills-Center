@@ -80,20 +80,56 @@ serve(async (req: Request) => {
           .update({ application_fee_paid: true, updated_at: new Date().toISOString() })
           .eq("id", metadata.application_id);
       } else if (metadata.payment_type === "registration_fee") {
-        await supabase
-          .from("applications")
-          .update({ registration_fee_paid: true, updated_at: new Date().toISOString() })
-          .eq("id", metadata.application_id);
-
-        // Update program enrolled count
+        // Get application details including registration number and trainee info
         const { data: application } = await supabase
           .from("applications")
-          .select("program_id")
+          .select(`
+            *,
+            profiles!applications_trainee_id_fkey(full_name, email),
+            programs(id, title)
+          `)
           .eq("id", metadata.application_id)
           .single();
 
         if (application) {
+          // Update application as registration paid
+          await supabase
+            .from("applications")
+            .update({ registration_fee_paid: true, updated_at: new Date().toISOString() })
+            .eq("id", metadata.application_id);
+
+          // Update program enrolled count
           await supabase.rpc("increment_enrolled_count", { program_id: application.program_id });
+
+          // Send registration complete email with ID card
+          try {
+            const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({
+                to: application.profiles?.email || metadata.trainee_email,
+                template: 'registration_complete',
+                data: {
+                  name: application.profiles?.full_name || 'Trainee',
+                  program: application.programs?.title || 'Training Program',
+                  registration_number: application.registration_number || '',
+                  dashboard_url: `${metadata.callback_url?.split('/dashboard')[0] || ''}/dashboard`,
+                  id_card_url: `${metadata.callback_url?.split('/dashboard')[0] || ''}/dashboard/id-card`,
+                },
+              }),
+            });
+            
+            if (!emailResponse.ok) {
+              console.error("Failed to send registration email:", await emailResponse.text());
+            } else {
+              console.log("Registration complete email sent successfully");
+            }
+          } catch (emailError) {
+            console.error("Error sending registration email:", emailError);
+          }
         }
       }
 
