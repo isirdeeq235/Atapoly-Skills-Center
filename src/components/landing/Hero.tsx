@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle2, Play, ChevronLeft, ChevronRight, Star, Award, Zap } from "lucide-react";
+import { ArrowRight, Play, ChevronLeft, ChevronRight, Star, Award, Zap } from "lucide-react";
 import { useHeroSlides } from "@/hooks/useHeroSlides";
-import { useSiteConfig } from "@/hooks/useSiteConfig";
 import heroBackground from "@/assets/hero-background.jpg";
 import { useState, useEffect } from "react";
 
@@ -14,7 +13,6 @@ const defaultFeatures = [
 
 export function Hero() {
   const { data: slides, isLoading: slidesLoading } = useHeroSlides();
-  const { data: siteConfig } = useSiteConfig();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const activeSlides = slides && slides.length > 0 ? slides : [{
@@ -38,27 +36,14 @@ export function Hero() {
 
   return (
     <section className="relative min-h-[100vh] flex items-center overflow-hidden">
-      {/* Dynamic Background */}
+      {/* Full Background Image with Dark Overlay */}
       <div className="absolute inset-0">
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 scale-105"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000"
           style={{ backgroundImage: `url(${currentSlideData?.image_url || heroBackground})` }}
         />
-        {/* Multi-layer gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/95 to-primary/70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-primary/50" />
-      </div>
-
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 bg-accent/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-[150px]" />
-        
-        {/* Decorative grid pattern */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }} />
+        {/* Dark overlay to make text readable */}
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       {/* Slide Navigation */}
@@ -93,7 +78,7 @@ export function Hero() {
               <span className="text-sm font-medium text-white/90">Now enrolling for 2026 programs</span>
             </div>
 
-            {/* Dynamic Heading */}
+            {/* Dynamic Heading with Animation */}
             <h1 
               key={currentSlide}
               className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 leading-[1.1] animate-slide-up"
@@ -101,7 +86,7 @@ export function Hero() {
               {currentSlideData?.title}
             </h1>
 
-            {/* Subtitle */}
+            {/* Subtitle with Animation */}
             <p 
               key={`subtitle-${currentSlide}`}
               className="text-lg md:text-xl text-white/80 mb-8 max-w-xl leading-relaxed animate-slide-up" 
