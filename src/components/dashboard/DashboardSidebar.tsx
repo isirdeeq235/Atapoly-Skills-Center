@@ -34,6 +34,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Apply", href: "/dashboard/apply", icon: BookOpen },
     { label: "My Applications", href: "/dashboard/applications", icon: FileText },
     { label: "Payments", href: "/dashboard/payments", icon: CreditCard },
+    { label: "ID Card", href: "/dashboard/id-card", icon: User },
   ],
   instructor: [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
