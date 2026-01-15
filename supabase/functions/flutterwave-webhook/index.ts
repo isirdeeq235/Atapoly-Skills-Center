@@ -80,7 +80,7 @@ serve(async (req: Request) => {
           .update({ application_fee_paid: true, updated_at: new Date().toISOString() })
           .eq("id", metadata.application_id);
       } else if (metadata.payment_type === "registration_fee") {
-        // Get application details including registration number and trainee info
+        // Get application details including program info
         const { data: application } = await supabase
           .from("applications")
           .select(`
@@ -92,10 +92,24 @@ serve(async (req: Request) => {
           .single();
 
         if (application) {
-          // Update application as registration paid
+          // Generate registration number using RPC
+          let registrationNumber = application.registration_number;
+          if (!registrationNumber) {
+            const { data: regNum } = await supabase.rpc("generate_registration_number", {
+              program_title: application.programs?.title || "PROG"
+            });
+            registrationNumber = regNum;
+            console.log("Generated registration number:", registrationNumber);
+          }
+
+          // Update application as registration paid with registration number
           await supabase
             .from("applications")
-            .update({ registration_fee_paid: true, updated_at: new Date().toISOString() })
+            .update({ 
+              registration_fee_paid: true, 
+              registration_number: registrationNumber,
+              updated_at: new Date().toISOString() 
+            })
             .eq("id", metadata.application_id);
 
           // Update program enrolled count
@@ -115,7 +129,7 @@ serve(async (req: Request) => {
                 data: {
                   name: application.profiles?.full_name || 'Trainee',
                   program: application.programs?.title || 'Training Program',
-                  registration_number: application.registration_number || '',
+                  registration_number: registrationNumber || '',
                   dashboard_url: `${metadata.callback_url?.split('/dashboard')[0] || ''}/dashboard`,
                   id_card_url: `${metadata.callback_url?.split('/dashboard')[0] || ''}/dashboard/id-card`,
                 },

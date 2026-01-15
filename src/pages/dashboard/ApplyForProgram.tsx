@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePrograms } from "@/hooks/usePrograms";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { 
   Clock, 
   Users, 
@@ -17,7 +18,8 @@ import {
   CheckCircle2, 
   BookOpen,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle
 } from "lucide-react";
 
 const ApplyForProgram = () => {
@@ -26,11 +28,25 @@ const ApplyForProgram = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { data: programs, isLoading: programsLoading } = usePrograms();
-  const { provider, hasActiveProvider } = useActivePaymentProvider();
+  const { provider, hasActiveProvider, isLoading: providerLoading } = useActivePaymentProvider();
   
   const [selectedProgram, setSelectedProgram] = useState<string | null>(programId || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'select' | 'confirm' | 'payment'>('select');
+
+  // Check for existing unpaid applications
+  const { data: existingApplications } = useQuery({
+    queryKey: ['existing-applications', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("applications")
+        .select("id, program_id, application_fee_paid, status, programs(title)")
+        .eq("trainee_id", user?.id)
+        .eq("application_fee_paid", false);
+      return data || [];
+    },
+    enabled: !!user,
+  });
 
   const program = programs?.find(p => p.id === selectedProgram);
 
@@ -40,22 +56,29 @@ const ApplyForProgram = () => {
   };
 
   const handleSubmitApplication = async () => {
-    if (!selectedProgram || !user) return;
+    if (!selectedProgram || !user || !program) return;
     
     setIsSubmitting(true);
     try {
-      // Create application
-      const { data: application, error: appError } = await supabase
-        .from("applications")
-        .insert({
-          program_id: selectedProgram,
-          trainee_id: user.id,
-          status: "pending",
-        })
-        .select()
-        .single();
+      // Check if user already has an unpaid application for this program
+      const existingForProgram = existingApplications?.find(a => a.program_id === selectedProgram);
+      let applicationId = existingForProgram?.id;
 
-      if (appError) throw appError;
+      // Only create new application if one doesn't exist
+      if (!applicationId) {
+        const { data: application, error: appError } = await supabase
+          .from("applications")
+          .insert({
+            program_id: selectedProgram,
+            trainee_id: user.id,
+            status: "pending",
+          })
+          .select()
+          .single();
+
+        if (appError) throw appError;
+        applicationId = application.id;
+      }
 
       if (!hasActiveProvider || !provider) {
         toast({
@@ -67,45 +90,68 @@ const ApplyForProgram = () => {
         return;
       }
 
+      console.log("Initializing payment with provider:", provider, "for application:", applicationId);
+
       // Initialize payment
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         "initialize-payment",
         {
           body: {
             provider,
-            amount: program?.application_fee || 0,
+            amount: program.application_fee,
             email: profile?.email || user.email,
             payment_type: "application_fee",
-            application_id: application.id,
+            application_id: applicationId,
             trainee_id: user.id,
             callback_url: `${window.location.origin}/dashboard/applications?payment=success`,
           },
         }
       );
 
-      if (paymentError) throw paymentError;
+      console.log("Payment initialization response:", paymentData);
+
+      if (paymentError) {
+        console.error("Payment error:", paymentError);
+        throw new Error(paymentError.message || "Payment initialization failed");
+      }
 
       if (paymentData?.authorization_url) {
         window.location.href = paymentData.authorization_url;
       } else {
-        throw new Error("Failed to get payment URL");
+        throw new Error("Failed to get payment URL from provider");
       }
     } catch (error: any) {
+      console.error("Application/payment error:", error);
       toast({
         title: "Application failed",
-        description: error.message,
+        description: error.message || "An error occurred. Please try again.",
         variant: "destructive",
       });
       setIsSubmitting(false);
     }
   };
 
-  if (programsLoading) {
+  if (programsLoading || providerLoading) {
     return (
       <DashboardLayout role="trainee" title="Apply for Program">
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Check if payment provider is configured
+  if (!hasActiveProvider) {
+    return (
+      <DashboardLayout role="trainee" title="Apply for Program">
+        <Card className="p-8 text-center">
+          <AlertTriangle className="w-12 h-12 mx-auto text-warning mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Payment Not Available</h3>
+          <p className="text-muted-foreground">
+            Payment processing is not currently configured. Please contact support.
+          </p>
+        </Card>
       </DashboardLayout>
     );
   }
