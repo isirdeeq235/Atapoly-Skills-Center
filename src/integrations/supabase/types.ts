@@ -14,16 +14,403 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          admin_notes: string | null
+          application_fee_paid: boolean
+          created_at: string
+          id: string
+          program_id: string
+          registration_fee_paid: boolean
+          registration_number: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          trainee_id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          application_fee_paid?: boolean
+          created_at?: string
+          id?: string
+          program_id: string
+          registration_fee_paid?: boolean
+          registration_number?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          trainee_id: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          application_fee_paid?: boolean
+          created_at?: string
+          id?: string
+          program_id?: string
+          registration_fee_paid?: boolean
+          registration_number?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          trainee_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_trainee_id_fkey"
+            columns: ["trainee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hero_slides: {
+        Row: {
+          created_at: string
+          cta_link: string | null
+          cta_text: string | null
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          created_at: string
+          flutterwave_enabled: boolean
+          flutterwave_public_key: string | null
+          flutterwave_secret_key: string | null
+          id: string
+          paystack_enabled: boolean
+          paystack_public_key: string | null
+          paystack_secret_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          flutterwave_enabled?: boolean
+          flutterwave_public_key?: string | null
+          flutterwave_secret_key?: string | null
+          id?: string
+          paystack_enabled?: boolean
+          paystack_public_key?: string | null
+          paystack_secret_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          flutterwave_enabled?: boolean
+          flutterwave_public_key?: string | null
+          flutterwave_secret_key?: string | null
+          id?: string
+          paystack_enabled?: boolean
+          paystack_public_key?: string | null
+          paystack_secret_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          application_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_reference: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          trainee_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          application_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          trainee_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          application_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          trainee_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_trainee_id_fkey"
+            columns: ["trainee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programs: {
+        Row: {
+          application_fee: number
+          created_at: string
+          description: string | null
+          duration: string | null
+          enrolled_count: number
+          id: string
+          image_url: string | null
+          instructor_id: string | null
+          max_capacity: number | null
+          registration_fee: number
+          status: Database["public"]["Enums"]["program_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          application_fee?: number
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          enrolled_count?: number
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          max_capacity?: number | null
+          registration_fee?: number
+          status?: Database["public"]["Enums"]["program_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          application_fee?: number
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          enrolled_count?: number
+          id?: string
+          image_url?: string | null
+          instructor_id?: string | null
+          max_capacity?: number | null
+          registration_fee?: number
+          status?: Database["public"]["Enums"]["program_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programs_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          created_at: string
+          id: string
+          payment_id: string
+          receipt_number: string
+          storage_path: string | null
+          trainee_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payment_id: string
+          receipt_number: string
+          storage_path?: string | null
+          trainee_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payment_id?: string
+          receipt_number?: string
+          storage_path?: string | null
+          trainee_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_trainee_id_fkey"
+            columns: ["trainee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_config: {
+        Row: {
+          address: string | null
+          certificate_signature_url: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          favicon_url: string | null
+          id: string
+          logo_url: string | null
+          maintenance_mode: boolean
+          site_name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          certificate_signature_url?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          maintenance_mode?: boolean
+          site_name?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          certificate_signature_url?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          maintenance_mode?: boolean
+          site_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_admin_or_higher: { Args: { user_id: string }; Returns: boolean }
+      is_instructor: { Args: { user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "admin" | "instructor" | "trainee"
+      application_status: "pending" | "approved" | "rejected"
+      payment_provider: "paystack" | "flutterwave"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
+      payment_type: "application_fee" | "registration_fee"
+      program_status: "draft" | "published" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +537,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "admin", "instructor", "trainee"],
+      application_status: ["pending", "approved", "rejected"],
+      payment_provider: ["paystack", "flutterwave"],
+      payment_status: ["pending", "completed", "failed", "refunded"],
+      payment_type: ["application_fee", "registration_fee"],
+      program_status: ["draft", "published", "archived"],
+    },
   },
 } as const

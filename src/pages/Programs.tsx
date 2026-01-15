@@ -3,72 +3,33 @@ import { Footer } from "@/components/landing/Footer";
 import { ProgramCard } from "@/components/programs/ProgramCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Filter } from "lucide-react";
-
-const programs = [
-  {
-    id: "1",
-    title: "Full Stack Web Development",
-    description: "Master modern web development with React, Node.js, and cloud technologies. Build production-ready applications from scratch.",
-    duration: "6 months",
-    enrolledCount: 45,
-    maxCapacity: 50,
-    applicationFee: "₦25,000",
-    status: "open" as const,
-  },
-  {
-    id: "2",
-    title: "Data Science & Machine Learning",
-    description: "Learn data analysis, statistical modeling, and machine learning using Python, TensorFlow, and industry-standard tools.",
-    duration: "8 months",
-    enrolledCount: 30,
-    maxCapacity: 40,
-    applicationFee: "₦35,000",
-    status: "open" as const,
-  },
-  {
-    id: "3",
-    title: "Project Management Professional",
-    description: "Develop essential project management skills with Agile, Scrum, and PMP preparation. Lead teams to success.",
-    duration: "3 months",
-    enrolledCount: 25,
-    maxCapacity: 30,
-    applicationFee: "₦20,000",
-    status: "open" as const,
-  },
-  {
-    id: "4",
-    title: "UI/UX Design Masterclass",
-    description: "Create stunning user interfaces and seamless user experiences. Master Figma, design systems, and user research.",
-    duration: "4 months",
-    enrolledCount: 35,
-    maxCapacity: 35,
-    applicationFee: "₦22,000",
-    status: "closed" as const,
-  },
-  {
-    id: "5",
-    title: "Digital Marketing & Growth",
-    description: "Drive business growth with SEO, social media marketing, content strategy, and performance analytics.",
-    duration: "3 months",
-    enrolledCount: 0,
-    maxCapacity: 40,
-    applicationFee: "₦18,000",
-    status: "coming-soon" as const,
-  },
-  {
-    id: "6",
-    title: "Cybersecurity Fundamentals",
-    description: "Protect digital assets with ethical hacking, network security, and incident response skills. Industry certifications included.",
-    duration: "5 months",
-    enrolledCount: 28,
-    maxCapacity: 30,
-    applicationFee: "₦30,000",
-    status: "open" as const,
-  },
-];
+import { Search, Filter, Loader2 } from "lucide-react";
+import { usePrograms } from "@/hooks/usePrograms";
+import { useState, useMemo } from "react";
 
 const Programs = () => {
+  const { data: programs, isLoading, error } = usePrograms();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredPrograms = useMemo(() => {
+    if (!programs) return [];
+    if (!searchQuery.trim()) return programs;
+    
+    const query = searchQuery.toLowerCase();
+    return programs.filter(program => 
+      program.title.toLowerCase().includes(query) ||
+      program.description?.toLowerCase().includes(query)
+    );
+  }, [programs, searchQuery]);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -92,6 +53,8 @@ const Programs = () => {
                 <Input 
                   placeholder="Search programs..." 
                   className="pl-10 bg-white border-0 h-12"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
               <Button variant="hero" size="lg" className="h-12">
@@ -109,15 +72,47 @@ const Programs = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-foreground">Available Programs</h2>
-              <p className="text-muted-foreground">{programs.length} programs available</p>
+              <p className="text-muted-foreground">
+                {isLoading ? 'Loading...' : `${filteredPrograms.length} programs available`}
+              </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {programs.map((program) => (
-              <ProgramCard key={program.id} {...program} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <p className="text-destructive">Failed to load programs. Please try again.</p>
+            </div>
+          ) : filteredPrograms.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground">
+                {searchQuery ? 'No programs found matching your search.' : 'No programs available yet.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPrograms.map((program) => (
+                <ProgramCard 
+                  key={program.id} 
+                  id={program.id}
+                  title={program.title}
+                  description={program.description || ''}
+                  duration={program.duration || 'TBD'}
+                  enrolledCount={program.enrolled_count}
+                  maxCapacity={program.max_capacity || 0}
+                  applicationFee={formatCurrency(program.application_fee)}
+                  status={
+                    program.status === 'published' 
+                      ? (program.max_capacity && program.enrolled_count >= program.max_capacity ? 'closed' : 'open')
+                      : 'coming-soon'
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

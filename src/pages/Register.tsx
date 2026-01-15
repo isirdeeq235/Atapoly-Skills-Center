@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   GraduationCap, 
   Mail, 
@@ -12,46 +11,40 @@ import {
   ArrowRight, 
   Eye, 
   EyeOff,
-  Shield,
-  BookOpen,
-  Users
+  Loader2
 } from "lucide-react";
-
-const roles = [
-  {
-    value: "trainee",
-    label: "Trainee",
-    description: "Apply for programs and track your learning progress",
-    icon: BookOpen,
-  },
-  {
-    value: "instructor",
-    label: "Instructor",
-    description: "Manage programs and guide trainees",
-    icon: Users,
-  },
-  {
-    value: "admin",
-    label: "Admin",
-    description: "Full platform management access",
-    icon: Shield,
-  },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { toast } from "sonner";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
-    role: "trainee",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { signUp } = useAuth();
+  const { data: siteConfig } = useSiteConfig();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement registration logic
-    console.log("Registration submitted:", formData);
+    setIsLoading(true);
+
+    try {
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      await signUp(formData.email, formData.password, fullName, 'trainee');
+      toast.success("Account created successfully! You can now sign in.");
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create account");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -97,10 +90,18 @@ const Register = () => {
         <div className="w-full max-w-md py-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-accent-foreground" />
-            </div>
-            <span className="font-bold text-xl text-foreground">TrainHub</span>
+            {siteConfig?.logo_url ? (
+              <img src={siteConfig.logo_url} alt={siteConfig.site_name} className="h-10 w-auto" />
+            ) : (
+              <>
+                <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                  <GraduationCap className="w-6 h-6 text-accent-foreground" />
+                </div>
+                <span className="font-bold text-xl text-foreground">
+                  {siteConfig?.site_name || 'TrainHub'}
+                </span>
+              </>
+            )}
           </Link>
 
           {/* Header */}
@@ -126,6 +127,7 @@ const Register = () => {
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -137,6 +139,7 @@ const Register = () => {
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -154,6 +157,7 @@ const Register = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -171,6 +175,8 @@ const Register = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  minLength={6}
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -180,43 +186,18 @@ const Register = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
             </div>
 
-            {/* Role Selection */}
-            <div className="space-y-3">
-              <Label>I am a</Label>
-              <RadioGroup
-                value={formData.role}
-                onValueChange={(value) => setFormData({ ...formData, role: value })}
-                className="grid grid-cols-1 gap-3"
-              >
-                {roles.map((role) => (
-                  <div key={role.value}>
-                    <RadioGroupItem
-                      value={role.value}
-                      id={role.value}
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor={role.value}
-                      className="flex items-center gap-3 rounded-lg border-2 border-border bg-card p-4 cursor-pointer transition-all hover:border-accent/50 peer-data-[state=checked]:border-accent peer-data-[state=checked]:bg-accent/5"
-                    >
-                      <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
-                        <role.icon className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-foreground">{role.label}</div>
-                        <div className="text-sm text-muted-foreground">{role.description}</div>
-                      </div>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-
-            <Button type="submit" className="w-full" size="lg">
-              Create Account
-              <ArrowRight className="w-4 h-4" />
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
