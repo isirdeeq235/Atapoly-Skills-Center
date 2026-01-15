@@ -143,6 +143,39 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_settings_public: {
+        Row: {
+          created_at: string
+          flutterwave_enabled: boolean
+          flutterwave_public_key: string | null
+          id: string
+          paystack_enabled: boolean
+          paystack_public_key: string | null
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          flutterwave_enabled?: boolean
+          flutterwave_public_key?: string | null
+          id?: string
+          paystack_enabled?: boolean
+          paystack_public_key?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          flutterwave_enabled?: boolean
+          flutterwave_public_key?: string | null
+          id?: string
+          paystack_enabled?: boolean
+          paystack_public_key?: string | null
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
