@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { TraineeOnboardingGuard, ProfileCompletionGuard, RequireFullEnrollment } from "@/components/auth/TraineeOnboardingGuard";
+import { DynamicHead } from "@/components/DynamicHead";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
@@ -36,6 +37,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <DynamicHead />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />

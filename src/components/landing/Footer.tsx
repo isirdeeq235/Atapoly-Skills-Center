@@ -48,9 +48,13 @@ export function Footer() {
           {/* Brand & Newsletter */}
           <div className="lg:col-span-4">
             <Link to="/" className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
-                <GraduationCap className="w-7 h-7 text-accent-foreground" />
-              </div>
+              {siteConfig?.logo_url ? (
+                <img src={siteConfig.logo_url} alt={siteConfig.site_name} className="w-12 h-12 rounded-xl object-contain" />
+              ) : (
+                <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
+                  <GraduationCap className="w-7 h-7 text-accent-foreground" />
+                </div>
+              )}
               <span className="font-bold text-2xl">{siteConfig?.site_name || 'TrainHub'}</span>
             </Link>
             <p className="text-primary-foreground/70 mb-6 max-w-sm leading-relaxed">

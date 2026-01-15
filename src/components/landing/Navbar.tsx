@@ -39,9 +39,13 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <nav className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-accent-foreground" />
-            </div>
+            {siteConfig?.logo_url ? (
+              <img src={siteConfig.logo_url} alt={siteConfig.site_name} className="w-10 h-10 rounded-lg object-contain" />
+            ) : (
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                <GraduationCap className="w-6 h-6 text-accent-foreground" />
+              </div>
+            )}
             <span className={cn("font-bold text-xl transition-colors", isScrolled ? "text-foreground" : "text-white")}>
               {siteConfig?.site_name || 'TrainHub'}
             </span>
