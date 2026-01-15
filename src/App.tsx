@@ -146,6 +146,11 @@ const App = () => (
                 <AdminUsers />
               </ProtectedRoute>
             } />
+            <Route path="/admin/payments" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <PaymentHistory />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/hero-slides" element={
               <ProtectedRoute allowedRoles={['super_admin']}>
                 <AdminHeroSlides />
