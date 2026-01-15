@@ -178,7 +178,7 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Applications</CardTitle>
-              <Link to="/dashboard/applications">
+              <Link to="/admin/applications">
                 <Button variant="ghost" size="sm">
                   View All <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -276,7 +276,7 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link to="/dashboard/applications">
+            <Link to="/admin/applications">
               <Button variant="outline" className="w-full h-24 flex-col gap-2">
                 <FileText className="w-6 h-6 text-accent" />
                 <span>Review Applications</span>
