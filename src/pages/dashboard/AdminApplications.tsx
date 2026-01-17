@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { createNotification } from "@/hooks/useNotifications";
 import { 
   FileText, 
   Loader2, 
@@ -127,6 +128,33 @@ const AdminApplications = () => {
         .eq("id", id);
 
       if (error) throw error;
+
+      // Create in-app notification for trainee
+      try {
+        const notificationType = status === 'approved' ? 'application_approved' : 'application_rejected';
+        const notificationTitle = status === 'approved' 
+          ? 'Application Approved! 🎉' 
+          : 'Application Update';
+        const notificationMessage = status === 'approved'
+          ? `Your application for ${application.programs?.title} has been approved! Please proceed to pay the registration fee of ₦${application.programs?.registration_fee?.toLocaleString() || '0'}.`
+          : `Your application for ${application.programs?.title} has been reviewed. ${notes ? `Admin notes: ${notes}` : 'Please contact support for more information.'}`;
+
+        await createNotification(
+          application.profiles?.id,
+          notificationType,
+          notificationTitle,
+          notificationMessage,
+          {
+            application_id: id,
+            program_id: application.programs?.id,
+            program_title: application.programs?.title,
+            registration_number: regNumber || null,
+          }
+        );
+        console.log("In-app notification created successfully");
+      } catch (notifError) {
+        console.error("Failed to create in-app notification:", notifError);
+      }
 
       // Send email notification to trainee about status change
       try {

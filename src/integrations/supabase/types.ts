@@ -107,6 +107,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           created_at: string
@@ -456,6 +489,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      broadcast_announcement: {
+        Args: {
+          p_message: string
+          p_metadata?: Json
+          p_role: string
+          p_title: string
+        }
+        Returns: number
+      }
+      create_notification: {
+        Args: {
+          p_message: string
+          p_metadata?: Json
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       generate_registration_number: {
         Args: { program_title: string }
         Returns: string

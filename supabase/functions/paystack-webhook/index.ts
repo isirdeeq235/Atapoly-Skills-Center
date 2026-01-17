@@ -80,6 +80,20 @@ serve(async (req: Request) => {
           .from("applications")
           .update({ application_fee_paid: true, updated_at: new Date().toISOString() })
           .eq("id", metadata.application_id);
+
+        // Create notification for trainee
+        await supabase.rpc("create_notification", {
+          p_user_id: metadata.trainee_id,
+          p_type: "payment_success",
+          p_title: "Application Fee Paid ✓",
+          p_message: "Your application fee has been received. Your application is now under review.",
+          p_metadata: { 
+            payment_id: metadata.payment_id,
+            application_id: metadata.application_id,
+            amount: data.amount / 100 
+          }
+        });
+
       } else if (metadata.payment_type === "registration_fee") {
         // Get application details including program info
         const { data: application } = await supabase
@@ -115,6 +129,20 @@ serve(async (req: Request) => {
 
           // Update program enrolled count
           await supabase.rpc("increment_enrolled_count", { program_id: application.program_id });
+
+          // Create notification for trainee - Registration Complete
+          await supabase.rpc("create_notification", {
+            p_user_id: metadata.trainee_id,
+            p_type: "registration_complete",
+            p_title: "Registration Complete! 🎓",
+            p_message: `Congratulations! You are now enrolled in ${application.programs?.title}. Your registration number is ${registrationNumber}. Visit your ID Card page to download your trainee ID.`,
+            p_metadata: { 
+              payment_id: metadata.payment_id,
+              application_id: metadata.application_id,
+              registration_number: registrationNumber,
+              program_title: application.programs?.title
+            }
+          });
 
           // Send registration complete email with ID card
           const baseUrl = Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '') || '';
