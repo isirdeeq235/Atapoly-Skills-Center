@@ -23,13 +23,18 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (!user) {
     // Redirect to appropriate login based on intended role
-    const isAdminRoute = location.pathname.startsWith('/admin');
+    const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/instructor');
     return <Navigate to={isAdminRoute ? "/admin-login" : "/login"} state={{ from: location }} replace />;
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     // Redirect to appropriate dashboard based on role
-    const dashboardPath = role === 'trainee' ? '/dashboard/complete-profile' : '/admin';
+    let dashboardPath = '/dashboard/complete-profile';
+    if (role === 'super_admin' || role === 'admin') {
+      dashboardPath = '/admin';
+    } else if (role === 'instructor') {
+      dashboardPath = '/instructor';
+    }
     return <Navigate to={dashboardPath} replace />;
   }
 

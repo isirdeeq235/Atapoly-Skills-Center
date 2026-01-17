@@ -1,9 +1,11 @@
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { Bell, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -13,6 +15,21 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, role, title, subtitle }: DashboardLayoutProps) {
+  const { profile } = useAuth();
+  
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const isAdminRole = role === 'admin' || role === 'super-admin' || role === 'instructor';
+  const notificationsPath = isAdminRole ? "/admin/notifications" : "/dashboard/notifications";
+  const profilePath = isAdminRole ? "/admin/profile" : "/dashboard/profile";
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sidebar */}
@@ -38,17 +55,22 @@ export function DashboardLayout({ children, role, title, subtitle }: DashboardLa
             </div>
 
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
-            </Button>
+            <Link to={notificationsPath}>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+              </Button>
+            </Link>
 
             {/* User Avatar */}
-            <Avatar>
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                JD
-              </AvatarFallback>
-            </Avatar>
+            <Link to={profilePath}>
+              <Avatar className="cursor-pointer hover:ring-2 hover:ring-accent transition-all">
+                <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {getInitials(profile?.full_name || "U")}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
           </div>
         </header>
 

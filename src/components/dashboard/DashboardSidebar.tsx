@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -19,6 +19,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
 interface NavItem {
   label: string;
   href: string;
@@ -38,8 +41,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "ID Card", href: "/dashboard/id-card", icon: User },
   ],
   instructor: [
-    { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { label: "Programs", href: "/admin/programs", icon: BookOpen },
+    { label: "Dashboard", href: "/instructor", icon: LayoutDashboard },
+    { label: "My Programs", href: "/admin/programs", icon: BookOpen },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   ],
   admin: [
@@ -64,9 +67,26 @@ const roleNavItems: Record<string, NavItem[]> = {
 
 export function DashboardSidebar({ role }: DashboardSidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const navItems = roleNavItems[role] || roleNavItems.trainee;
   const { data: siteConfig } = useSiteConfig();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("Logged out successfully");
+      navigate("/");
+    } catch (error) {
+      toast.error("Failed to log out");
+    }
+  };
+
+  // Determine the correct profile and notifications paths based on role
+  const isAdminRole = role === 'admin' || role === 'super-admin' || role === 'instructor';
+  const profilePath = isAdminRole ? "/admin/profile" : "/dashboard/profile";
+  const notificationsPath = isAdminRole ? "/admin/notifications" : "/dashboard/notifications";
 
   return (
     <aside 
@@ -129,20 +149,29 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
       {/* Bottom Section */}
       <div className="p-4 border-t border-sidebar-border">
         <Link
-          to="/dashboard/notifications"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors mb-1"
+          to={notificationsPath}
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors mb-1",
+            location.pathname === notificationsPath && "bg-sidebar-primary text-sidebar-primary-foreground"
+          )}
         >
           <Bell className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span>Notifications</span>}
         </Link>
         <Link
-          to="/dashboard/profile"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors mb-1"
+          to={profilePath}
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors mb-1",
+            location.pathname === profilePath && "bg-sidebar-primary text-sidebar-primary-foreground"
+          )}
         >
           <User className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span>Profile</span>}
         </Link>
-        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+        >
           <LogOut className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span>Logout</span>}
         </button>
