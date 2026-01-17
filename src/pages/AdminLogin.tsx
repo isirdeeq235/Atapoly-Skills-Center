@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, Loader2, ShieldCheck } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { GraduationCap, Loader2, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, role } = useAuth();
+  const { signIn } = useAuth();
+  const { data: siteConfig } = useSiteConfig();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,20 +24,14 @@ const AdminLogin = () => {
 
     try {
       await signIn(email, password);
+      toast.success("Welcome back!");
       
-      // Check if user has admin/instructor role after sign in
-      // The role check happens in useAuth, we just need to navigate
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
-      navigate("/admin");
+      // Navigate after a short delay to allow role to be fetched
+      setTimeout(() => {
+        navigate("/admin");
+      }, 500);
     } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid credentials. Please try again.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Invalid credentials. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -47,10 +43,18 @@ const AdminLogin = () => {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <GraduationCap className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">TrainHub</span>
+            {siteConfig?.logo_url ? (
+              <img src={siteConfig.logo_url} alt={siteConfig.site_name} className="h-12 w-auto" />
+            ) : (
+              <>
+                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+                  <GraduationCap className="w-7 h-7 text-primary-foreground" />
+                </div>
+                <span className="text-2xl font-bold text-foreground">
+                  {siteConfig?.site_name || 'TrainHub'}
+                </span>
+              </>
+            )}
           </Link>
         </div>
 
@@ -81,16 +85,31 @@ const AdminLogin = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link to="/forgot-password" className="text-xs text-accent hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
