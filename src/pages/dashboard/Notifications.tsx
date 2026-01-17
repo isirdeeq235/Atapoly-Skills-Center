@@ -1,8 +1,9 @@
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications, NotificationType } from "@/hooks/useNotifications";
 import { 
   Bell, 
   CheckCircle2, 
@@ -11,88 +12,105 @@ import {
   AlertCircle,
   Clock,
   Trash2,
-  CheckCheck
+  CheckCheck,
+  Loader2,
+  Megaphone,
+  UserCheck,
+  XCircle,
+  Award,
+  BookOpen
 } from "lucide-react";
-import { useState } from "react";
-import { format } from "date-fns";
-
-interface Notification {
-  id: string;
-  type: 'application' | 'payment' | 'approval' | 'info';
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-}
-
-// Mock notifications - In production, these would come from the database
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'approval',
-    title: 'Application Approved',
-    message: 'Your application for the training program has been approved. Please proceed to pay the registration fee.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'payment',
-    title: 'Payment Successful',
-    message: 'Your application fee payment of ₦5,000 has been confirmed.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'application',
-    title: 'Application Submitted',
-    message: 'Your application has been submitted successfully and is pending review.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'info',
-    title: 'Welcome to the Platform',
-    message: 'Thank you for registering. Complete your profile to get started.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-    read: true,
-  },
-];
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Notifications = () => {
   const { role } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const { 
+    notifications, 
+    isLoading, 
+    unreadCount,
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification,
+    clearAll,
+    isMarkingAllRead
+  } = useNotifications();
 
-  const getIcon = (type: Notification['type']) => {
+  const getIcon = (type: NotificationType) => {
     switch (type) {
-      case 'application': return <FileText className="w-5 h-5 text-primary" />;
-      case 'payment': return <CreditCard className="w-5 h-5 text-success" />;
-      case 'approval': return <CheckCircle2 className="w-5 h-5 text-success" />;
-      case 'info': return <AlertCircle className="w-5 h-5 text-info" />;
+      case 'application_submitted': 
+        return <FileText className="w-5 h-5 text-primary" />;
+      case 'application_approved': 
+        return <UserCheck className="w-5 h-5 text-success" />;
+      case 'application_rejected': 
+        return <XCircle className="w-5 h-5 text-destructive" />;
+      case 'payment_success': 
+        return <CreditCard className="w-5 h-5 text-success" />;
+      case 'payment_failed': 
+        return <CreditCard className="w-5 h-5 text-destructive" />;
+      case 'registration_complete': 
+        return <Award className="w-5 h-5 text-accent" />;
+      case 'system_announcement': 
+        return <Megaphone className="w-5 h-5 text-info" />;
+      case 'program_update': 
+        return <BookOpen className="w-5 h-5 text-primary" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-  };
+  const getTypeBadge = (type: NotificationType) => {
+    const labels: Record<NotificationType, string> = {
+      application_submitted: 'Application',
+      application_approved: 'Approved',
+      application_rejected: 'Rejected',
+      payment_success: 'Payment',
+      payment_failed: 'Payment Failed',
+      registration_complete: 'Enrolled',
+      system_announcement: 'Announcement',
+      program_update: 'Program',
+    };
+    
+    const variants: Record<NotificationType, 'default' | 'approved' | 'rejected' | 'pending' | 'outline'> = {
+      application_submitted: 'default',
+      application_approved: 'approved',
+      application_rejected: 'rejected',
+      payment_success: 'approved',
+      payment_failed: 'rejected',
+      registration_complete: 'approved',
+      system_announcement: 'outline',
+      program_update: 'default',
+    };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    return <Badge variant={variants[type]}>{labels[type]}</Badge>;
   };
-
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const dashboardRole = role === 'super_admin' ? 'super-admin' : 
                         role === 'admin' ? 'admin' : 
                         role === 'instructor' ? 'instructor' : 'trainee';
+
+  if (isLoading) {
+    return (
+      <DashboardLayout 
+        role={dashboardRole as any} 
+        title="Notifications"
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout 
@@ -109,12 +127,47 @@ const Notifications = () => {
               {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
             </span>
           </div>
-          {unreadCount > 0 && (
-            <Button variant="outline" size="sm" onClick={markAllAsRead}>
-              <CheckCheck className="w-4 h-4 mr-2" />
-              Mark all as read
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => markAllAsRead()}
+                disabled={isMarkingAllRead}
+              >
+                {isMarkingAllRead ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckCheck className="w-4 h-4 mr-2" />
+                )}
+                Mark all as read
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear all
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Clear all notifications?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete all your notifications. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => clearAll()} className="bg-destructive hover:bg-destructive/90">
+                      Clear All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
 
         {/* Notifications List */}
@@ -133,7 +186,7 @@ const Notifications = () => {
             {notifications.map((notification) => (
               <Card 
                 key={notification.id} 
-                className={`transition-colors ${!notification.read ? 'bg-accent/5 border-accent/20' : ''}`}
+                className={`transition-all ${!notification.read ? 'bg-accent/5 border-accent/20 shadow-sm' : 'hover:bg-muted/50'}`}
               >
                 <CardContent className="p-4">
                   <div className="flex gap-4">
@@ -142,28 +195,34 @@ const Notifications = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="font-medium text-foreground flex items-center gap-2">
-                            {notification.title}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-medium text-foreground">
+                              {notification.title}
+                            </h4>
                             {!notification.read && (
-                              <Badge variant="default" className="text-xs">New</Badge>
+                              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
                             )}
-                          </h4>
+                            {getTypeBadge(notification.type)}
+                          </div>
                           <p className="text-sm text-muted-foreground mt-1">
                             {notification.message}
                           </p>
                           <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                             <Clock className="w-3 h-3" />
-                            {format(notification.timestamp, 'PPp')}
+                            <span title={format(new Date(notification.created_at), 'PPpp')}>
+                              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           {!notification.read && (
                             <Button 
                               variant="ghost" 
                               size="icon" 
                               className="h-8 w-8"
                               onClick={() => markAsRead(notification.id)}
+                              title="Mark as read"
                             >
                               <CheckCircle2 className="w-4 h-4" />
                             </Button>
@@ -173,6 +232,7 @@ const Notifications = () => {
                             size="icon" 
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => deleteNotification(notification.id)}
+                            title="Delete notification"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
