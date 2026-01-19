@@ -18,6 +18,9 @@ export type Database = {
         Row: {
           admin_notes: string | null
           application_fee_paid: boolean
+          batch_id: string | null
+          completed_at: string | null
+          completion_status: string | null
           created_at: string
           id: string
           program_id: string
@@ -30,6 +33,9 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           application_fee_paid?: boolean
+          batch_id?: string | null
+          completed_at?: string | null
+          completion_status?: string | null
           created_at?: string
           id?: string
           program_id: string
@@ -42,6 +48,9 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           application_fee_paid?: boolean
+          batch_id?: string | null
+          completed_at?: string | null
+          completion_status?: string | null
           created_at?: string
           id?: string
           program_id?: string
@@ -53,6 +62,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "applications_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "applications_program_id_fkey"
             columns: ["program_id"]
             isOneToOne: false
@@ -61,6 +77,128 @@ export type Database = {
           },
           {
             foreignKeyName: "applications_trainee_id_fkey"
+            columns: ["trainee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batches: {
+        Row: {
+          batch_name: string
+          created_at: string
+          end_date: string | null
+          enrolled_count: number | null
+          id: string
+          max_capacity: number | null
+          program_id: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          batch_name: string
+          created_at?: string
+          end_date?: string | null
+          enrolled_count?: number | null
+          id?: string
+          max_capacity?: number | null
+          program_id: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          batch_name?: string
+          created_at?: string
+          end_date?: string | null
+          enrolled_count?: number | null
+          id?: string
+          max_capacity?: number | null
+          program_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batches_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificates: {
+        Row: {
+          application_id: string
+          batch_id: string | null
+          certificate_number: string
+          created_at: string
+          id: string
+          issued_at: string
+          issued_by: string | null
+          pdf_storage_path: string | null
+          program_id: string
+          trainee_id: string
+        }
+        Insert: {
+          application_id: string
+          batch_id?: string | null
+          certificate_number: string
+          created_at?: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          pdf_storage_path?: string | null
+          program_id: string
+          trainee_id: string
+        }
+        Update: {
+          application_id?: string
+          batch_id?: string | null
+          certificate_number?: string
+          created_at?: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          pdf_storage_path?: string | null
+          program_id?: string
+          trainee_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_trainee_id_fkey"
             columns: ["trainee_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -508,6 +646,10 @@ export type Database = {
         }
         Returns: string
       }
+      generate_certificate_number: {
+        Args: { program_title: string }
+        Returns: string
+      }
       generate_registration_number: {
         Args: { program_title: string }
         Returns: string
@@ -523,6 +665,10 @@ export type Database = {
       is_admin_or_higher: { Args: { user_id: string }; Returns: boolean }
       is_instructor: { Args: { user_id: string }; Returns: boolean }
       is_super_admin: { Args: { user_id: string }; Returns: boolean }
+      issue_certificate: {
+        Args: { p_application_id: string; p_issued_by?: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "instructor" | "trainee"

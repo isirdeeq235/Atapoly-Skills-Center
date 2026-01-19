@@ -31,6 +31,9 @@ import AdminUsers from "./pages/dashboard/AdminUsers";
 import AdminHeroSlides from "./pages/dashboard/AdminHeroSlides";
 import CompleteProfile from "./pages/dashboard/CompleteProfile";
 import Notifications from "./pages/dashboard/Notifications";
+import MyCertificates from "./pages/dashboard/MyCertificates";
+import AdminBatches from "./pages/dashboard/AdminBatches";
+import AdminCertificates from "./pages/dashboard/AdminCertificates";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -124,6 +127,15 @@ const App = () => (
               </ProtectedRoute>
             } />
             
+            {/* Trainee Certificates */}
+            <Route path="/dashboard/certificates" element={
+              <ProtectedRoute allowedRoles={['trainee']}>
+                <RequireFullEnrollment>
+                  <MyCertificates />
+                </RequireFullEnrollment>
+              </ProtectedRoute>
+            } />
+            
             {/* Trainee Profile Settings - Requires full enrollment */}
             <Route path="/dashboard/profile" element={
               <ProtectedRoute allowedRoles={['trainee']}>
@@ -194,6 +206,16 @@ const App = () => (
             <Route path="/admin/hero-slides" element={
               <ProtectedRoute allowedRoles={['super_admin']}>
                 <AdminHeroSlides />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/batches" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <AdminBatches />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/certificates" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <AdminCertificates />
               </ProtectedRoute>
             } />
             
