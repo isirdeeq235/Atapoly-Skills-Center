@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { ArrowRight, CheckCircle, FileText, CreditCard, UserCheck, Award } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,9 @@ const steps = [
   },
 ];
 
-export function HowItWorks() {
+export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
   return (
-    <section className="py-24 bg-secondary/30 relative overflow-hidden">
+    <section ref={ref} className="py-24 bg-secondary/30 relative overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5" style={{
         backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
@@ -114,4 +115,6 @@ export function HowItWorks() {
       </div>
     </section>
   );
-}
+});
+
+HowItWorks.displayName = "HowItWorks";

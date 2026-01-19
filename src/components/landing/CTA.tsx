@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, CheckCircle } from "lucide-react";
@@ -8,9 +9,9 @@ const benefits = [
   "Cancel anytime",
 ];
 
-export function CTA() {
+export const CTA = forwardRef<HTMLElement>(function CTA(_, ref) {
   return (
-    <section className="py-24 bg-background relative overflow-hidden">
+    <section ref={ref} className="py-24 bg-background relative overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary via-primary to-primary/90 p-12 md:p-20">
           {/* Background decorations */}
@@ -78,4 +79,6 @@ export function CTA() {
       </div>
     </section>
   );
-}
+});
+
+CTA.displayName = "CTA";
