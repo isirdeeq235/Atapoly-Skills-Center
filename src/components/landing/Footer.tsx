@@ -1,101 +1,80 @@
 import { forwardRef } from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap, Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
 
 const footerLinks = {
   programs: [
     { label: "All Programs", href: "/programs" },
-    { label: "Get Started", href: "/register" },
+    { label: "Upcoming Cohorts", href: "/programs" },
+    { label: "Application Guide", href: "/programs" },
   ],
   company: [
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },
+    { label: "Careers", href: "/about" },
   ],
   support: [
-    { label: "Sign In", href: "/login" },
-    { label: "Register", href: "/register" },
+    { label: "Help Center", href: "/contact" },
+    { label: "FAQs", href: "/contact" },
+    { label: "Student Portal", href: "/login" },
   ],
 };
-
-const socialLinks = [
-  { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-];
 
 export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
   const { data: siteConfig } = useSiteConfig();
 
   return (
-    <footer ref={ref} className="bg-primary text-primary-foreground relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/10 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/5 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="container mx-auto px-4 pt-20 pb-10 relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
-          {/* Brand & Newsletter */}
-          <div className="lg:col-span-4">
-            <Link to="/" className="flex items-center gap-3 mb-6">
+    <footer ref={ref} className="bg-foreground text-background">
+      <div className="container mx-auto px-4">
+        {/* Main Footer */}
+        <div className="py-16 lg:py-20 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
+          
+          {/* Brand Column */}
+          <div className="col-span-2 md:col-span-4 lg:col-span-2 lg:pr-12">
+            <Link to="/" className="inline-flex items-center gap-3 mb-6">
               {siteConfig?.logo_url ? (
-                <img src={siteConfig.logo_url} alt={siteConfig.site_name} className="w-12 h-12 rounded-xl object-contain" />
+                <img src={siteConfig.logo_url} alt={siteConfig.site_name} className="h-10 w-auto brightness-0 invert" />
               ) : (
-                <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
-                  <GraduationCap className="w-7 h-7 text-accent-foreground" />
+                <span className="text-2xl font-bold">{siteConfig?.site_name || "Training Portal"}</span>
+              )}
+            </Link>
+            <p className="text-background/60 leading-relaxed mb-8 max-w-sm">
+              Empowering professionals with world-class training programs designed to accelerate your career growth.
+            </p>
+            
+            {/* Contact Info */}
+            <div className="space-y-3">
+              {siteConfig?.contact_email && (
+                <a href={`mailto:${siteConfig.contact_email}`} className="flex items-center gap-3 text-background/60 hover:text-background transition-colors group">
+                  <Mail className="w-5 h-5" />
+                  <span>{siteConfig.contact_email}</span>
+                </a>
+              )}
+              {siteConfig?.contact_phone && (
+                <a href={`tel:${siteConfig.contact_phone}`} className="flex items-center gap-3 text-background/60 hover:text-background transition-colors group">
+                  <Phone className="w-5 h-5" />
+                  <span>{siteConfig.contact_phone}</span>
+                </a>
+              )}
+              {siteConfig?.address && (
+                <div className="flex items-start gap-3 text-background/60">
+                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <span>{siteConfig.address}</span>
                 </div>
               )}
-              <span className="font-bold text-2xl">{siteConfig?.site_name || 'TrainHub'}</span>
-            </Link>
-            <p className="text-primary-foreground/70 mb-6 max-w-sm leading-relaxed">
-              Empowering professionals to achieve their goals through world-class 
-              training programs and expert guidance.
-            </p>
-
-            {/* Newsletter */}
-            <div className="space-y-3">
-              <p className="font-semibold">Subscribe to our newsletter</p>
-              <div className="flex gap-2">
-                <Input 
-                  type="email" 
-                  placeholder="Enter your email" 
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                />
-                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                  Subscribe
-                </Button>
-              </div>
-            </div>
-
-            {/* Social Links */}
-            <div className="flex items-center gap-3 mt-8">
-              {socialLinks.map((social, index) => (
-                <a
-                  key={index}
-                  href={social.href}
-                  aria-label={social.label}
-                  className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  <social.icon className="w-5 h-5" />
-                </a>
-              ))}
             </div>
           </div>
 
-          {/* Links */}
-          <div className="lg:col-span-2">
-            <h4 className="font-semibold text-lg mb-5">Programs</h4>
+          {/* Programs */}
+          <div>
+            <h4 className="font-semibold text-background mb-4">Programs</h4>
             <ul className="space-y-3">
               {footerLinks.programs.map((link, index) => (
                 <li key={index}>
                   <Link 
-                    to={link.href} 
-                    className="text-primary-foreground/70 hover:text-accent transition-colors flex items-center gap-1 group"
+                    to={link.href}
+                    className="text-background/60 hover:text-background transition-colors inline-flex items-center gap-1 group"
                   >
                     {link.label}
                     <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -105,14 +84,15 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
             </ul>
           </div>
 
-          <div className="lg:col-span-2">
-            <h4 className="font-semibold text-lg mb-5">Company</h4>
+          {/* Company */}
+          <div>
+            <h4 className="font-semibold text-background mb-4">Company</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link, index) => (
                 <li key={index}>
                   <Link 
-                    to={link.href} 
-                    className="text-primary-foreground/70 hover:text-accent transition-colors flex items-center gap-1 group"
+                    to={link.href}
+                    className="text-background/60 hover:text-background transition-colors inline-flex items-center gap-1 group"
                   >
                     {link.label}
                     <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -122,63 +102,36 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
             </ul>
           </div>
 
-          <div className="lg:col-span-2">
-            <h4 className="font-semibold text-lg mb-5">Support</h4>
+          {/* Support */}
+          <div>
+            <h4 className="font-semibold text-background mb-4">Support</h4>
             <ul className="space-y-3">
               {footerLinks.support.map((link, index) => (
                 <li key={index}>
                   <Link 
-                    to={link.href} 
-                    className="text-primary-foreground/70 hover:text-accent transition-colors flex items-center gap-1 group"
+                    to={link.href}
+                    className="text-background/60 hover:text-background transition-colors inline-flex items-center gap-1 group"
                   >
                     {link.label}
                     <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div className="lg:col-span-2">
-            <h4 className="font-semibold text-lg mb-5">Contact</h4>
-            <ul className="space-y-4">
-              {siteConfig?.contact_email && (
-                <li className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-accent mt-0.5" />
-                  <span className="text-primary-foreground/70 text-sm">{siteConfig.contact_email}</span>
-                </li>
-              )}
-              {siteConfig?.contact_phone && (
-                <li className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-accent mt-0.5" />
-                  <span className="text-primary-foreground/70 text-sm">{siteConfig.contact_phone}</span>
-                </li>
-              )}
-              {siteConfig?.address && (
-                <li className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-accent mt-0.5" />
-                  <span className="text-primary-foreground/70 text-sm">{siteConfig.address}</span>
-                </li>
-              )}
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-primary-foreground/50">
-            © {new Date().getFullYear()} {siteConfig?.site_name || 'TrainHub'}. All rights reserved.
+        <div className="py-6 border-t border-background/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-background/40">
+            © {new Date().getFullYear()} {siteConfig?.site_name || "Training Portal"}. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link to="/about" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
-              About
+            <Link to="/about" className="text-sm text-background/40 hover:text-background transition-colors">
+              Privacy Policy
             </Link>
-            <Link to="/contact" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
-              Contact
-            </Link>
-            <Link to="/programs" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
-              Programs
+            <Link to="/about" className="text-sm text-background/40 hover:text-background transition-colors">
+              Terms of Service
             </Link>
           </div>
         </div>
