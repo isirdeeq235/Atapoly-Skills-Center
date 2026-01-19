@@ -13,7 +13,9 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
-  Image
+  Image,
+  Award,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "My Applications", href: "/dashboard/applications", icon: FileText },
     { label: "Payments", href: "/dashboard/payments", icon: CreditCard },
     { label: "ID Card", href: "/dashboard/id-card", icon: User },
+    { label: "Certificates", href: "/dashboard/certificates", icon: Award },
   ],
   instructor: [
     { label: "Dashboard", href: "/instructor", icon: LayoutDashboard },
@@ -49,6 +52,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Applications", href: "/admin/applications", icon: FileText },
     { label: "Programs", href: "/admin/programs", icon: BookOpen },
+    { label: "Batches", href: "/admin/batches", icon: Calendar },
+    { label: "Certificates", href: "/admin/certificates", icon: Award },
     { label: "Users", href: "/admin/users", icon: Users },
     { label: "Payments", href: "/admin/payments", icon: CreditCard },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
@@ -57,6 +62,8 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Applications", href: "/admin/applications", icon: FileText },
     { label: "Programs", href: "/admin/programs", icon: BookOpen },
+    { label: "Batches", href: "/admin/batches", icon: Calendar },
+    { label: "Certificates", href: "/admin/certificates", icon: Award },
     { label: "Users", href: "/admin/users", icon: Users },
     { label: "Payments", href: "/admin/payments", icon: CreditCard },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
