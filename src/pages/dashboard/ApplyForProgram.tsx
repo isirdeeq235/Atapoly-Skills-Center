@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { usePrograms } from "@/hooks/usePrograms";
+import { useBatches } from "@/hooks/useBatches";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { 
   Clock, 
   Users, 
@@ -19,7 +21,10 @@ import {
   BookOpen,
   ArrowRight,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  Calendar,
+  CalendarDays,
+  ChevronRight
 } from "lucide-react";
 
 const ApplyForProgram = () => {
@@ -31,8 +36,12 @@ const ApplyForProgram = () => {
   const { provider, hasActiveProvider, isLoading: providerLoading } = useActivePaymentProvider();
   
   const [selectedProgram, setSelectedProgram] = useState<string | null>(programId || null);
+  const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [step, setStep] = useState<'select' | 'confirm' | 'payment'>('select');
+  const [step, setStep] = useState<'select' | 'batch' | 'confirm'>('select');
+
+  // Fetch batches for selected program
+  const { data: batches, isLoading: batchesLoading } = useBatches(selectedProgram || undefined);
 
   // Check for existing unpaid applications
   const { data: existingApplications } = useQuery({
@@ -40,7 +49,7 @@ const ApplyForProgram = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("applications")
-        .select("id, program_id, application_fee_paid, status, programs(title)")
+        .select("id, program_id, batch_id, application_fee_paid, status, programs(title)")
         .eq("trainee_id", user?.id)
         .eq("application_fee_paid", false);
       return data || [];
@@ -49,10 +58,28 @@ const ApplyForProgram = () => {
   });
 
   const program = programs?.find(p => p.id === selectedProgram);
+  const batch = batches?.find(b => b.id === selectedBatch);
 
   const handleSelectProgram = (id: string) => {
     setSelectedProgram(id);
+    setSelectedBatch(null);
+    setStep('batch');
+  };
+
+  const handleSelectBatch = (id: string) => {
+    setSelectedBatch(id);
     setStep('confirm');
+  };
+
+  const handleBackToPrograms = () => {
+    setSelectedProgram(null);
+    setSelectedBatch(null);
+    setStep('select');
+  };
+
+  const handleBackToBatches = () => {
+    setSelectedBatch(null);
+    setStep('batch');
   };
 
   const handleSubmitApplication = async () => {
@@ -70,6 +97,7 @@ const ApplyForProgram = () => {
           .from("applications")
           .insert({
             program_id: selectedProgram,
+            batch_id: selectedBatch,
             trainee_id: user.id,
             status: "pending",
           })
@@ -78,6 +106,12 @@ const ApplyForProgram = () => {
 
         if (appError) throw appError;
         applicationId = application.id;
+      } else if (selectedBatch) {
+        // Update existing application with selected batch
+        await supabase
+          .from("applications")
+          .update({ batch_id: selectedBatch })
+          .eq("id", applicationId);
       }
 
       if (!hasActiveProvider || !provider) {
@@ -157,9 +191,40 @@ const ApplyForProgram = () => {
   }
 
   const publishedPrograms = programs?.filter(p => p.status === 'published') || [];
+  const availableBatches = batches?.filter(b => {
+    const spotsLeft = (b.max_capacity || 100) - (b.enrolled_count || 0);
+    return spotsLeft > 0;
+  }) || [];
 
   return (
-    <DashboardLayout role="trainee" title="Apply for Program" subtitle="Select a program to begin your application">
+    <DashboardLayout role="trainee" title="Apply for Program" subtitle="Select a program and cohort to begin your application">
+      {/* Progress Indicator */}
+      <div className="mb-8">
+        <div className="flex items-center justify-center gap-2">
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            step === 'select' ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
+          }`}>
+            <span className="w-6 h-6 rounded-full bg-current/20 flex items-center justify-center text-xs">1</span>
+            Select Program
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            step === 'batch' ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
+          }`}>
+            <span className="w-6 h-6 rounded-full bg-current/20 flex items-center justify-center text-xs">2</span>
+            Choose Cohort
+          </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+            step === 'confirm' ? 'bg-accent text-accent-foreground' : 'bg-secondary text-muted-foreground'
+          }`}>
+            <span className="w-6 h-6 rounded-full bg-current/20 flex items-center justify-center text-xs">3</span>
+            Confirm & Pay
+          </div>
+        </div>
+      </div>
+
+      {/* Step 1: Select Program */}
       {step === 'select' && (
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -170,7 +235,7 @@ const ApplyForProgram = () => {
               return (
                 <Card 
                   key={prog.id} 
-                  className={`cursor-pointer transition-all hover:border-accent ${
+                  className={`cursor-pointer transition-all hover:border-accent hover:shadow-lg ${
                     selectedProgram === prog.id ? 'border-accent ring-2 ring-accent/20' : ''
                   }`}
                   onClick={() => handleSelectProgram(prog.id)}
@@ -226,6 +291,107 @@ const ApplyForProgram = () => {
         </div>
       )}
 
+      {/* Step 2: Select Batch/Cohort */}
+      {step === 'batch' && program && (
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" onClick={handleBackToPrograms}>
+              ← Back to Programs
+            </Button>
+          </div>
+
+          <Card className="mb-6">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{program.title}</CardTitle>
+                  <CardDescription>{program.duration} • ₦{program.application_fee.toLocaleString()} Application Fee</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <CalendarDays className="w-5 h-5 text-accent" />
+              <h3 className="text-lg font-semibold">Select Your Preferred Cohort</h3>
+            </div>
+
+            {batchesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : availableBatches.length > 0 ? (
+              <div className="grid gap-4">
+                {availableBatches.map((b) => {
+                  const spotsLeft = (b.max_capacity || 100) - (b.enrolled_count || 0);
+                  const startDate = new Date(b.start_date);
+                  const endDate = b.end_date ? new Date(b.end_date) : null;
+                  const isSelected = selectedBatch === b.id;
+
+                  return (
+                    <Card 
+                      key={b.id}
+                      className={`cursor-pointer transition-all hover:border-accent hover:shadow-md ${
+                        isSelected ? 'border-accent ring-2 ring-accent/20 bg-accent/5' : ''
+                      }`}
+                      onClick={() => handleSelectBatch(b.id)}
+                    >
+                      <CardContent className="p-5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-gradient-to-br from-accent/20 to-accent/10 rounded-xl flex flex-col items-center justify-center border border-accent/20">
+                              <span className="text-xs text-accent font-medium">{format(startDate, 'MMM')}</span>
+                              <span className="text-lg font-bold text-accent">{format(startDate, 'd')}</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground">{b.batch_name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {format(startDate, 'MMMM d, yyyy')}
+                                {endDate && ` - ${format(endDate, 'MMMM d, yyyy')}`}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={spotsLeft <= 5 ? "pending" : "outline"} className="mb-1">
+                              {spotsLeft} spots left
+                            </Badge>
+                            <p className="text-xs text-muted-foreground">
+                              {b.enrolled_count || 0}/{b.max_capacity || '∞'} enrolled
+                            </p>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 text-accent">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="text-sm font-medium">Selected</span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card className="p-8 text-center">
+                <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Cohorts Available</h3>
+                <p className="text-muted-foreground mb-4">
+                  There are no open cohorts for this program at the moment.
+                </p>
+                <Button variant="outline" onClick={handleBackToPrograms}>
+                  Choose Another Program
+                </Button>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Confirm & Pay */}
       {step === 'confirm' && program && (
         <div className="max-w-2xl mx-auto">
           <Card>
@@ -235,10 +401,11 @@ const ApplyForProgram = () => {
                 Confirm Application
               </CardTitle>
               <CardDescription>
-                Review the program details before proceeding to payment
+                Review your selection before proceeding to payment
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Program Details */}
               <div className="p-4 bg-secondary/50 rounded-lg">
                 <h3 className="font-semibold text-lg mb-2">{program.title}</h3>
                 <p className="text-muted-foreground text-sm mb-4">{program.description}</p>
@@ -248,12 +415,45 @@ const ApplyForProgram = () => {
                     <span className="ml-2 font-medium">{program.duration}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Enrolled:</span>
+                    <span className="text-muted-foreground">Total Enrolled:</span>
                     <span className="ml-2 font-medium">{program.enrolled_count}/{program.max_capacity || '∞'}</span>
                   </div>
                 </div>
               </div>
 
+              {/* Batch Details */}
+              {batch && (
+                <div className="p-4 bg-accent/5 border border-accent/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CalendarDays className="w-5 h-5 text-accent" />
+                    <h4 className="font-semibold">Selected Cohort</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Cohort Name:</span>
+                      <span className="ml-2 font-medium">{batch.batch_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Start Date:</span>
+                      <span className="ml-2 font-medium">{format(new Date(batch.start_date), 'MMMM d, yyyy')}</span>
+                    </div>
+                    {batch.end_date && (
+                      <div>
+                        <span className="text-muted-foreground">End Date:</span>
+                        <span className="ml-2 font-medium">{format(new Date(batch.end_date), 'MMMM d, yyyy')}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-muted-foreground">Available Spots:</span>
+                      <span className="ml-2 font-medium">
+                        {(batch.max_capacity || 100) - (batch.enrolled_count || 0)} remaining
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Summary */}
               <div className="border border-border rounded-lg p-4">
                 <h4 className="font-medium mb-3">Payment Summary</h4>
                 <div className="space-y-2">
@@ -270,6 +470,7 @@ const ApplyForProgram = () => {
                 </div>
               </div>
 
+              {/* Info Note */}
               <div className="flex items-start gap-3 p-4 bg-info/10 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
@@ -281,8 +482,9 @@ const ApplyForProgram = () => {
                 </div>
               </div>
 
+              {/* Action Buttons */}
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep('select')} className="flex-1">
+                <Button variant="outline" onClick={handleBackToBatches} className="flex-1">
                   Back
                 </Button>
                 <Button onClick={handleSubmitApplication} disabled={isSubmitting} className="flex-1">
