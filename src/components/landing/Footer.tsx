@@ -8,21 +8,15 @@ import { Input } from "@/components/ui/input";
 const footerLinks = {
   programs: [
     { label: "All Programs", href: "/programs" },
-    { label: "Web Development", href: "/programs" },
-    { label: "Data Science", href: "/programs" },
-    { label: "Project Management", href: "/programs" },
+    { label: "Get Started", href: "/register" },
   ],
   company: [
     { label: "About Us", href: "/about" },
-    { label: "Careers", href: "/careers" },
     { label: "Contact", href: "/contact" },
-    { label: "Blog", href: "/blog" },
   ],
   support: [
-    { label: "Help Center", href: "/help" },
-    { label: "FAQs", href: "/faqs" },
-    { label: "Privacy Policy", href: "/privacy" },
-    { label: "Terms of Service", href: "/terms" },
+    { label: "Sign In", href: "/login" },
+    { label: "Register", href: "/register" },
   ],
 };
 
@@ -177,14 +171,14 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
             © {new Date().getFullYear()} {siteConfig?.site_name || 'TrainHub'}. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link to="/privacy" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
-              Privacy
+            <Link to="/about" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
+              About
             </Link>
-            <Link to="/terms" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
-              Terms
+            <Link to="/contact" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
+              Contact
             </Link>
-            <Link to="/cookies" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
-              Cookies
+            <Link to="/programs" className="text-sm text-primary-foreground/50 hover:text-accent transition-colors">
+              Programs
             </Link>
           </div>
         </div>

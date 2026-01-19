@@ -1,9 +1,9 @@
+import { forwardRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, ChevronLeft, ChevronRight, Star, Award, Zap } from "lucide-react";
 import { useHeroSlides } from "@/hooks/useHeroSlides";
 import heroBackground from "@/assets/hero-background.jpg";
-import { useState, useEffect } from "react";
 
 const defaultFeatures = [
   { icon: Star, text: "Industry-leading programs" },
@@ -11,7 +11,7 @@ const defaultFeatures = [
   { icon: Zap, text: "Fast-track your career" },
 ];
 
-export function Hero() {
+export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   const { data: slides, isLoading: slidesLoading } = useHeroSlides();
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -35,7 +35,7 @@ export function Hero() {
   const currentSlideData = activeSlides[currentSlide];
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden -mt-16 pt-16">
+    <section ref={ref} className="relative min-h-screen flex items-center overflow-hidden -mt-16 pt-16">
       {/* Full Background Image with Dark Overlay - covers navbar */}
       <div className="absolute inset-0 -top-16">
         <div 
@@ -201,4 +201,6 @@ export function Hero() {
       </div>
     </section>
   );
-}
+});
+
+Hero.displayName = "Hero";
