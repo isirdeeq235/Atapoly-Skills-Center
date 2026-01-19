@@ -1,121 +1,107 @@
 import { forwardRef } from "react";
-import { ArrowRight, CheckCircle, FileText, CreditCard, UserCheck, Award, Sparkles } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const steps = [
   {
     step: "01",
-    icon: FileText,
-    title: "Apply for a Program",
-    description: "Browse available training programs and select your preferred cohort based on start dates.",
-    color: "from-blue-500 to-indigo-600",
-    bgColor: "bg-blue-500/10",
+    title: "Choose Your Program",
+    description: "Browse our catalog and select a program that aligns with your career goals. Pick your preferred cohort start date.",
+    highlights: ["50+ programs available", "Flexible start dates", "Clear curriculum outline"],
   },
   {
     step: "02",
-    icon: CreditCard,
-    title: "Pay Application Fee",
-    description: "Complete secure payment via Paystack or Flutterwave and receive instant confirmation.",
-    color: "from-violet-500 to-purple-600",
-    bgColor: "bg-violet-500/10",
+    title: "Apply & Pay",
+    description: "Submit your application and pay the application fee securely online. We'll review your application within 48 hours.",
+    highlights: ["Secure payment", "Quick approval", "Email notifications"],
   },
   {
     step: "03",
-    icon: UserCheck,
-    title: "Get Approved",
-    description: "Admin reviews your application. Upon approval, you'll receive an email notification.",
-    color: "from-orange-500 to-amber-600",
-    bgColor: "bg-orange-500/10",
+    title: "Get Enrolled",
+    description: "Once approved, complete your registration payment. You'll receive your unique student ID and dashboard access.",
+    highlights: ["Digital ID card", "Personal dashboard", "Learning resources"],
   },
   {
     step: "04",
-    icon: Award,
     title: "Start Learning",
-    description: "Pay registration fee, get your unique ID card, and join your cohort on the start date.",
-    color: "from-emerald-500 to-teal-600",
-    bgColor: "bg-emerald-500/10",
+    description: "Join your cohort on the start date. Engage with instructors, complete assignments, and earn your certificate.",
+    highlights: ["Expert instructors", "Hands-on training", "Career support"],
   },
 ];
 
 export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
   return (
-    <section ref={ref} className="py-32 bg-secondary/30 relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/5 rounded-full blur-[150px]" />
-      
-      {/* Subtle pattern */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{
-        backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
-        backgroundSize: '48px 48px'
-      }} />
-
-      <div className="container mx-auto px-4 relative">
-        {/* Section Header */}
-        <div className="text-center max-w-4xl mx-auto mb-24">
-          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-6 py-2.5 mb-8">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-primary">Simple Process</span>
+    <section ref={ref} className="py-24 lg:py-32 bg-background">
+      <div className="container mx-auto px-4">
+        {/* Header */}
+        <div className="max-w-3xl mx-auto text-center mb-16 lg:mb-24">
+          <div className="inline-flex items-center gap-3 mb-6">
+            <div className="h-px w-12 bg-accent" />
+            <span className="text-sm font-semibold text-accent uppercase tracking-[0.2em]">
+              How It Works
+            </span>
+            <div className="h-px w-12 bg-accent" />
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-8 leading-tight">
-            Your Journey to
-            <span className="text-accent block mt-2">Success in 4 Steps</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
+            Simple steps to transform your career
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Our streamlined process ensures a smooth journey from application to certification.
-          </p>
         </div>
 
-        {/* Steps Timeline */}
-        <div className="relative max-w-6xl mx-auto">
-          {/* Connection Line - Desktop */}
-          <div className="hidden lg:block absolute top-32 left-[10%] right-[10%] h-1 bg-gradient-to-r from-blue-500 via-violet-500 via-orange-500 to-emerald-500 rounded-full opacity-20" />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
-            {steps.map((item, index) => (
-              <div key={index} className="relative group">
-                {/* Card */}
-                <div className="bg-card rounded-3xl p-8 border border-border shadow-sm hover:shadow-2xl hover:border-accent/30 transition-all duration-500 relative z-10 h-full">
-                  {/* Step Number Badge */}
-                  <div className="absolute -top-4 -right-4 w-14 h-14 bg-gradient-to-br from-background to-secondary rounded-2xl border border-border flex items-center justify-center shadow-lg">
-                    <span className="text-2xl font-bold text-foreground/20">{item.step}</span>
-                  </div>
-                  
-                  {/* Icon */}
-                  <div className={`w-20 h-20 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center mb-8 shadow-xl group-hover:scale-110 group-hover:-rotate-3 transition-all duration-300`}>
-                    <item.icon className="w-10 h-10 text-white" />
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-foreground mb-4 group-hover:text-accent transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed mb-6">
-                    {item.description}
-                  </p>
-
-                  {/* Checkmark */}
-                  <div className={`inline-flex items-center gap-2 ${item.bgColor} text-accent rounded-full px-4 py-2`}>
-                    <CheckCircle className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Quick & Easy</span>
-                  </div>
-                </div>
-
-                {/* Arrow (Desktop) */}
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:flex absolute top-32 -right-3 z-20 w-10 h-10 bg-background rounded-full border-2 border-border items-center justify-center shadow-lg group-hover:border-accent transition-colors">
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                  </div>
-                )}
+        {/* Steps */}
+        <div className="max-w-5xl mx-auto">
+          {steps.map((step, index) => (
+            <div 
+              key={index}
+              className={`relative flex flex-col lg:flex-row gap-8 lg:gap-16 py-12 lg:py-16 ${
+                index !== steps.length - 1 ? 'border-b border-border' : ''
+              }`}
+            >
+              {/* Step Number */}
+              <div className="lg:w-32 flex-shrink-0">
+                <span className="text-6xl lg:text-7xl font-bold text-muted-foreground/20">
+                  {step.step}
+                </span>
               </div>
-            ))}
-          </div>
+
+              {/* Content */}
+              <div className="flex-1">
+                <h3 className="text-2xl lg:text-3xl font-bold text-foreground mb-4">
+                  {step.title}
+                </h3>
+                <p className="text-lg text-muted-foreground mb-6 max-w-xl">
+                  {step.description}
+                </p>
+                
+                {/* Highlights */}
+                <div className="flex flex-wrap gap-4">
+                  {step.highlights.map((highlight, hIndex) => (
+                    <div 
+                      key={hIndex}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-accent" />
+                      </div>
+                      <span className="text-foreground">{highlight}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Connector line for desktop */}
+              {index !== steps.length - 1 && (
+                <div className="hidden lg:block absolute left-16 bottom-0 w-px h-8 bg-border translate-y-full" />
+              )}
+            </div>
+          ))}
         </div>
 
         {/* CTA */}
-        <div className="text-center mt-20">
+        <div className="mt-16 text-center">
           <Link to="/register">
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl shadow-accent/25 text-lg px-10 py-7 rounded-full group">
-              Start Your Journey Now
+            <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 rounded-full px-8 h-14 text-base font-semibold group">
+              Start Your Application
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
