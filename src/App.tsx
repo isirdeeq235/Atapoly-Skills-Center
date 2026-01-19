@@ -13,6 +13,8 @@ import AdminLogin from "./pages/AdminLogin";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import Programs from "./pages/Programs";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import TraineeDashboard from "./pages/dashboard/TraineeDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/programs" element={<Programs />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
             
             {/* Trainee Complete Profile - First step after registration */}
             <Route path="/dashboard/complete-profile" element={
