@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { GraduationCap, Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
@@ -32,11 +33,11 @@ const socialLinks = [
   { icon: Instagram, href: "#", label: "Instagram" },
 ];
 
-export function Footer() {
+export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
   const { data: siteConfig } = useSiteConfig();
 
   return (
-    <footer className="bg-primary text-primary-foreground relative overflow-hidden">
+    <footer ref={ref} className="bg-primary text-primary-foreground relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/10 rounded-full blur-[100px]" />
@@ -190,4 +191,6 @@ export function Footer() {
       </div>
     </footer>
   );
-}
+});
+
+Footer.displayName = "Footer";
