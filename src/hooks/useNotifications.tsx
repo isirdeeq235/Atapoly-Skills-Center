@@ -72,6 +72,15 @@ export function useNotifications() {
 
           // Invalidate and refetch notifications
           queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
+          
+          // If notification is about application status change, also refetch applications
+          if (newNotification.type === 'application_approved' || 
+              newNotification.type === 'application_rejected' ||
+              newNotification.type === 'registration_complete') {
+            queryClient.invalidateQueries({ queryKey: ['trainee-applications', user.id] });
+            queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
+            queryClient.invalidateQueries({ queryKey: ['existing-applications', user.id] });
+          }
         }
       )
       .on(
