@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { 
   FileText, 
@@ -17,7 +17,8 @@ import {
   XCircle, 
   CreditCard,
   ArrowRight,
-  Plus
+  Plus,
+  IdCard
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -38,6 +39,7 @@ interface Application {
 const MyApplications = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { provider, hasActiveProvider } = useActivePaymentProvider();
   const [payingFor, setPayingFor] = useState<string | null>(null);
@@ -68,21 +70,19 @@ const MyApplications = () => {
         title: "Payment Successful!",
         description: "Your application fee has been paid. Your application is now under review.",
       });
-      // Clear the query param
       setSearchParams({});
-      // Refetch applications
       refetch();
     } else if (payment === 'registration_success') {
       toast({
-        title: "Registration Complete!",
-        description: "Congratulations! You are now fully enrolled. Check your email for your ID card.",
+        title: "Registration Complete! 🎓",
+        description: "Congratulations! You are now fully enrolled. Redirecting to your dashboard...",
       });
-      // Clear the query param
       setSearchParams({});
-      // Refetch applications
       refetch();
+      // Redirect to full dashboard after a short delay
+      setTimeout(() => navigate('/dashboard'), 2000);
     }
-  }, [searchParams, toast, setSearchParams, refetch]);
+  }, [searchParams, toast, setSearchParams, refetch, navigate]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -298,13 +298,32 @@ const MyApplications = () => {
                   </div>
                 )}
                 {application.status === 'approved' && application.registration_fee_paid && (
-                  <div className="mt-4 p-3 bg-success/10 rounded-lg text-sm flex items-center justify-between">
-                    <p className="text-success">
-                      🎉 You are fully enrolled! Your registration number is: <strong>{application.registration_number}</strong>
-                    </p>
-                    <Link to="/dashboard/id-card">
-                      <Button variant="outline" size="sm">View ID Card</Button>
-                    </Link>
+                  <div className="mt-4 p-4 bg-gradient-to-r from-success/10 to-accent/10 rounded-lg border border-success/20">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-success flex items-center gap-2 mb-1">
+                          <CheckCircle2 className="w-5 h-5" />
+                          🎉 Fully Enrolled!
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Registration Number: <strong className="text-foreground">{application.registration_number}</strong>
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Link to="/dashboard/id-card">
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <IdCard className="w-4 h-4" />
+                            View ID Card
+                          </Button>
+                        </Link>
+                        <Link to="/dashboard">
+                          <Button size="sm" className="gap-2">
+                            Go to Dashboard
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 )}
                 {application.status === 'rejected' && (
