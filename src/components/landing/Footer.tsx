@@ -1,13 +1,19 @@
 import { forwardRef } from "react";
 import { Link } from "react-router-dom";
+import { 
+  Mail, 
+  Phone, 
+  MapPin, 
+  ArrowUpRight
+} from "lucide-react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
+import { useHomepageContent } from "@/hooks/useHomepageContent";
 
 const footerLinks = {
   programs: [
     { label: "All Programs", href: "/programs" },
-    { label: "Upcoming Cohorts", href: "/programs" },
-    { label: "Application Guide", href: "/programs" },
+    { label: "How to Apply", href: "/register" },
+    { label: "FAQs", href: "/about" },
   ],
   company: [
     { label: "About Us", href: "/about" },
@@ -16,13 +22,16 @@ const footerLinks = {
   ],
   support: [
     { label: "Help Center", href: "/contact" },
-    { label: "FAQs", href: "/contact" },
     { label: "Student Portal", href: "/login" },
+    { label: "Staff Login", href: "/admin-login" },
   ],
 };
 
 export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
   const { data: siteConfig } = useSiteConfig();
+  const { data: homepageContent } = useHomepageContent();
+
+  const footerAbout = homepageContent?.footer_about || "Empowering professionals with world-class training programs designed to accelerate your career growth.";
 
   return (
     <footer ref={ref} className="bg-foreground text-background">
@@ -40,7 +49,7 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
               )}
             </Link>
             <p className="text-background/60 leading-relaxed mb-8 max-w-sm">
-              Empowering professionals with world-class training programs designed to accelerate your career growth.
+              {footerAbout}
             </p>
             
             {/* Contact Info */}
@@ -122,7 +131,7 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="py-6 border-t border-background/10 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="py-6 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-background/40">
             © {new Date().getFullYear()} {siteConfig?.site_name || "Training Portal"}. All rights reserved.
           </p>

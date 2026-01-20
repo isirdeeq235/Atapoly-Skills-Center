@@ -15,7 +15,10 @@ import {
   ChevronRight,
   Image,
   Award,
-  Calendar
+  Calendar,
+  Palette,
+  FileEdit,
+  Layout
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -68,6 +71,9 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Payments", href: "/admin/payments", icon: CreditCard },
     { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     { label: "Hero Slides", href: "/admin/hero-slides", icon: Image },
+    { label: "Homepage", href: "/admin/homepage", icon: Layout },
+    { label: "Theme", href: "/admin/theme", icon: Palette },
+    { label: "Templates", href: "/admin/templates", icon: FileEdit },
     { label: "Settings", href: "/admin/settings", icon: Settings },
   ],
 };
