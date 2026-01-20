@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { TraineeOnboardingGuard, ProfileCompletionGuard, RequireFullEnrollment } from "@/components/auth/TraineeOnboardingGuard";
 import { DynamicHead } from "@/components/DynamicHead";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
@@ -34,19 +35,23 @@ import Notifications from "./pages/dashboard/Notifications";
 import MyCertificates from "./pages/dashboard/MyCertificates";
 import AdminBatches from "./pages/dashboard/AdminBatches";
 import AdminCertificates from "./pages/dashboard/AdminCertificates";
+import AdminThemeManager from "./pages/dashboard/AdminThemeManager";
+import AdminHomepageEditor from "./pages/dashboard/AdminHomepageEditor";
+import AdminTemplateEditor from "./pages/dashboard/AdminTemplateEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <DynamicHead />
-          <Routes>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <DynamicHead />
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
@@ -219,12 +224,30 @@ const App = () => (
               </ProtectedRoute>
             } />
             
+            {/* God Mode Super Admin Routes */}
+            <Route path="/admin/theme" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminThemeManager />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/homepage" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminHomepageEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/templates" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminTemplateEditor />
+              </ProtectedRoute>
+            } />
+            
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
