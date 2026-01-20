@@ -14,18 +14,29 @@ export interface Batch {
   updated_at: string;
 }
 
-export function useBatches(programId?: string) {
+export function useBatches(programId?: string, statusFilter?: string | string[]) {
   return useQuery({
-    queryKey: ['batches', programId],
+    queryKey: ['batches', programId, statusFilter],
     queryFn: async () => {
       let query = supabase
         .from('batches')
         .select('*')
-        .eq('status', 'open')
         .order('start_date', { ascending: true });
       
       if (programId) {
         query = query.eq('program_id', programId);
+      }
+
+      // Filter by status - default to open and upcoming for trainee selection
+      if (statusFilter) {
+        if (Array.isArray(statusFilter)) {
+          query = query.in('status', statusFilter);
+        } else {
+          query = query.eq('status', statusFilter);
+        }
+      } else {
+        // Default: show open and upcoming batches for trainee selection
+        query = query.in('status', ['open', 'upcoming']);
       }
 
       const { data, error } = await query;
