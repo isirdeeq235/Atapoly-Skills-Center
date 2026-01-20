@@ -27,7 +27,7 @@ export function useBatches(programId?: string, statusFilter?: string | string[])
         query = query.eq('program_id', programId);
       }
 
-      // Filter by status - default to open and upcoming for trainee selection
+      // Filter by status - default to open, upcoming, and ongoing for trainee selection
       if (statusFilter) {
         if (Array.isArray(statusFilter)) {
           query = query.in('status', statusFilter);
@@ -35,8 +35,9 @@ export function useBatches(programId?: string, statusFilter?: string | string[])
           query = query.eq('status', statusFilter);
         }
       } else {
-        // Default: show open and upcoming batches for trainee selection
-        query = query.in('status', ['open', 'upcoming']);
+        // Default: show open, upcoming, and ongoing batches for trainee selection
+        // Exclude only 'closed' and 'completed' batches
+        query = query.in('status', ['open', 'upcoming', 'ongoing']);
       }
 
       const { data, error } = await query;
