@@ -29,12 +29,14 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  permission?: string; // Required permission to see this item
 }
 
 interface DashboardSidebarProps {
@@ -52,18 +54,18 @@ const roleNavItems: Record<string, NavItem[]> = {
   ],
   instructor: [
     { label: "Dashboard", href: "/instructor", icon: LayoutDashboard },
-    { label: "My Programs", href: "/admin/programs", icon: BookOpen },
-    { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { label: "My Programs", href: "/admin/programs", icon: BookOpen, permission: "view_assigned_programs" },
+    { label: "Reports", href: "/admin/reports", icon: BarChart3, permission: "view_reports" },
   ],
   admin: [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { label: "Applications", href: "/admin/applications", icon: FileText },
-    { label: "Programs", href: "/admin/programs", icon: BookOpen },
-    { label: "Batches", href: "/admin/batches", icon: Calendar },
-    { label: "Certificates", href: "/admin/certificates", icon: Award },
-    { label: "Users", href: "/admin/users", icon: Users },
-    { label: "Payments", href: "/admin/payments", icon: CreditCard },
-    { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { label: "Applications", href: "/admin/applications", icon: FileText, permission: "view_applications" },
+    { label: "Programs", href: "/admin/programs", icon: BookOpen, permission: "view_programs" },
+    { label: "Batches", href: "/admin/batches", icon: Calendar, permission: "view_batches" },
+    { label: "Certificates", href: "/admin/certificates", icon: Award, permission: "view_certificates" },
+    { label: "Users", href: "/admin/users", icon: Users, permission: "view_users" },
+    { label: "Payments", href: "/admin/payments", icon: CreditCard, permission: "view_payments" },
+    { label: "Reports", href: "/admin/reports", icon: BarChart3, permission: "view_reports" },
   ],
   "super-admin": [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -90,9 +92,20 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const navItems = roleNavItems[role] || roleNavItems.trainee;
+  const allNavItems = roleNavItems[role] || roleNavItems.trainee;
   const { data: siteConfig } = useSiteConfig();
   const { signOut } = useAuth();
+  const { hasPermission } = usePermissions();
+
+  // Filter nav items based on permissions (super-admin sees all, others are filtered)
+  const navItems = role === 'super-admin' 
+    ? allNavItems 
+    : allNavItems.filter(item => {
+        // If no permission required, show the item
+        if (!item.permission) return true;
+        // Check if user has the required permission
+        return hasPermission(item.permission);
+      });
 
   const handleLogout = async () => {
     try {

@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { PermissionsProvider } from "@/hooks/usePermissions";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { TraineeOnboardingGuard, ProfileCompletionGuard, RequireFullEnrollment } from "@/components/auth/TraineeOnboardingGuard";
 import { DynamicHead } from "@/components/DynamicHead";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -57,6 +59,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <PermissionsProvider>
             <DynamicHead />
             <Routes>
             {/* Public Routes */}
@@ -190,17 +193,23 @@ const App = () => (
             
             <Route path="/admin/applications" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <AdminApplications />
+                <PermissionGuard requiredPermission="view_applications">
+                  <AdminApplications />
+                </PermissionGuard>
               </ProtectedRoute>
             } />
             <Route path="/admin/programs" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin', 'instructor']}>
-                <AdminPrograms />
+                <PermissionGuard requiredPermission="view_programs">
+                  <AdminPrograms />
+                </PermissionGuard>
               </ProtectedRoute>
             } />
             <Route path="/admin/reports" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin', 'instructor']}>
-                <AdminReports />
+                <PermissionGuard requiredPermission="view_reports">
+                  <AdminReports />
+                </PermissionGuard>
               </ProtectedRoute>
             } />
             <Route path="/admin/settings" element={
@@ -210,12 +219,16 @@ const App = () => (
             } />
             <Route path="/admin/users" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <AdminUsers />
+                <PermissionGuard requiredPermission="view_users">
+                  <AdminUsers />
+                </PermissionGuard>
               </ProtectedRoute>
             } />
             <Route path="/admin/payments" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <PaymentHistory />
+                <PermissionGuard requiredPermission="view_payments">
+                  <PaymentHistory />
+                </PermissionGuard>
               </ProtectedRoute>
             } />
             <Route path="/admin/hero-slides" element={
@@ -225,12 +238,16 @@ const App = () => (
             } />
             <Route path="/admin/batches" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <AdminBatches />
+                <PermissionGuard requiredPermission="view_batches">
+                  <AdminBatches />
+                </PermissionGuard>
               </ProtectedRoute>
             } />
             <Route path="/admin/certificates" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <AdminCertificates />
+                <PermissionGuard requiredPermission="view_certificates">
+                  <AdminCertificates />
+                </PermissionGuard>
               </ProtectedRoute>
             } />
             
@@ -274,6 +291,7 @@ const App = () => (
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </PermissionsProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

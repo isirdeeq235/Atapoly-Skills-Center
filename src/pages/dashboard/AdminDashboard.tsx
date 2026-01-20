@@ -21,7 +21,7 @@ import {
   Palette,
   Layout
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -34,10 +34,24 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 const AdminDashboard = () => {
   const { role, profile } = useAuth();
+  const location = useLocation();
   const isSuperAdmin = role === 'super_admin';
+
+  // Show access denied toast if redirected from a restricted page
+  useEffect(() => {
+    if (location.state?.accessDenied) {
+      toast.error("Access Denied", {
+        description: "You don't have permission to access that feature. Contact your Super Admin.",
+      });
+      // Clear the state to prevent showing again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Fetch real stats from database
   const { data: statsData, isLoading: statsLoading } = useQuery({
