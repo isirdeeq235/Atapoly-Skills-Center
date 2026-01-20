@@ -13,15 +13,14 @@ const footerLinks = {
   programs: [
     { label: "All Programs", href: "/programs" },
     { label: "How to Apply", href: "/register" },
-    { label: "FAQs", href: "/about" },
+    { label: "FAQs", href: "/faqs" },
   ],
   company: [
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },
-    { label: "Careers", href: "/about" },
   ],
   support: [
-    { label: "Help Center", href: "/contact" },
+    { label: "Help Center", href: "/faqs" },
     { label: "Student Portal", href: "/login" },
     { label: "Staff Login", href: "/admin-login" },
   ],
@@ -136,10 +135,10 @@ export const Footer = forwardRef<HTMLElement>(function Footer(_, ref) {
             © {new Date().getFullYear()} {siteConfig?.site_name || "Training Portal"}. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link to="/about" className="text-sm text-background/40 hover:text-background transition-colors">
+            <Link to="/privacy-policy" className="text-sm text-background/40 hover:text-background transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/about" className="text-sm text-background/40 hover:text-background transition-colors">
+            <Link to="/terms-of-service" className="text-sm text-background/40 hover:text-background transition-colors">
               Terms of Service
             </Link>
           </div>

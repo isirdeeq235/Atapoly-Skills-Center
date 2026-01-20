@@ -16,6 +16,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Programs from "./pages/Programs";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import FAQs from "./pages/FAQs";
 import TraineeDashboard from "./pages/dashboard/TraineeDashboard";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
@@ -64,6 +67,9 @@ const App = () => (
             <Route path="/programs" element={<Programs />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/faqs" element={<FAQs />} />
             
             {/* Trainee Complete Profile - First step after registration */}
             <Route path="/dashboard/complete-profile" element={
