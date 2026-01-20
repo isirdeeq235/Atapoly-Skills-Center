@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   CheckCircle2, 
   Circle, 
@@ -35,28 +36,85 @@ const OnboardingHub = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isPaying, setIsPaying] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Verify payment with the backend
+  const verifyPayment = useCallback(async (reference: string, paymentType: 'application' | 'registration') => {
+    if (!provider) return;
+    
+    setIsVerifying(true);
+    try {
+      console.log("Verifying payment:", { reference, provider, paymentType });
+      
+      const { data, error } = await supabase.functions.invoke("verify-payment", {
+        body: { reference, provider }
+      });
+      
+      console.log("Verification response:", data);
+      
+      if (error) {
+        console.error("Verification error:", error);
+        throw error;
+      }
+      
+      if (data?.success) {
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['onboarding-status', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['trainee-applications', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['existing-applications', user?.id] });
+        
+        await refetch();
+        
+        if (paymentType === 'application') {
+          toast({
+            title: "Application Fee Paid! 🎉",
+            description: "Proceed to complete your profile information.",
+          });
+        } else {
+          toast({
+            title: "Registration Complete! 🎓",
+            description: "Welcome! You now have full access to your dashboard.",
+          });
+          setTimeout(() => navigate('/dashboard'), 1500);
+        }
+      } else {
+        toast({
+          title: "Payment Verification",
+          description: data?.error || "Unable to verify payment. Please contact support if payment was deducted.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Payment verification failed:", error);
+      // Still refetch in case webhook already processed it
+      await refetch();
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [provider, user?.id, queryClient, refetch, toast, navigate]);
 
   // Handle payment success redirects
   useEffect(() => {
     const payment = searchParams.get('payment');
-    if (payment === 'success') {
-      toast({
-        title: "Application Fee Paid! 🎉",
-        description: "Proceed to complete your profile information.",
-      });
+    const reference = searchParams.get('reference') || searchParams.get('trxref');
+    
+    if (payment === 'success' && reference) {
+      setSearchParams({});
+      verifyPayment(reference, 'application');
+    } else if (payment === 'registration_success' && reference) {
+      setSearchParams({});
+      verifyPayment(reference, 'registration');
+    } else if (payment === 'success' || payment === 'registration_success') {
+      // Fallback if no reference - still try to refresh
       setSearchParams({});
       refetch();
-    } else if (payment === 'registration_success') {
       toast({
-        title: "Registration Complete! 🎓",
-        description: "Welcome! You now have full access to your dashboard.",
+        title: payment === 'success' ? "Payment Processing" : "Registration Processing",
+        description: "Your payment is being verified. This may take a moment.",
       });
-      setSearchParams({});
-      refetch();
-      // Redirect to full dashboard after registration
-      setTimeout(() => navigate('/dashboard'), 1500);
     }
-  }, [searchParams, toast, setSearchParams, refetch, navigate]);
+  }, [searchParams, setSearchParams, verifyPayment, refetch, toast]);
 
   // Auto-redirect to dashboard when fully enrolled
   useEffect(() => {

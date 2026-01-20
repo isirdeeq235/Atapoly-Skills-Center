@@ -132,7 +132,7 @@ const ApplyForProgram = () => {
 
       console.log("Initializing payment with provider:", provider, "for application:", applicationId);
 
-      // Initialize payment
+      // Initialize payment - callback URL will include reference from payment provider
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         "initialize-payment",
         {
@@ -143,7 +143,7 @@ const ApplyForProgram = () => {
             payment_type: "application_fee",
             application_id: applicationId,
             trainee_id: user.id,
-            callback_url: `${window.location.origin}/dashboard/complete-profile?payment=success`,
+            callback_url: `${window.location.origin}/dashboard/onboarding?payment=success`,
           },
         }
       );
