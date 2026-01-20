@@ -20,7 +20,8 @@ import {
   FileEdit,
   Layout,
   Blocks,
-  BellRing
+  BellRing,
+  MailOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Templates", href: "/admin/templates", icon: FileEdit },
     { label: "Form Builder", href: "/admin/form-builder", icon: Blocks },
     { label: "Notifications", href: "/admin/notifications-settings", icon: BellRing },
+    { label: "Email Templates", href: "/admin/email-templates", icon: MailOpen },
     { label: "Settings", href: "/admin/settings", icon: Settings },
   ],
 };

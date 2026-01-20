@@ -340,6 +340,45 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          available_placeholders: Json | null
+          created_at: string
+          description: string | null
+          html_template: string
+          id: string
+          is_enabled: boolean
+          subject_template: string
+          template_key: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          available_placeholders?: Json | null
+          created_at?: string
+          description?: string | null
+          html_template: string
+          id?: string
+          is_enabled?: boolean
+          subject_template: string
+          template_key: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          available_placeholders?: Json | null
+          created_at?: string
+          description?: string | null
+          html_template?: string
+          id?: string
+          is_enabled?: boolean
+          subject_template?: string
+          template_key?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hero_slides: {
         Row: {
           created_at: string
