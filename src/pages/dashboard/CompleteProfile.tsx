@@ -52,18 +52,19 @@ const CompleteProfile = () => {
     avatar_url: "",
   });
 
-  // Handle payment success from application fee
+  // Handle payment success from application fee - redirect to onboarding hub for verification
   useEffect(() => {
     const payment = searchParams.get('payment');
+    const reference = searchParams.get('reference') || searchParams.get('trxref');
     if (payment === 'success') {
-      toast({
-        title: "Application Fee Paid!",
-        description: "Your payment was successful. Please complete your profile to continue.",
-      });
-      // Clear the query param
-      setSearchParams({});
+      // Redirect to onboarding hub for proper payment verification
+      if (reference) {
+        navigate(`/dashboard/onboarding?payment=success&reference=${reference}`);
+      } else {
+        navigate(`/dashboard/onboarding?payment=success`);
+      }
     }
-  }, [searchParams, toast, setSearchParams]);
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     if (profile) {
