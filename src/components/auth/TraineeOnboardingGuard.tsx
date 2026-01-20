@@ -11,12 +11,12 @@ interface TraineeOnboardingGuardProps {
 
 // Map steps to their allowed routes
 const stepRoutes: Record<OnboardingStep, string> = {
-  select_program: '/dashboard/apply',           // Step 1: Select & pay application fee
-  complete_profile: '/dashboard/complete-profile', // Step 2: Complete profile after payment
-  pending_approval: '/dashboard/applications',   // Step 3: Waiting for approval
-  pay_registration_fee: '/dashboard/applications', // Step 4: Pay registration fee
-  fully_enrolled: '/dashboard',                  // Step 5: Full access
-  rejected: '/dashboard/applications',
+  select_program: '/dashboard/onboarding',           // Step 1: Hub shows program selection
+  complete_profile: '/dashboard/onboarding',         // Step 2: Hub redirects to profile completion
+  pending_approval: '/dashboard/onboarding',         // Step 3: Hub shows waiting status
+  pay_registration_fee: '/dashboard/onboarding',     // Step 4: Hub shows payment CTA
+  fully_enrolled: '/dashboard',                      // Step 5: Full access
+  rejected: '/dashboard/onboarding',                 // Hub shows rejection info
 };
 
 export function TraineeOnboardingGuard({ 

@@ -38,8 +38,8 @@ const Register = () => {
     try {
       const fullName = `${formData.firstName} ${formData.lastName}`;
       await signUp(formData.email, formData.password, fullName, 'trainee');
-      toast.success("Account created successfully! You can now sign in.");
-      navigate("/login");
+      toast.success("Account created successfully!");
+      navigate("/dashboard/onboarding");
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {

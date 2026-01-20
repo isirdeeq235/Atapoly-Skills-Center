@@ -27,6 +27,7 @@ import InstructorDashboard from "./pages/dashboard/InstructorDashboard";
 import SuperAdminSettings from "./pages/dashboard/SuperAdminSettings";
 import ApplyForProgram from "./pages/dashboard/ApplyForProgram";
 import MyApplications from "./pages/dashboard/MyApplications";
+import OnboardingHub from "./pages/dashboard/OnboardingHub";
 import PaymentHistory from "./pages/dashboard/PaymentHistory";
 import AdminApplications from "./pages/dashboard/AdminApplications";
 import AdminPrograms from "./pages/dashboard/AdminPrograms";
@@ -80,6 +81,15 @@ const App = () => (
               <ProtectedRoute allowedRoles={['trainee']}>
                 <TraineeOnboardingGuard allowedSteps={['complete_profile']}>
                   <CompleteProfile />
+                </TraineeOnboardingGuard>
+              </ProtectedRoute>
+            } />
+            
+            {/* Onboarding Hub - Central onboarding page for all steps */}
+            <Route path="/dashboard/onboarding" element={
+              <ProtectedRoute allowedRoles={['trainee']}>
+                <TraineeOnboardingGuard allowedSteps={['select_program', 'complete_profile', 'pending_approval', 'pay_registration_fee', 'rejected']}>
+                  <OnboardingHub />
                 </TraineeOnboardingGuard>
               </ProtectedRoute>
             } />

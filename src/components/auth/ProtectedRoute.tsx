@@ -29,7 +29,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     // Redirect to appropriate dashboard based on role
-    let dashboardPath = '/dashboard/complete-profile';
+    let dashboardPath = '/dashboard/onboarding';
     if (role === 'super_admin' || role === 'admin') {
       dashboardPath = '/admin';
     } else if (role === 'instructor') {

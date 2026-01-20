@@ -22,7 +22,8 @@ import {
   Blocks,
   BellRing,
   MailOpen,
-  ShieldCheck
+  ShieldCheck,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import { useState } from "react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { toast } from "sonner";
 
 interface NavItem {
@@ -94,18 +96,33 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const allNavItems = roleNavItems[role] || roleNavItems.trainee;
   const { data: siteConfig } = useSiteConfig();
-  const { signOut } = useAuth();
+  const { signOut, role: userRole } = useAuth();
   const { hasPermission } = usePermissions();
+  const { data: onboardingStatus } = useOnboardingStatus();
+
+  // Check if trainee is fully enrolled
+  const isFullyEnrolled = onboardingStatus?.currentStep === 'fully_enrolled';
+  
+  // For trainees not fully enrolled, show onboarding link
+  const traineeNavItems = role === 'trainee' && !isFullyEnrolled
+    ? [
+        { label: "Getting Started", href: "/dashboard/onboarding", icon: Sparkles },
+        { label: "Apply", href: "/dashboard/apply", icon: BookOpen },
+        { label: "My Applications", href: "/dashboard/applications", icon: FileText },
+      ]
+    : allNavItems;
 
   // Filter nav items based on permissions (super-admin sees all, others are filtered)
   const navItems = role === 'super-admin' 
     ? allNavItems 
-    : allNavItems.filter(item => {
-        // If no permission required, show the item
-        if (!item.permission) return true;
-        // Check if user has the required permission
-        return hasPermission(item.permission);
-      });
+    : role === 'trainee'
+      ? traineeNavItems
+      : allNavItems.filter(item => {
+          // If no permission required, show the item
+          if (!item.permission) return true;
+          // Check if user has the required permission
+          return hasPermission(item.permission);
+        });
 
   const handleLogout = async () => {
     try {
