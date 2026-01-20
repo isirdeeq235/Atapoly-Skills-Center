@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
-import { ArrowUpRight, GraduationCap, Users, Award, Briefcase, Lightbulb, Globe, Layers, Shield } from "lucide-react";
+import { forwardRef, useEffect, useRef, useState } from "react";
+import { GraduationCap, Users, Award, Briefcase, Lightbulb, Globe, Layers, Shield, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useHomepageContent } from "@/hooks/useHomepageContent";
 
@@ -15,13 +15,32 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export const Features = forwardRef<HTMLElement>(function Features(_, ref) {
-  const { data: content, isLoading } = useHomepageContent();
+  const { data: content } = useHomepageContent();
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const defaultFeatures = [
-    { number: "01", icon: "GraduationCap", title: "Industry-Led Programs", description: "Our curriculum is designed and updated by industry experts to ensure you learn the most relevant and in-demand skills." },
-    { number: "02", icon: "Users", title: "Expert Instructors", description: "Learn from professionals with years of real-world experience who bring practical insights to every session." },
-    { number: "03", icon: "Award", title: "Recognized Certification", description: "Earn certificates that are valued by employers and can help advance your career opportunities." },
-    { number: "04", icon: "Briefcase", title: "Career Support", description: "Get access to job placement assistance, interview preparation, and networking opportunities." },
+    { number: "01", icon: "GraduationCap", title: "Industry-Led Curriculum", description: "Programs designed by experts with real-world experience, ensuring you learn skills that matter." },
+    { number: "02", icon: "Users", title: "Expert Mentorship", description: "Get personalized guidance from instructors who've achieved success in their fields." },
+    { number: "03", icon: "Award", title: "Recognized Credentials", description: "Earn certifications valued by top employers, opening doors to new opportunities." },
+    { number: "04", icon: "Briefcase", title: "Career Acceleration", description: "Access job placement support, networking events, and interview coaching." },
   ];
 
   const features = content ? [
@@ -31,49 +50,76 @@ export const Features = forwardRef<HTMLElement>(function Features(_, ref) {
     { number: "04", icon: content.feature_4_icon, title: content.feature_4_title, description: content.feature_4_description },
   ] : defaultFeatures;
 
-  const featuresTitle = content?.features_title || "Built for success, designed for learners";
-  const featuresSubtitle = content?.features_subtitle || "We've crafted every aspect of our training experience to maximize your potential and career growth.";
+  const featuresTitle = content?.features_title || "Why leaders choose us";
+  const featuresSubtitle = content?.features_subtitle || "We've built a learning experience that delivers real results and lasting career impact.";
 
   return (
-    <section ref={ref} className="py-24 lg:py-32 bg-secondary/30">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="max-w-3xl mb-16 lg:mb-24">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-px w-12 bg-accent" />
-            <span className="text-sm font-semibold text-accent uppercase tracking-[0.2em]">
-              Why Choose Us
-            </span>
+    <section ref={ref} className="py-24 lg:py-32 bg-card relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
+      
+      <div ref={sectionRef} className="container mx-auto px-4 relative">
+        {/* Header - Asymmetric layout */}
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 mb-16 lg:mb-24">
+          <div>
+            <div 
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-6 transition-all duration-700 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              <span className="text-sm font-medium text-accent">Why Choose Us</span>
+            </div>
+            <h2 
+              className={`text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] transition-all duration-700 delay-100 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+            >
+              {featuresTitle}
+            </h2>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
-            {featuresTitle}
-          </h2>
-          <p className="text-xl text-muted-foreground">
-            {featuresSubtitle}
-          </p>
+          <div className="lg:pt-12">
+            <p 
+              className={`text-xl text-muted-foreground leading-relaxed transition-all duration-700 delay-200 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+            >
+              {featuresSubtitle}
+            </p>
+          </div>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
+        {/* Features - Bento Grid Style */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => {
             const IconComponent = iconMap[feature.icon] || GraduationCap;
+            const isLarge = index === 0 || index === 3;
+            
             return (
               <div 
                 key={index}
-                className="group relative bg-card p-8 lg:p-10 rounded-2xl border border-border hover:border-accent/30 transition-all duration-300 hover:shadow-xl"
+                className={`group relative bg-background rounded-3xl p-8 border border-border hover:border-accent/40 transition-all duration-500 hover:shadow-2xl hover:shadow-accent/5 ${
+                  isLarge ? 'lg:col-span-2' : ''
+                } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                style={{ transitionDelay: `${200 + index * 100}ms` }}
               >
-                {/* Number */}
-                <span className="absolute top-8 right-8 text-7xl font-bold text-muted-foreground/10 group-hover:text-accent/10 transition-colors">
-                  {feature.number}
-                </span>
+                {/* Hover gradient */}
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 
                 <div className="relative">
-                  {/* Icon */}
-                  <div className="w-14 h-14 bg-accent/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-accent group-hover:text-white transition-all">
-                    <IconComponent className="w-7 h-7 text-accent group-hover:text-white transition-colors" />
+                  {/* Icon with animated background */}
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
+                      <IconComponent className="w-8 h-8 text-accent group-hover:text-accent-foreground transition-colors" />
+                    </div>
+                    {/* Number tag */}
+                    <span className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground group-hover:bg-accent group-hover:text-accent-foreground transition-all">
+                      {feature.number}
+                    </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-foreground mb-3 group-hover:text-accent transition-colors">
+                  <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 group-hover:text-accent transition-colors">
                     {feature.title}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">
@@ -86,13 +132,17 @@ export const Features = forwardRef<HTMLElement>(function Features(_, ref) {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-16 text-center">
+        <div 
+          className={`mt-16 flex justify-center transition-all duration-700 delay-600 ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           <Link 
             to="/about" 
-            className="inline-flex items-center gap-2 text-foreground font-semibold hover:text-accent transition-colors group"
+            className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-foreground text-background hover:bg-foreground/90 font-semibold transition-all"
           >
             Learn more about our approach
-            <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>
