@@ -75,12 +75,12 @@ const App = () => (
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/faqs" element={<FAQs />} />
             
-            {/* Trainee Complete Profile - First step after registration */}
+            {/* Trainee Complete Profile - Step 2: After application fee is paid */}
             <Route path="/dashboard/complete-profile" element={
               <ProtectedRoute allowedRoles={['trainee']}>
-                <ProfileCompletionGuard>
+                <TraineeOnboardingGuard allowedSteps={['complete_profile']}>
                   <CompleteProfile />
-                </ProfileCompletionGuard>
+                </TraineeOnboardingGuard>
               </ProtectedRoute>
             } />
             
@@ -102,17 +102,17 @@ const App = () => (
               </ProtectedRoute>
             } />
             
-            {/* Apply for Program - Allowed for profile-complete trainees */}
+            {/* Apply for Program - Step 1: Select program & pay application fee */}
             <Route path="/dashboard/apply" element={
               <ProtectedRoute allowedRoles={['trainee']}>
-                <TraineeOnboardingGuard allowedSteps={['apply_program', 'pay_application_fee', 'fully_enrolled']}>
+                <TraineeOnboardingGuard allowedSteps={['select_program', 'fully_enrolled']}>
                   <ApplyForProgram />
                 </TraineeOnboardingGuard>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/apply/:programId" element={
               <ProtectedRoute allowedRoles={['trainee']}>
-                <TraineeOnboardingGuard allowedSteps={['apply_program', 'pay_application_fee', 'fully_enrolled']}>
+                <TraineeOnboardingGuard allowedSteps={['select_program', 'fully_enrolled']}>
                   <ApplyForProgram />
                 </TraineeOnboardingGuard>
               </ProtectedRoute>

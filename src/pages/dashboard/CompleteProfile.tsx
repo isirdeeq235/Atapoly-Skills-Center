@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
 const CompleteProfile = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile, refreshProfile } = useAuth();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +51,19 @@ const CompleteProfile = () => {
     emergency_contact: "",
     avatar_url: "",
   });
+
+  // Handle payment success from application fee
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    if (payment === 'success') {
+      toast({
+        title: "Application Fee Paid!",
+        description: "Your payment was successful. Please complete your profile to continue.",
+      });
+      // Clear the query param
+      setSearchParams({});
+    }
+  }, [searchParams, toast, setSearchParams]);
 
   useEffect(() => {
     if (profile) {
@@ -223,11 +237,11 @@ const CompleteProfile = () => {
 
       toast({
         title: "Profile completed",
-        description: "Your profile has been saved. You can now apply for a program.",
+        description: "Your profile has been saved. Your application is now pending admin approval.",
       });
 
-      // Navigate to program application
-      navigate('/dashboard/apply');
+      // Navigate to applications page to see pending status
+      navigate('/dashboard/applications');
     } catch (error: any) {
       toast({
         title: "Error saving profile",
@@ -250,24 +264,28 @@ const CompleteProfile = () => {
   return (
     <DashboardLayout role="trainee" title="Complete Your Profile" subtitle="Please provide your information to continue">
       <div className="max-w-3xl mx-auto">
-        {/* Progress Indicator */}
+        {/* Progress Indicator - Updated for new flow */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold">1</div>
+              <div className="w-8 h-8 rounded-full bg-success text-white flex items-center justify-center text-sm font-semibold">✓</div>
+              <span className="font-medium text-success">Application Fee Paid</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold">2</div>
               <span className="font-medium">Complete Profile</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">2</div>
-              <span>Apply for Program</span>
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">3</div>
+              <span>Admin Approval</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">3</div>
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">4</div>
               <span>Pay & Enroll</span>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-accent w-1/3 transition-all" />
+            <div className="h-full bg-accent w-1/2 transition-all" />
           </div>
         </div>
 

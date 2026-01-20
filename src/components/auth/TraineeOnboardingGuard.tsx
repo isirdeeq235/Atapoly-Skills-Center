@@ -11,12 +11,11 @@ interface TraineeOnboardingGuardProps {
 
 // Map steps to their allowed routes
 const stepRoutes: Record<OnboardingStep, string> = {
-  complete_profile: '/dashboard/complete-profile',
-  apply_program: '/dashboard/apply',
-  pay_application_fee: '/dashboard/apply',
-  pending_approval: '/dashboard/applications',
-  pay_registration_fee: '/dashboard/applications',
-  fully_enrolled: '/dashboard',
+  select_program: '/dashboard/apply',           // Step 1: Select & pay application fee
+  complete_profile: '/dashboard/complete-profile', // Step 2: Complete profile after payment
+  pending_approval: '/dashboard/applications',   // Step 3: Waiting for approval
+  pay_registration_fee: '/dashboard/applications', // Step 4: Pay registration fee
+  fully_enrolled: '/dashboard',                  // Step 5: Full access
   rejected: '/dashboard/applications',
 };
 
@@ -76,7 +75,7 @@ export function RequireFullEnrollment({ children }: { children: React.ReactNode 
   );
 }
 
-// Helper component for profile completion page
+// Helper component for complete profile page - ensures user has paid application fee first
 export function ProfileCompletionGuard({ children }: { children: React.ReactNode }) {
   const { data: status, isLoading } = useOnboardingStatus();
   const { role } = useAuth();
@@ -93,8 +92,13 @@ export function ProfileCompletionGuard({ children }: { children: React.ReactNode
     );
   }
 
+  // Redirect to apply page if application fee not paid yet
+  if (status?.currentStep === 'select_program') {
+    return <Navigate to="/dashboard/apply" replace />;
+  }
+
   // If profile is already complete, redirect to appropriate step
-  if (status?.profile.isComplete) {
+  if (status?.profile.isComplete && status?.currentStep !== 'complete_profile') {
     const targetRoute = stepRoutes[status.currentStep];
     return <Navigate to={targetRoute} replace />;
   }
