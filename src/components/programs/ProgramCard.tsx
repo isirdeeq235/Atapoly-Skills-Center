@@ -82,7 +82,7 @@ export function ProgramCard({
             <p className="text-xs text-muted-foreground">Application Fee</p>
             <p className="text-lg font-bold text-foreground">{applicationFee}</p>
           </div>
-          <Link to={`/programs/${id}`}>
+          <Link to={status === "open" ? "/register" : `/programs/${id}`}>
             <Button variant={status === "open" ? "default" : "outline"} disabled={status === "closed"}>
               {status === "open" ? "Apply Now" : "View Details"}
               <ArrowRight className="w-4 h-4 ml-1" />
