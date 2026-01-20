@@ -132,38 +132,43 @@ const OnboardingHub = () => {
   const steps = [
     {
       id: 'select_program',
-      title: 'Select Program & Pay Application Fee',
-      description: 'Choose your training program and pay the application fee to begin',
+      title: 'Step 1: Pay Application Fee',
+      description: 'Choose your training program and pay the non-refundable application fee to submit your application',
       icon: CreditCard,
       route: '/dashboard/apply',
+      feeType: 'Application Fee',
     },
     {
       id: 'complete_profile',
-      title: 'Complete Your Profile',
-      description: 'Provide your personal information and upload a passport photo',
+      title: 'Step 2: Complete Your Profile',
+      description: 'Provide your personal information and upload a passport photograph',
       icon: User,
       route: '/dashboard/complete-profile',
+      feeType: null,
     },
     {
       id: 'pending_approval',
-      title: 'Application Review',
-      description: 'Your application is being reviewed by our admissions team',
+      title: 'Step 3: Application Review',
+      description: 'Your application is being reviewed by our admissions team. You will be notified once approved.',
       icon: Clock,
       route: null,
+      feeType: null,
     },
     {
       id: 'pay_registration_fee',
-      title: 'Pay Registration Fee',
-      description: 'Complete your enrollment by paying the registration fee',
+      title: 'Step 4: Pay Registration Fee',
+      description: 'Your application has been approved! Pay the registration fee to complete your enrollment',
       icon: CreditCard,
       route: null, // Will handle inline
+      feeType: 'Registration Fee',
     },
     {
       id: 'fully_enrolled',
-      title: 'Access Your Dashboard',
-      description: 'You now have full access to your trainee dashboard, ID card, and more',
+      title: 'Step 5: Access Full Dashboard',
+      description: 'You are now fully enrolled! Access your ID card, certificates, and trainee dashboard',
       icon: GraduationCap,
       route: '/dashboard',
+      feeType: null,
     },
   ];
 
