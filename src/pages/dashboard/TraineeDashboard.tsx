@@ -17,7 +17,9 @@ import {
   Calendar,
   AlertCircle,
   Loader2,
-  User
+  User,
+  Users,
+  Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format, addDays, isAfter, isBefore } from "date-fns";
@@ -25,7 +27,7 @@ import { format, addDays, isAfter, isBefore } from "date-fns";
 const TraineeDashboard = () => {
   const { user, profile } = useAuth();
 
-  // Fetch user's applications with program details
+  // Fetch user's applications with program and batch details
   const { data: applications, isLoading: applicationsLoading } = useQuery({
     queryKey: ['trainee-applications', user?.id],
     queryFn: async () => {
@@ -34,7 +36,8 @@ const TraineeDashboard = () => {
         .from("applications")
         .select(`
           *,
-          programs(id, title, description, duration, image_url)
+          programs(id, title, description, duration, image_url),
+          batches(id, batch_name, start_date, end_date, status)
         `)
         .eq("trainee_id", user.id)
         .order("created_at", { ascending: false });
@@ -116,7 +119,7 @@ const TraineeDashboard = () => {
   }));
 
   // Get progress for enrolled programs (simulated based on enrollment date)
-  const programProgress = enrolledApplications.map((app) => {
+  const programProgress = enrolledApplications.map((app: any) => {
     const createdDate = new Date(app.created_at);
     const daysSinceEnrollment = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
     const progress = Math.min(Math.floor((daysSinceEnrollment / 90) * 100), 100); // Assuming 90 day programs
@@ -125,6 +128,9 @@ const TraineeDashboard = () => {
       title: app.programs?.title || "Program",
       progress,
       registrationNumber: app.registration_number,
+      batchName: app.batches?.batch_name || null,
+      batchStartDate: app.batches?.start_date || null,
+      batchEndDate: app.batches?.end_date || null,
       status: progress >= 100 ? 'completed' : 'in-progress',
       nextSession: format(addDays(new Date(), Math.floor(Math.random() * 7) + 1), "MMM d, yyyy"),
     };
@@ -217,8 +223,21 @@ const TraineeDashboard = () => {
                         <h4 className="font-medium text-foreground">{program.title}</h4>
                         <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                           <User className="w-3 h-3" />
-                          {program.registrationNumber}
+                          {program.registrationNumber || "Pending"}
                         </p>
+                        {program.batchName && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                            <Users className="w-3 h-3" />
+                            Cohort: {program.batchName}
+                          </p>
+                        )}
+                        {program.batchStartDate && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                            <Calendar className="w-3 h-3" />
+                            {format(new Date(program.batchStartDate), "MMM d, yyyy")} 
+                            {program.batchEndDate && ` - ${format(new Date(program.batchEndDate), "MMM d, yyyy")}`}
+                          </p>
+                        )}
                         <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                           <Clock className="w-3 h-3" />
                           Next: {program.nextSession}
@@ -357,10 +376,22 @@ const TraineeDashboard = () => {
                   <span>My ID Card</span>
                 </Button>
               </Link>
+              <Link to="/dashboard/certificates">
+                <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                  <Award className="w-6 h-6 text-accent" />
+                  <span>Certificates</span>
+                </Button>
+              </Link>
               <Link to="/dashboard/profile">
                 <Button variant="outline" className="w-full h-24 flex-col gap-2">
                   <User className="w-6 h-6 text-accent" />
                   <span>My Profile</span>
+                </Button>
+              </Link>
+              <Link to="/dashboard/notifications">
+                <Button variant="outline" className="w-full h-24 flex-col gap-2">
+                  <AlertCircle className="w-6 h-6 text-accent" />
+                  <span>Notifications</span>
                 </Button>
               </Link>
             </div>
