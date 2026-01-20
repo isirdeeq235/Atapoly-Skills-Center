@@ -461,15 +461,28 @@ const ApplyForProgram = () => {
 
               {/* Payment Summary */}
               <div className="border border-border rounded-lg p-4">
-                <h4 className="font-medium mb-3">Payment Summary</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Application Fee</span>
-                    <span className="font-semibold">₦{program.application_fee.toLocaleString()}</span>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-accent" />
+                  Payment Summary
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-medium text-foreground">Application Fee</span>
+                      <p className="text-xs text-muted-foreground">Pay now to submit your application</p>
+                    </div>
+                    <span className="font-semibold text-accent">₦{program.application_fee.toLocaleString()}</span>
                   </div>
-                  <div className="border-t border-border pt-2 mt-2">
+                  <div className="flex justify-between items-start text-muted-foreground">
+                    <div>
+                      <span className="font-medium">Registration Fee</span>
+                      <p className="text-xs">Pay after approval to complete enrollment</p>
+                    </div>
+                    <span className="font-medium">₦{program.registration_fee.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-border pt-3 mt-3">
                     <div className="flex justify-between text-lg font-semibold">
-                      <span>Total</span>
+                      <span>Due Now (Application Fee)</span>
                       <span className="text-accent">₦{program.application_fee.toLocaleString()}</span>
                     </div>
                   </div>
@@ -500,11 +513,11 @@ const ApplyForProgram = () => {
               <div className="flex items-start gap-3 p-4 bg-info/10 rounded-lg">
                 <AlertCircle className="w-5 h-5 text-info flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-foreground">Important Note</p>
-                  <p className="text-muted-foreground">
-                    After paying the application fee, your application will be reviewed by an admin. 
-                    You'll receive an email notification once it's approved.
-                  </p>
+                  <p className="font-medium text-foreground">Two-Step Payment Process</p>
+                  <ul className="text-muted-foreground mt-1 space-y-1">
+                    <li>• <strong>Step 1 (Now):</strong> Pay the Application Fee to submit your application</li>
+                    <li>• <strong>Step 2 (After Approval):</strong> Pay the Registration Fee to complete enrollment</li>
+                  </ul>
                 </div>
               </div>
 
@@ -522,7 +535,7 @@ const ApplyForProgram = () => {
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Pay ₦{program.application_fee.toLocaleString()}
+                      Pay Application Fee - ₦{program.application_fee.toLocaleString()}
                     </>
                   )}
                 </Button>
