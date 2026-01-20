@@ -11,6 +11,7 @@ export type NotificationType =
   | 'application_rejected' 
   | 'payment_success' 
   | 'payment_failed' 
+  | 'payment_verified'
   | 'registration_complete' 
   | 'system_announcement' 
   | 'program_update';
