@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useEmailTemplates, useUpdateEmailTemplate, EmailTemplate } from "@/hooks/useEmailTemplates";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Mail, 
   Save, 
@@ -24,7 +25,8 @@ import {
   XCircle,
   CreditCard,
   UserPlus,
-  Award
+  Award,
+  Send
 } from "lucide-react";
 
 // Icon mapping for templates
@@ -46,6 +48,11 @@ export default function AdminEmailTemplates() {
   const [editedHtml, setEditedHtml] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [activeView, setActiveView] = useState<'code' | 'preview'>('code');
+  
+  // Test email state
+  const [showTestEmailDialog, setShowTestEmailDialog] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState("");
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   const handleEditTemplate = (template: EmailTemplate) => {
     setEditingTemplate(template);
@@ -97,6 +104,45 @@ export default function AdminEmailTemplates() {
 
   const insertPlaceholder = (placeholder: string) => {
     setEditedHtml(prev => prev + placeholder);
+  };
+
+  // Send test email with current template content
+  const handleSendTestEmail = async () => {
+    if (!testEmailAddress || !editingTemplate) return;
+
+    setSendingTestEmail(true);
+    try {
+      const previewHtml = getPreviewHtml();
+      const previewSubject = editedSubject
+        .replace(/\{\{name\}\}/g, "John Doe")
+        .replace(/\{\{program\}\}/g, "Web Development Bootcamp")
+        .replace(/\{\{site_name\}\}/g, "Training Academy");
+
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: testEmailAddress,
+          subject: `[TEST] ${previewSubject}`,
+          html: previewHtml,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test email sent!",
+        description: `Check your inbox at ${testEmailAddress}`,
+      });
+      setShowTestEmailDialog(false);
+      setTestEmailAddress("");
+    } catch (error: any) {
+      toast({
+        title: "Failed to send test email",
+        description: error.message || "Please check SMTP configuration",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingTestEmail(false);
+    }
   };
 
   // Replace placeholders with sample data for preview
@@ -286,18 +332,79 @@ export default function AdminEmailTemplates() {
             </div>
           )}
 
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="secondary" 
+              onClick={() => setShowTestEmailDialog(true)}
+              disabled={!editedHtml}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Send Test Email
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditingTemplate(null)}>
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button onClick={handleSaveTemplate} disabled={updateTemplate.isPending}>
+                {updateTemplate.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Save Template
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test Email Dialog */}
+      <Dialog open={showTestEmailDialog} onOpenChange={setShowTestEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5" />
+              Send Test Email
+            </DialogTitle>
+            <DialogDescription>
+              Send a preview of this template to your email address. Placeholders will be replaced with sample data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="test-email">Recipient Email Address</Label>
+              <Input
+                id="test-email"
+                type="email"
+                placeholder="your@email.com"
+                value={testEmailAddress}
+                onChange={(e) => setTestEmailAddress(e.target.value)}
+              />
+            </div>
+            <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+              <p className="font-medium mb-1">Sample data will be used:</p>
+              <ul className="list-disc list-inside space-y-0.5 text-xs">
+                <li>Name: John Doe</li>
+                <li>Program: Web Development Bootcamp</li>
+                <li>Registration Number: TRN-2026-00123</li>
+              </ul>
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingTemplate(null)}>
-              <X className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={() => setShowTestEmailDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveTemplate} disabled={updateTemplate.isPending}>
-              {updateTemplate.isPending ? (
+            <Button 
+              onClick={handleSendTestEmail} 
+              disabled={!testEmailAddress || sendingTestEmail}
+            >
+              {sendingTestEmail ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <Save className="w-4 h-4 mr-2" />
+                <Send className="w-4 h-4 mr-2" />
               )}
-              Save Template
+              Send Test
             </Button>
           </DialogFooter>
         </DialogContent>
