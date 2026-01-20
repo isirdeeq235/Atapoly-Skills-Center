@@ -22,6 +22,7 @@ export type Database = {
           completed_at: string | null
           completion_status: string | null
           created_at: string
+          custom_field_values: Json | null
           id: string
           program_id: string
           registration_fee_paid: boolean
@@ -37,6 +38,7 @@ export type Database = {
           completed_at?: string | null
           completion_status?: string | null
           created_at?: string
+          custom_field_values?: Json | null
           id?: string
           program_id: string
           registration_fee_paid?: boolean
@@ -52,6 +54,7 @@ export type Database = {
           completed_at?: string | null
           completion_status?: string | null
           created_at?: string
+          custom_field_values?: Json | null
           id?: string
           program_id?: string
           registration_fee_paid?: boolean
@@ -271,6 +274,68 @@ export type Database = {
             columns: ["trainee_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_form_fields: {
+        Row: {
+          created_at: string
+          display_order: number
+          field_label: string
+          field_name: string
+          field_options: Json | null
+          field_type: string
+          form_type: string
+          help_text: string | null
+          id: string
+          is_active: boolean
+          is_required: boolean
+          placeholder: string | null
+          program_id: string | null
+          updated_at: string
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          field_label: string
+          field_name: string
+          field_options?: Json | null
+          field_type: string
+          form_type: string
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          placeholder?: string | null
+          program_id?: string | null
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          field_label?: string
+          field_name?: string
+          field_options?: Json | null
+          field_type?: string
+          form_type?: string
+          help_text?: string | null
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          placeholder?: string | null
+          program_id?: string | null
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_form_fields_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
             referencedColumns: ["id"]
           },
         ]
@@ -677,6 +742,7 @@ export type Database = {
           avatar_url: string | null
           country: string | null
           created_at: string
+          custom_field_values: Json | null
           date_of_birth: string | null
           email: string
           emergency_contact: string | null
@@ -695,6 +761,7 @@ export type Database = {
           avatar_url?: string | null
           country?: string | null
           created_at?: string
+          custom_field_values?: Json | null
           date_of_birth?: string | null
           email: string
           emergency_contact?: string | null
@@ -713,6 +780,7 @@ export type Database = {
           avatar_url?: string | null
           country?: string | null
           created_at?: string
+          custom_field_values?: Json | null
           date_of_birth?: string | null
           email?: string
           emergency_contact?: string | null

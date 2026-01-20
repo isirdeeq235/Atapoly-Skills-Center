@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePrograms } from "@/hooks/usePrograms";
 import { useBatches } from "@/hooks/useBatches";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
+import { useCustomFormFields } from "@/hooks/useCustomFormFields";
+import { DynamicFormField } from "@/components/forms/DynamicFormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -39,9 +41,13 @@ const ApplyForProgram = () => {
   const [selectedBatch, setSelectedBatch] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'select' | 'batch' | 'confirm'>('select');
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
 
   // Fetch batches for selected program
   const { data: batches, isLoading: batchesLoading } = useBatches(selectedProgram || undefined);
+  
+  // Fetch custom application fields for selected program
+  const { data: customFields } = useCustomFormFields('application', selectedProgram || undefined);
 
   // Check for existing unpaid applications
   const { data: existingApplications } = useQuery({
@@ -469,6 +475,26 @@ const ApplyForProgram = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Custom Application Fields */}
+              {customFields && customFields.length > 0 && (
+                <div className="space-y-4 p-4 bg-secondary/30 rounded-lg">
+                  <h4 className="font-medium">Additional Information</h4>
+                  <div className="grid gap-4">
+                    {customFields.map((field) => (
+                      <DynamicFormField
+                        key={field.id}
+                        field={field}
+                        value={customFieldValues[field.field_name]}
+                        onChange={(value) => setCustomFieldValues(prev => ({
+                          ...prev,
+                          [field.field_name]: value
+                        }))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Info Note */}
               <div className="flex items-start gap-3 p-4 bg-info/10 rounded-lg">

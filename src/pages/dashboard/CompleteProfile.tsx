@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useCustomFormFields } from "@/hooks/useCustomFormFields";
+import { DynamicFormField } from "@/components/forms/DynamicFormField";
 import { 
   User, 
   Camera, 
@@ -30,6 +32,10 @@ const CompleteProfile = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
+  
+  // Fetch custom profile fields
+  const { data: customFields } = useCustomFormFields('profile');
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -89,6 +95,14 @@ const CompleteProfile = () => {
         emergency_contact: data.emergency_contact || "",
         avatar_url: data.avatar_url || "",
       });
+      
+      // Load custom field values
+      if (data.custom_field_values) {
+        const values = typeof data.custom_field_values === 'string' 
+          ? JSON.parse(data.custom_field_values) 
+          : data.custom_field_values;
+        setCustomFieldValues(values as Record<string, any>);
+      }
     }
   };
 
@@ -167,6 +181,20 @@ const CompleteProfile = () => {
       return;
     }
 
+    // Validate required custom fields
+    const missingRequiredCustom = customFields?.filter(f => 
+      f.is_required && !customFieldValues[f.field_name]
+    );
+    
+    if (missingRequiredCustom && missingRequiredCustom.length > 0) {
+      toast({
+        title: "Missing required fields",
+        description: `Please fill in: ${missingRequiredCustom.map(f => f.field_label).join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -183,6 +211,7 @@ const CompleteProfile = () => {
           next_of_kin_phone: formData.next_of_kin_phone,
           emergency_contact: formData.emergency_contact,
           avatar_url: formData.avatar_url,
+          custom_field_values: customFieldValues,
           onboarding_completed: true,
           updated_at: new Date().toISOString(),
         })
@@ -443,6 +472,30 @@ const CompleteProfile = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Custom Fields Section */}
+              {customFields && customFields.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-medium flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    Additional Information
+                  </h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {customFields.map((field) => (
+                      <div key={field.id} className={field.field_type === 'textarea' ? 'md:col-span-2' : ''}>
+                        <DynamicFormField
+                          field={field}
+                          value={customFieldValues[field.field_name]}
+                          onChange={(value) => setCustomFieldValues(prev => ({
+                            ...prev,
+                            [field.field_name]: value
+                          }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Important Notice */}
               <div className="flex items-start gap-3 p-4 bg-info/10 rounded-lg">

@@ -38,6 +38,7 @@ import AdminCertificates from "./pages/dashboard/AdminCertificates";
 import AdminThemeManager from "./pages/dashboard/AdminThemeManager";
 import AdminHomepageEditor from "./pages/dashboard/AdminHomepageEditor";
 import AdminTemplateEditor from "./pages/dashboard/AdminTemplateEditor";
+import AdminFormBuilder from "./pages/dashboard/AdminFormBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -238,6 +239,11 @@ const App = () => (
             <Route path="/admin/templates" element={
               <ProtectedRoute allowedRoles={['super_admin']}>
                 <AdminTemplateEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/form-builder" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminFormBuilder />
               </ProtectedRoute>
             } />
             
