@@ -15,8 +15,10 @@ import {
   TrendingUp,
   CheckCircle2
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 interface AssignedProgram {
   id: string;
@@ -31,6 +33,17 @@ interface AssignedProgram {
 
 const InstructorDashboard = () => {
   const { user, profile } = useAuth();
+  const location = useLocation();
+
+  // Show access denied toast if redirected from a restricted page
+  useEffect(() => {
+    if (location.state?.accessDenied) {
+      toast.error("Access Denied", {
+        description: "You don't have permission to access that feature. Contact your Super Admin.",
+      });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Fetch programs assigned to this instructor
   const { data: assignedPrograms, isLoading } = useQuery({
