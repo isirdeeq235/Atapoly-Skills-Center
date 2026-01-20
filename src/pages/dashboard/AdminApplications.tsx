@@ -195,6 +195,78 @@ const AdminApplications = () => {
     },
   });
 
+  // Mutation to manually mark payment as complete (for admin verification)
+  const markPaymentCompleteMutation = useMutation({
+    mutationFn: async ({ applicationId, paymentType, traineeId }: { 
+      applicationId: string; 
+      paymentType: 'application_fee' | 'registration_fee';
+      traineeId: string;
+    }) => {
+      // Update application fee status
+      const updateField = paymentType === 'application_fee' 
+        ? { application_fee_paid: true } 
+        : { registration_fee_paid: true };
+      
+      const { error } = await supabase
+        .from("applications")
+        .update({ ...updateField, updated_at: new Date().toISOString() })
+        .eq("id", applicationId);
+
+      if (error) throw error;
+
+      // If marking registration fee as paid, also increment enrolled count and generate reg number if needed
+      if (paymentType === 'registration_fee') {
+        const { data: appData } = await supabase
+          .from("applications")
+          .select("registration_number, program_id, programs(title)")
+          .eq("id", applicationId)
+          .single();
+        
+        if (appData && !appData.registration_number) {
+          const { data: regNum } = await supabase.rpc("generate_registration_number", {
+            program_title: (appData.programs as any)?.title || "PROG"
+          });
+          
+          await supabase
+            .from("applications")
+            .update({ registration_number: regNum })
+            .eq("id", applicationId);
+            
+          // Increment enrolled count
+          await supabase.rpc("increment_enrolled_count", { program_id: appData.program_id });
+        }
+
+        // Notify trainee
+        await createNotification(
+          traineeId,
+          'registration_complete',
+          'Registration Complete! 🎓',
+          'Your registration fee has been verified. You now have full access to your dashboard and ID card.',
+          { application_id: applicationId }
+        );
+      } else {
+        // Notify trainee for application fee
+        await createNotification(
+          traineeId,
+          'payment_verified',
+          'Payment Verified ✓',
+          'Your application fee has been verified by admin. Please complete your profile to continue.',
+          { application_id: applicationId }
+        );
+      }
+
+      return { paymentType };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+      toast.success(`${data.paymentType === 'application_fee' ? 'Application' : 'Registration'} fee marked as paid`);
+    },
+    onError: (error) => {
+      toast.error("Failed to update payment status");
+      console.error(error);
+    },
+  });
+
   const handleReviewApplication = (application: Application) => {
     setSelectedApplication(application);
     setReviewNotes(application.admin_notes || "");
@@ -218,6 +290,15 @@ const AdminApplications = () => {
       status: 'rejected',
       notes: reviewNotes,
       application: selectedApplication,
+    });
+  };
+
+  const handleMarkPaymentComplete = (paymentType: 'application_fee' | 'registration_fee') => {
+    if (!selectedApplication) return;
+    markPaymentCompleteMutation.mutate({
+      applicationId: selectedApplication.id,
+      paymentType,
+      traineeId: selectedApplication.profiles?.id,
     });
   };
 
@@ -477,22 +558,61 @@ const AdminApplications = () => {
                       <FileText className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium">{selectedApplication.programs?.title}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Application Fee: ₦{selectedApplication.programs?.application_fee?.toLocaleString()}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          Application Fee: ₦{selectedApplication.programs?.application_fee?.toLocaleString()}
+                        </span>
                         {selectedApplication.application_fee_paid ? (
-                          <Badge variant="approved" className="ml-2">Paid</Badge>
+                          <Badge variant="approved">Paid</Badge>
                         ) : (
-                          <Badge variant="pending" className="ml-2">Unpaid</Badge>
+                          <Badge variant="pending">Unpaid</Badge>
                         )}
-                      </span>
+                      </div>
+                      {!selectedApplication.application_fee_paid && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleMarkPaymentComplete('application_fee')}
+                          disabled={markPaymentCompleteMutation.isPending}
+                        >
+                          {markPaymentCompleteMutation.isPending ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                          )}
+                          Verify
+                        </Button>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        Registration Fee: ₦{selectedApplication.programs?.registration_fee?.toLocaleString()}
-                      </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          Registration Fee: ₦{selectedApplication.programs?.registration_fee?.toLocaleString()}
+                        </span>
+                        {selectedApplication.registration_fee_paid ? (
+                          <Badge variant="approved">Paid</Badge>
+                        ) : (
+                          <Badge variant="pending">Unpaid</Badge>
+                        )}
+                      </div>
+                      {selectedApplication.status === 'approved' && !selectedApplication.registration_fee_paid && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleMarkPaymentComplete('registration_fee')}
+                          disabled={markPaymentCompleteMutation.isPending}
+                        >
+                          {markPaymentCompleteMutation.isPending ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                          )}
+                          Verify
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm">Current Status:</span>

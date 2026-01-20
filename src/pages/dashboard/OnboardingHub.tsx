@@ -170,6 +170,90 @@ const OnboardingHub = () => {
     }
   };
 
+  // Handle verifying existing payment (for when user has paid but status not updated)
+  const handleVerifyExistingPayment = async () => {
+    if (!user || !status?.application.applicationId) return;
+    
+    setIsVerifying(true);
+    try {
+      // First, get the latest pending payment for this application
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("id, provider_reference, provider, status")
+        .eq("application_id", status.application.applicationId)
+        .eq("payment_type", "registration_fee")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      
+      if (!payments || payments.length === 0) {
+        toast({
+          title: "No Payment Found",
+          description: "We couldn't find a pending payment. Please initiate a new payment.",
+          variant: "destructive",
+        });
+        setIsVerifying(false);
+        return;
+      }
+
+      const payment = payments[0];
+      
+      if (payment.status === 'completed') {
+        // Payment already completed, just refresh
+        await refetch();
+        toast({
+          title: "Payment Already Verified",
+          description: "Your payment has already been processed. Refreshing your status...",
+        });
+        setIsVerifying(false);
+        return;
+      }
+
+      // If we have a reference, try to verify with payment provider
+      if (payment.provider_reference && provider) {
+        const { data, error } = await supabase.functions.invoke("verify-payment", {
+          body: { 
+            reference: payment.provider_reference, 
+            provider: payment.provider || provider,
+            payment_id: payment.id
+          }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.success) {
+          queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
+          await refetch();
+          toast({
+            title: "Payment Verified! 🎉",
+            description: "Your registration is complete. Welcome to your dashboard!",
+          });
+          setTimeout(() => navigate('/dashboard'), 1500);
+        } else {
+          toast({
+            title: "Payment Not Yet Confirmed",
+            description: data?.error || "Your payment is still being processed. Please try again in a few minutes or contact support.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // No reference - ask user to contact admin
+        toast({
+          title: "Manual Verification Required",
+          description: "Please contact an administrator to verify your payment.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Payment verification error:", error);
+      toast({
+        title: "Verification Failed",
+        description: "Unable to verify payment. Please contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout role="trainee" title="Getting Started">
@@ -357,19 +441,37 @@ const OnboardingHub = () => {
                     </p>
                   </div>
                 </div>
-                <Button 
-                  size="lg" 
-                  className="w-full sm:w-auto"
-                  onClick={handlePayRegistrationFee}
-                  disabled={isPaying}
-                >
-                  {isPaying ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CreditCard className="w-4 h-4 mr-2" />
-                  )}
-                  Pay Registration Fee - ₦{status?.application.registrationFee?.toLocaleString()}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    size="lg" 
+                    className="flex-1 sm:flex-none"
+                    onClick={handlePayRegistrationFee}
+                    disabled={isPaying || isVerifying}
+                  >
+                    {isPaying ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CreditCard className="w-4 h-4 mr-2" />
+                    )}
+                    Pay Registration Fee - ₦{status?.application.registrationFee?.toLocaleString()}
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    onClick={handleVerifyExistingPayment}
+                    disabled={isPaying || isVerifying}
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    )}
+                    Already Paid? Verify
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  If you've already made a payment but it's not reflected, click "Already Paid? Verify" to check your payment status.
+                </p>
               </div>
             )}
           </CardContent>
