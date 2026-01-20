@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,15 +9,15 @@ const corsHeaders = {
 
 interface EmailRequest {
   to: string;
-  subject: string;
+  subject?: string;
   html?: string;
   text?: string;
   template?: string;
   data?: Record<string, string>;
 }
 
-// Email templates
-const templates: Record<string, (data: Record<string, string>) => { subject: string; html: string }> = {
+// Fallback templates (used if database templates are not available)
+const fallbackTemplates: Record<string, (data: Record<string, string>) => { subject: string; html: string }> = {
   application_approved: (data) => ({
     subject: "🎉 Application Approved - Complete Your Registration",
     html: `
@@ -79,19 +80,13 @@ const templates: Record<string, (data: Record<string, string>) => { subject: str
             <h1 style="color: #10b981; margin: 0;">Payment Successful ✓</h1>
           </div>
           <p style="color: #333; font-size: 16px;">Dear <strong>${data.name}</strong>,</p>
-          <p style="color: #666; line-height: 1.6;">Your payment has been received successfully. Here are your transaction details:</p>
+          <p style="color: #666; line-height: 1.6;">Your payment has been received successfully.</p>
           <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; color: #666;">Transaction Reference:</td><td style="padding: 8px 0; text-align: right; font-weight: bold;">${data.reference}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Payment Type:</td><td style="padding: 8px 0; text-align: right;">${data.payment_type}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Program:</td><td style="padding: 8px 0; text-align: right;">${data.program}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Reference:</td><td style="padding: 8px 0; text-align: right; font-weight: bold;">${data.reference}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Amount:</td><td style="padding: 8px 0; text-align: right; font-weight: bold; color: #10b981;">₦${data.amount}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Date:</td><td style="padding: 8px 0; text-align: right;">${data.date}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Payment Method:</td><td style="padding: 8px 0; text-align: right;">${data.provider}</td></tr>
             </table>
-          </div>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${data.receipt_url}" style="background: #0d9488; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Download Receipt</a>
           </div>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
           <p style="color: #999; font-size: 12px; text-align: center;">© ${new Date().getFullYear()} Training Platform. All rights reserved.</p>
@@ -113,8 +108,7 @@ const templates: Record<string, (data: Record<string, string>) => { subject: str
             <h1 style="color: #0d9488; margin: 0;">Welcome! 👋</h1>
           </div>
           <p style="color: #333; font-size: 16px;">Dear <strong>${data.name}</strong>,</p>
-          <p style="color: #666; line-height: 1.6;">Thank you for registering with our training platform. We're excited to have you join our community of learners!</p>
-          <p style="color: #666; line-height: 1.6;">Explore our programs and start your learning journey today.</p>
+          <p style="color: #666; line-height: 1.6;">Thank you for registering with our training platform.</p>
           <div style="text-align: center; margin: 30px 0;">
             <a href="${data.dashboard_url}" style="background: #0d9488; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Go to Dashboard</a>
           </div>
@@ -139,29 +133,13 @@ const templates: Record<string, (data: Record<string, string>) => { subject: str
           </div>
           <p style="color: #333; font-size: 16px;">Dear <strong>${data.name}</strong>,</p>
           <p style="color: #666; line-height: 1.6;">Congratulations! You are now officially enrolled in <strong>${data.program}</strong>.</p>
-          
           <div style="background: linear-gradient(135deg, #0d9488, #14b8a6); padding: 25px; border-radius: 12px; margin: 25px 0; color: white; text-align: center;">
             <p style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Your Trainee ID</p>
             <p style="margin: 0; font-size: 28px; font-weight: bold; letter-spacing: 2px;">${data.registration_number}</p>
           </div>
-          
-          <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #166534; margin: 0 0 15px 0; font-size: 16px;">What's Next?</h3>
-            <ul style="color: #166534; margin: 0; padding-left: 20px; line-height: 1.8;">
-              <li>Download your Digital ID Card from your dashboard</li>
-              <li>Check your training schedule for upcoming sessions</li>
-              <li>Access your program resources and materials</li>
-            </ul>
-          </div>
-          
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${data.dashboard_url}" style="background: #0d9488; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Access Your Dashboard</a>
+            <a href="${data.dashboard_url}" style="background: #0d9488; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Access Your Dashboard</a>
           </div>
-          
-          <div style="text-align: center; margin: 20px 0;">
-            <a href="${data.id_card_url}" style="color: #0d9488; text-decoration: underline; font-weight: 500;">Download ID Card →</a>
-          </div>
-          
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
           <p style="color: #999; font-size: 12px; text-align: center;">© ${new Date().getFullYear()} Training Platform. All rights reserved.</p>
         </div>
@@ -170,6 +148,35 @@ const templates: Record<string, (data: Record<string, string>) => { subject: str
     `,
   }),
 };
+
+// Replace placeholders in template
+function replacePlaceholders(template: string, data: Record<string, string>): string {
+  let result = template;
+  
+  // Add common placeholders
+  data.year = new Date().getFullYear().toString();
+  
+  // Replace simple placeholders {{key}}
+  Object.entries(data).forEach(([key, value]) => {
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+    result = result.replace(regex, value || '');
+  });
+  
+  // Handle conditional blocks {{#key}}...{{/key}}
+  Object.entries(data).forEach(([key, value]) => {
+    const conditionalRegex = new RegExp(`\\{\\{#${key}\\}\\}([\\s\\S]*?)\\{\\{/${key}\\}\\}`, 'g');
+    if (value) {
+      result = result.replace(conditionalRegex, '$1');
+    } else {
+      result = result.replace(conditionalRegex, '');
+    }
+  });
+  
+  // Remove any remaining conditional blocks for keys not in data
+  result = result.replace(/\{\{#\w+\}\}[\s\S]*?\{\{\/\w+\}\}/g, '');
+  
+  return result;
+}
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -182,6 +189,8 @@ serve(async (req: Request) => {
     const smtpUser = Deno.env.get("SMTP_USER");
     const smtpPass = Deno.env.get("SMTP_PASS");
     const fromEmail = Deno.env.get("SMTP_FROM_EMAIL");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!smtpHost || !smtpUser || !smtpPass || !fromEmail) {
       console.error("SMTP configuration incomplete");
@@ -196,9 +205,43 @@ serve(async (req: Request) => {
     let emailSubject = subject;
     let emailHtml = html;
 
-    // Use template if provided
-    if (template && templates[template] && data) {
-      const templateResult = templates[template](data);
+    // Try to fetch template from database if template key is provided
+    if (template && data && supabaseUrl && supabaseServiceKey) {
+      try {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        
+        const { data: dbTemplate, error } = await supabase
+          .from('email_templates')
+          .select('*')
+          .eq('template_key', template)
+          .eq('is_enabled', true)
+          .single();
+
+        if (dbTemplate && !error) {
+          console.log(`Using database template for: ${template}`);
+          emailSubject = replacePlaceholders(dbTemplate.subject_template, data);
+          emailHtml = replacePlaceholders(dbTemplate.html_template, data);
+        } else {
+          console.log(`Database template not found for: ${template}, using fallback`);
+          // Fall back to hardcoded template
+          if (fallbackTemplates[template]) {
+            const templateResult = fallbackTemplates[template](data);
+            emailSubject = templateResult.subject;
+            emailHtml = templateResult.html;
+          }
+        }
+      } catch (dbError) {
+        console.error("Error fetching template from database:", dbError);
+        // Fall back to hardcoded template
+        if (fallbackTemplates[template]) {
+          const templateResult = fallbackTemplates[template](data);
+          emailSubject = templateResult.subject;
+          emailHtml = templateResult.html;
+        }
+      }
+    } else if (template && data && fallbackTemplates[template]) {
+      // Use fallback template if no database connection
+      const templateResult = fallbackTemplates[template](data);
       emailSubject = templateResult.subject;
       emailHtml = templateResult.html;
     }
