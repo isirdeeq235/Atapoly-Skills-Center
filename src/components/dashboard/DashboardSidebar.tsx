@@ -18,7 +18,8 @@ import {
   Calendar,
   Palette,
   FileEdit,
-  Layout
+  Layout,
+  Blocks
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ const roleNavItems: Record<string, NavItem[]> = {
     { label: "Homepage", href: "/admin/homepage", icon: Layout },
     { label: "Theme", href: "/admin/theme", icon: Palette },
     { label: "Templates", href: "/admin/templates", icon: FileEdit },
+    { label: "Form Builder", href: "/admin/form-builder", icon: Blocks },
     { label: "Settings", href: "/admin/settings", icon: Settings },
   ],
 };
