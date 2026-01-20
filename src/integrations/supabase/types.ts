@@ -933,6 +933,39 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          permission_category: string
+          permission_key: string
+          permission_label: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          permission_category: string
+          permission_key: string
+          permission_label: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          permission_category?: string
+          permission_key?: string
+          permission_label?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_config: {
         Row: {
           address: string | null
@@ -1109,6 +1142,10 @@ export type Database = {
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_permission: {
+        Args: { permission: string; user_id: string }
+        Returns: boolean
       }
       increment_enrolled_count: {
         Args: { program_id: string }
