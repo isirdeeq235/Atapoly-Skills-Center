@@ -131,6 +131,75 @@ export type Database = {
           },
         ]
       }
+      certificate_template: {
+        Row: {
+          accent_color: string
+          background_color: string
+          body_template: string
+          border_style: string
+          created_at: string
+          footer_text: string
+          header_text: string
+          id: string
+          orientation: string
+          paper_size: string
+          show_certificate_number: boolean
+          show_logo: boolean
+          show_qr_code: boolean
+          show_signature: boolean
+          signature_name: string | null
+          signature_title: string
+          singleton: boolean
+          subheader_text: string
+          text_color: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          background_color?: string
+          body_template?: string
+          border_style?: string
+          created_at?: string
+          footer_text?: string
+          header_text?: string
+          id?: string
+          orientation?: string
+          paper_size?: string
+          show_certificate_number?: boolean
+          show_logo?: boolean
+          show_qr_code?: boolean
+          show_signature?: boolean
+          signature_name?: string | null
+          signature_title?: string
+          singleton?: boolean
+          subheader_text?: string
+          text_color?: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          background_color?: string
+          body_template?: string
+          border_style?: string
+          created_at?: string
+          footer_text?: string
+          header_text?: string
+          id?: string
+          orientation?: string
+          paper_size?: string
+          show_certificate_number?: boolean
+          show_logo?: boolean
+          show_qr_code?: boolean
+          show_signature?: boolean
+          signature_name?: string | null
+          signature_title?: string
+          singleton?: boolean
+          subheader_text?: string
+          text_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           application_id: string
@@ -241,6 +310,204 @@ export type Database = {
           is_active?: boolean
           subtitle?: string | null
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      homepage_content: {
+        Row: {
+          created_at: string
+          cta_button_link: string
+          cta_button_text: string
+          cta_subtitle: string
+          cta_title: string
+          feature_1_description: string
+          feature_1_icon: string
+          feature_1_title: string
+          feature_2_description: string
+          feature_2_icon: string
+          feature_2_title: string
+          feature_3_description: string
+          feature_3_icon: string
+          feature_3_title: string
+          feature_4_description: string
+          feature_4_icon: string
+          feature_4_title: string
+          features_subtitle: string
+          features_title: string
+          footer_about: string
+          hero_cta_link: string
+          hero_cta_text: string
+          hero_image_url: string | null
+          hero_subtitle: string
+          hero_title: string
+          id: string
+          show_how_it_works: boolean
+          show_programs_section: boolean
+          show_testimonials: boolean
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cta_button_link?: string
+          cta_button_text?: string
+          cta_subtitle?: string
+          cta_title?: string
+          feature_1_description?: string
+          feature_1_icon?: string
+          feature_1_title?: string
+          feature_2_description?: string
+          feature_2_icon?: string
+          feature_2_title?: string
+          feature_3_description?: string
+          feature_3_icon?: string
+          feature_3_title?: string
+          feature_4_description?: string
+          feature_4_icon?: string
+          feature_4_title?: string
+          features_subtitle?: string
+          features_title?: string
+          footer_about?: string
+          hero_cta_link?: string
+          hero_cta_text?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          show_how_it_works?: boolean
+          show_programs_section?: boolean
+          show_testimonials?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cta_button_link?: string
+          cta_button_text?: string
+          cta_subtitle?: string
+          cta_title?: string
+          feature_1_description?: string
+          feature_1_icon?: string
+          feature_1_title?: string
+          feature_2_description?: string
+          feature_2_icon?: string
+          feature_2_title?: string
+          feature_3_description?: string
+          feature_3_icon?: string
+          feature_3_title?: string
+          feature_4_description?: string
+          feature_4_icon?: string
+          feature_4_title?: string
+          features_subtitle?: string
+          features_title?: string
+          footer_about?: string
+          hero_cta_link?: string
+          hero_cta_text?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          show_how_it_works?: boolean
+          show_programs_section?: boolean
+          show_testimonials?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      id_card_template: {
+        Row: {
+          background_color: string
+          card_height: number
+          card_width: number
+          created_at: string
+          custom_fields: Json | null
+          footer_text: string
+          header_text: string
+          id: string
+          show_batch: boolean
+          show_emergency_contact: boolean
+          show_logo: boolean
+          show_photo: boolean
+          show_program: boolean
+          show_qr_code: boolean
+          show_registration_number: boolean
+          show_validity_date: boolean
+          singleton: boolean
+          text_color: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string
+          card_height?: number
+          card_width?: number
+          created_at?: string
+          custom_fields?: Json | null
+          footer_text?: string
+          header_text?: string
+          id?: string
+          show_batch?: boolean
+          show_emergency_contact?: boolean
+          show_logo?: boolean
+          show_photo?: boolean
+          show_program?: boolean
+          show_qr_code?: boolean
+          show_registration_number?: boolean
+          show_validity_date?: boolean
+          singleton?: boolean
+          text_color?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string
+          card_height?: number
+          card_width?: number
+          created_at?: string
+          custom_fields?: Json | null
+          footer_text?: string
+          header_text?: string
+          id?: string
+          show_batch?: boolean
+          show_emergency_contact?: boolean
+          show_logo?: boolean
+          show_photo?: boolean
+          show_program?: boolean
+          show_qr_code?: boolean
+          show_registration_number?: boolean
+          show_validity_date?: boolean
+          singleton?: boolean
+          text_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          message_template: string
+          template_key: string
+          title_template: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          message_template: string
+          template_key: string
+          title_template: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          message_template?: string
+          template_key?: string
+          title_template?: string
           updated_at?: string
         }
         Relationships: []
@@ -597,6 +864,84 @@ export type Database = {
           logo_url?: string | null
           maintenance_mode?: boolean
           site_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      theme_config: {
+        Row: {
+          accent_color: string
+          accent_foreground: string
+          background_color: string
+          border_color: string
+          card_color: string
+          card_foreground: string
+          created_at: string
+          destructive_color: string
+          destructive_foreground: string
+          foreground_color: string
+          id: string
+          muted_color: string
+          muted_foreground: string
+          primary_color: string
+          primary_foreground: string
+          secondary_color: string
+          secondary_foreground: string
+          sidebar_accent: string
+          sidebar_background: string
+          sidebar_foreground: string
+          sidebar_primary: string
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          accent_foreground?: string
+          background_color?: string
+          border_color?: string
+          card_color?: string
+          card_foreground?: string
+          created_at?: string
+          destructive_color?: string
+          destructive_foreground?: string
+          foreground_color?: string
+          id?: string
+          muted_color?: string
+          muted_foreground?: string
+          primary_color?: string
+          primary_foreground?: string
+          secondary_color?: string
+          secondary_foreground?: string
+          sidebar_accent?: string
+          sidebar_background?: string
+          sidebar_foreground?: string
+          sidebar_primary?: string
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          accent_foreground?: string
+          background_color?: string
+          border_color?: string
+          card_color?: string
+          card_foreground?: string
+          created_at?: string
+          destructive_color?: string
+          destructive_foreground?: string
+          foreground_color?: string
+          id?: string
+          muted_color?: string
+          muted_foreground?: string
+          primary_color?: string
+          primary_foreground?: string
+          secondary_color?: string
+          secondary_foreground?: string
+          sidebar_accent?: string
+          sidebar_background?: string
+          sidebar_foreground?: string
+          sidebar_primary?: string
+          singleton?: boolean
           updated_at?: string
         }
         Relationships: []
