@@ -143,7 +143,7 @@ const ApplyForProgram = () => {
             payment_type: "application_fee",
             application_id: applicationId,
             trainee_id: user.id,
-            callback_url: `${window.location.origin}/dashboard/applications?payment=success`,
+            callback_url: `${window.location.origin}/dashboard/complete-profile?payment=success`,
           },
         }
       );

@@ -3,12 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
 export type OnboardingStep = 
-  | 'complete_profile'      // Need to complete profile with passport photo
-  | 'apply_program'         // Need to apply for a program
-  | 'pay_application_fee'   // Need to pay application fee
-  | 'pending_approval'      // Waiting for admin approval
-  | 'pay_registration_fee'  // Approved - need to pay registration fee
-  | 'fully_enrolled'        // Fully enrolled with ID card
+  | 'select_program'        // Step 1: Select program and pay application fee
+  | 'complete_profile'      // Step 2: Complete profile after application fee paid
+  | 'pending_approval'      // Step 3: Waiting for admin approval
+  | 'pay_registration_fee'  // Step 4: Approved - need to pay registration fee
+  | 'fully_enrolled'        // Step 5: Fully enrolled with ID card
   | 'rejected';             // Application was rejected
 
 export interface OnboardingStatus {
@@ -100,22 +99,30 @@ export function useOnboardingStatus() {
         registrationNumber: applicationData?.registration_number || null,
       };
 
-      // Determine current step
-      let currentStep: OnboardingStep = 'complete_profile';
+      // Determine current step - NEW FLOW:
+      // 1. Select program & pay application fee FIRST
+      // 2. Complete profile form
+      // 3. Admin approval
+      // 4. Pay registration fee
+      // 5. Fully enrolled
+      let currentStep: OnboardingStep = 'select_program';
 
-      if (!isProfileComplete) {
+      if (!application.exists || !application.applicationFeePaid) {
+        // Step 1: Must select program and pay application fee first
+        currentStep = 'select_program';
+      } else if (!isProfileComplete) {
+        // Step 2: After application fee paid, complete profile
         currentStep = 'complete_profile';
-      } else if (!application.exists) {
-        currentStep = 'apply_program';
-      } else if (!application.applicationFeePaid) {
-        currentStep = 'pay_application_fee';
       } else if (application.status === 'pending') {
+        // Step 3: Waiting for admin approval
         currentStep = 'pending_approval';
       } else if (application.status === 'rejected') {
         currentStep = 'rejected';
       } else if (application.status === 'approved' && !application.registrationFeePaid) {
+        // Step 4: Pay registration fee
         currentStep = 'pay_registration_fee';
       } else if (application.status === 'approved' && application.registrationFeePaid) {
+        // Step 5: Fully enrolled
         currentStep = 'fully_enrolled';
       }
 
