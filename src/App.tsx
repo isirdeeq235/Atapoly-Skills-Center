@@ -39,6 +39,7 @@ import AdminThemeManager from "./pages/dashboard/AdminThemeManager";
 import AdminHomepageEditor from "./pages/dashboard/AdminHomepageEditor";
 import AdminTemplateEditor from "./pages/dashboard/AdminTemplateEditor";
 import AdminFormBuilder from "./pages/dashboard/AdminFormBuilder";
+import AdminNotificationTemplates from "./pages/dashboard/AdminNotificationTemplates";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -244,6 +245,11 @@ const App = () => (
             <Route path="/admin/form-builder" element={
               <ProtectedRoute allowedRoles={['super_admin']}>
                 <AdminFormBuilder />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/notifications-settings" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminNotificationTemplates />
               </ProtectedRoute>
             } />
             
