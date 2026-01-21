@@ -1,11 +1,55 @@
 import { forwardRef, useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronDown, Star } from "lucide-react";
 import { useHeroSlides } from "@/hooks/useHeroSlides";
+import { useHomepageContent } from "@/hooks/useHomepageContent";
+
+// Memoized trust indicator avatars
+const TrustAvatars = memo(() => (
+  <div className="flex -space-x-2">
+    {['JD', 'MK', 'AS', 'RN'].map((initials, i) => (
+      <div 
+        key={i} 
+        className="w-10 h-10 rounded-full border-2 border-background bg-gradient-to-br from-accent to-primary flex items-center justify-center text-xs font-bold text-white"
+      >
+        {initials}
+      </div>
+    ))}
+    <div className="w-10 h-10 rounded-full border-2 border-background bg-foreground flex items-center justify-center text-xs font-medium text-background">
+      +10K
+    </div>
+  </div>
+));
+TrustAvatars.displayName = "TrustAvatars";
+
+// Memoized stats cards with dynamic content
+const StatsCards = memo(({ isVisible, stats }: { 
+  isVisible: boolean; 
+  stats: Array<{ value: string; label: string }>;
+}) => (
+  <div className="hidden xl:block absolute right-8 top-1/2 -translate-y-1/2">
+    <div className="flex flex-col gap-4">
+      {stats.map((stat, index) => (
+        <div 
+          key={index}
+          className={`glass-dark rounded-2xl p-5 backdrop-blur-xl border border-background/10 min-w-[160px] transition-all duration-300 hover:scale-105 ${
+            isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+          }`}
+          style={{ transitionDelay: `${150 + index * 50}ms` }}
+        >
+          <div className="text-3xl font-bold text-accent mb-1">{stat.value}</div>
+          <div className="text-sm text-background/60">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+));
+StatsCards.displayName = "StatsCards";
 
 export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   const { data: slides } = useHeroSlides();
+  const { data: homepageContent } = useHomepageContent();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -19,7 +63,6 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   }];
 
   useEffect(() => {
-    // Immediate visibility for faster perceived load
     requestAnimationFrame(() => setIsVisible(true));
     
     if (activeSlides.length <= 1) return;
@@ -31,6 +74,23 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
   const currentSlideData = activeSlides[currentSlide];
   const backgroundImage = currentSlideData?.image_url;
+
+  // Get dynamic content from homepage settings
+  const badgeText = homepageContent?.hero_badge_text || 'Enrollment now open';
+  const badgeVisible = homepageContent?.hero_badge_visible ?? true;
+  const statsVisible = homepageContent?.hero_stats_visible ?? true;
+  const trustVisible = homepageContent?.hero_trust_visible ?? true;
+  const trustRating = homepageContent?.hero_trust_rating || '4.9/5';
+  const trustReviewsCount = homepageContent?.hero_trust_reviews_count || '2,000+';
+  const trustGraduatesText = homepageContent?.hero_trust_graduates_text || 'Graduates worldwide';
+  const secondaryCtaText = homepageContent?.hero_secondary_cta_text || 'Explore Programs';
+  const secondaryCtaLink = homepageContent?.hero_secondary_cta_link || '/programs';
+
+  const stats = [
+    { value: homepageContent?.hero_stat_1_value || '98%', label: homepageContent?.hero_stat_1_label || 'Completion Rate' },
+    { value: homepageContent?.hero_stat_2_value || '15+', label: homepageContent?.hero_stat_2_label || 'Industry Partners' },
+    { value: homepageContent?.hero_stat_3_value || '50+', label: homepageContent?.hero_stat_3_label || 'Programs' },
+  ];
 
   const scrollToNext = () => {
     window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
@@ -60,6 +120,18 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
       {/* Content container */}
       <div className="relative z-10 container mx-auto px-4 min-h-screen flex flex-col justify-center pt-20 lg:pt-0">
         <div className="max-w-4xl">
+          {/* Animated badge - conditionally rendered */}
+          {badgeVisible && (
+            <div 
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 backdrop-blur-sm border border-accent/30 mb-8 transition-all duration-300 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-accent" />
+              <span className="text-sm font-medium text-background/90">{badgeText}</span>
+            </div>
+          )}
+
           {/* Main headline with fast animation */}
           <h1 
             key={currentSlide}
@@ -90,7 +162,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
           {/* CTA Section */}
           <div 
-            className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 delay-150 ${
+            className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-16 transition-all duration-300 delay-150 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -103,17 +175,39 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/programs">
+            <Link to={secondaryCtaLink}>
               <Button 
                 variant="ghost" 
                 size="lg" 
                 className="text-background/90 hover:text-background hover:bg-background/10 rounded-full px-8 h-14 text-base font-semibold border border-background/20"
               >
-                Explore Programs
+                {secondaryCtaText}
               </Button>
             </Link>
           </div>
+
+          {/* Trust indicators - conditionally rendered */}
+          {trustVisible && (
+            <div 
+              className={`flex flex-wrap items-center gap-8 pt-8 border-t border-background/10 transition-all duration-300 delay-200 ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 text-accent fill-accent" />
+                ))}
+                <span className="ml-2 text-sm text-background/70">{trustRating} from {trustReviewsCount} reviews</span>
+              </div>
+              <div className="h-6 w-px bg-background/20 hidden sm:block" />
+              <TrustAvatars />
+              <span className="text-sm text-background/70">{trustGraduatesText}</span>
+            </div>
+          )}
         </div>
+
+        {/* Floating stats cards - conditionally rendered */}
+        {statsVisible && <StatsCards isVisible={isVisible} stats={stats} />}
       </div>
 
       {/* Slide indicators */}
