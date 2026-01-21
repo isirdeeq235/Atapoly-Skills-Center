@@ -1,7 +1,8 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useState, memo } from "react";
 import { ArrowRight, Check, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useInView } from "@/hooks/useInView";
 
 const steps = [
   {
@@ -34,27 +35,87 @@ const steps = [
   },
 ];
 
+// Memoized step button for desktop
+const StepButton = memo(({ step, index, isActive, onClick, isVisible }: {
+  step: typeof steps[0];
+  index: number;
+  isActive: boolean;
+  onClick: () => void;
+  isVisible: boolean;
+}) => (
+  <button
+    onClick={onClick}
+    className={`w-full text-left p-6 rounded-2xl border transition-all duration-200 ${
+      isActive 
+        ? 'bg-card border-accent shadow-lg shadow-accent/10' 
+        : 'bg-transparent border-border hover:border-muted-foreground/30 hover:bg-card/50'
+    } ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
+    style={{ transitionDelay: `${50 + index * 50}ms` }}
+  >
+    <div className="flex items-start gap-4">
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${
+        isActive 
+          ? 'bg-accent text-accent-foreground' 
+          : 'bg-muted text-muted-foreground'
+      }`}>
+        {step.step}
+      </div>
+      <div className="flex-1">
+        <h3 className={`text-xl font-bold mb-1 transition-colors ${
+          isActive ? 'text-foreground' : 'text-muted-foreground'
+        }`}>
+          {step.title}
+        </h3>
+        {isActive && (
+          <p className="text-muted-foreground text-sm animate-fade-in">
+            {step.description}
+          </p>
+        )}
+      </div>
+    </div>
+  </button>
+));
+StepButton.displayName = "StepButton";
+
+// Memoized mobile step card
+const MobileStepCard = memo(({ step, index, isVisible }: {
+  step: typeof steps[0];
+  index: number;
+  isVisible: boolean;
+}) => (
+  <div 
+    className={`bg-card rounded-2xl p-6 border border-border transition-all duration-300 ${
+      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`}
+    style={{ transitionDelay: `${50 + index * 50}ms` }}
+  >
+    <div className="flex items-start gap-4 mb-4">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center font-bold text-white text-lg flex-shrink-0">
+        {step.step}
+      </div>
+      <div>
+        <h3 className="text-xl font-bold text-foreground mb-1">{step.title}</h3>
+        <p className="text-muted-foreground text-sm">{step.description}</p>
+      </div>
+    </div>
+    <div className="flex flex-wrap gap-2 pl-16">
+      {step.highlights.map((highlight, hIndex) => (
+        <span 
+          key={hIndex}
+          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm"
+        >
+          <Check className="w-3 h-3" />
+          {highlight}
+        </span>
+      ))}
+    </div>
+  </div>
+));
+MobileStepCard.displayName = "MobileStepCard";
+
 export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const { ref: sectionRef, isVisible } = useInView();
   const [activeStep, setActiveStep] = useState(0);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <section ref={ref} className="py-24 lg:py-32 bg-background relative overflow-hidden">
@@ -68,7 +129,7 @@ export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-24">
           <div 
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6 transition-all duration-700 ${
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6 transition-all duration-300 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
@@ -76,7 +137,7 @@ export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
             <span className="text-sm font-medium text-primary">Simple 4-Step Process</span>
           </div>
           <h2 
-            className={`text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6 transition-all duration-700 delay-100 ${
+            className={`text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6 transition-all duration-300 delay-50 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -85,7 +146,7 @@ export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
             <span className="text-accent">starts here</span>
           </h2>
           <p 
-            className={`text-xl text-muted-foreground transition-all duration-700 delay-200 ${
+            className={`text-xl text-muted-foreground transition-all duration-300 delay-75 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -98,44 +159,20 @@ export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
           {/* Left - Step selector */}
           <div className="space-y-4">
             {steps.map((step, index) => (
-              <button
+              <StepButton
                 key={index}
+                step={step}
+                index={index}
+                isActive={activeStep === index}
                 onClick={() => setActiveStep(index)}
-                className={`w-full text-left p-6 rounded-2xl border transition-all duration-300 ${
-                  activeStep === index 
-                    ? 'bg-card border-accent shadow-lg shadow-accent/10' 
-                    : 'bg-transparent border-border hover:border-muted-foreground/30 hover:bg-card/50'
-                } ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}
-                style={{ transitionDelay: `${200 + index * 100}ms` }}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg transition-all ${
-                    activeStep === index 
-                      ? 'bg-accent text-accent-foreground' 
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {step.step}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className={`text-xl font-bold mb-1 transition-colors ${
-                      activeStep === index ? 'text-foreground' : 'text-muted-foreground'
-                    }`}>
-                      {step.title}
-                    </h3>
-                    {activeStep === index && (
-                      <p className="text-muted-foreground text-sm animate-fade-in">
-                        {step.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </button>
+                isVisible={isVisible}
+              />
             ))}
           </div>
 
           {/* Right - Active step details */}
           <div 
-            className={`relative transition-all duration-700 delay-500 ${
+            className={`relative transition-all duration-300 delay-150 ${
               isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
             }`}
           >
@@ -160,8 +197,7 @@ export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
                   {steps[activeStep].highlights.map((highlight, hIndex) => (
                     <div 
                       key={hIndex}
-                      className="flex items-center gap-3 animate-slide-in-right"
-                      style={{ animationDelay: `${hIndex * 100}ms` }}
+                      className="flex items-center gap-3"
                     >
                       <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
                         <Check className="w-4 h-4 text-accent" />
@@ -182,40 +218,13 @@ export const HowItWorks = forwardRef<HTMLElement>(function HowItWorks(_, ref) {
         {/* Mobile Steps */}
         <div className="lg:hidden space-y-6">
           {steps.map((step, index) => (
-            <div 
-              key={index}
-              className={`bg-card rounded-2xl p-6 border border-border transition-all duration-700 ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-              }`}
-              style={{ transitionDelay: `${200 + index * 100}ms` }}
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-primary flex items-center justify-center font-bold text-white text-lg flex-shrink-0">
-                  {step.step}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground mb-1">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm">{step.description}</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2 pl-16">
-                {step.highlights.map((highlight, hIndex) => (
-                  <span 
-                    key={hIndex}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-accent/10 text-accent text-sm"
-                  >
-                    <Check className="w-3 h-3" />
-                    {highlight}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <MobileStepCard key={index} step={step} index={index} isVisible={isVisible} />
           ))}
         </div>
 
         {/* CTA */}
         <div 
-          className={`mt-16 text-center transition-all duration-700 delay-700 ${
+          className={`mt-16 text-center transition-all duration-300 delay-200 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >

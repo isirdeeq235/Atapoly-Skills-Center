@@ -1,9 +1,52 @@
-import { forwardRef, useState, useEffect } from "react";
+import { forwardRef, useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, ChevronDown, Star } from "lucide-react";
 import { useHeroSlides } from "@/hooks/useHeroSlides";
 import heroBackground from "@/assets/hero-background.jpg";
+
+// Memoized trust indicator avatars
+const TrustAvatars = memo(() => (
+  <div className="flex -space-x-2">
+    {['JD', 'MK', 'AS', 'RN'].map((initials, i) => (
+      <div 
+        key={i} 
+        className="w-10 h-10 rounded-full border-2 border-background bg-gradient-to-br from-accent to-primary flex items-center justify-center text-xs font-bold text-white"
+      >
+        {initials}
+      </div>
+    ))}
+    <div className="w-10 h-10 rounded-full border-2 border-background bg-foreground flex items-center justify-center text-xs font-medium text-background">
+      +10K
+    </div>
+  </div>
+));
+TrustAvatars.displayName = "TrustAvatars";
+
+// Memoized stats cards
+const StatsCards = memo(({ isVisible }: { isVisible: boolean }) => (
+  <div className="hidden xl:block absolute right-8 top-1/2 -translate-y-1/2">
+    <div className="flex flex-col gap-4">
+      {[
+        { value: "98%", label: "Completion Rate" },
+        { value: "15+", label: "Industry Partners" },
+        { value: "50+", label: "Programs" },
+      ].map((stat, index) => (
+        <div 
+          key={index}
+          className={`glass-dark rounded-2xl p-5 backdrop-blur-xl border border-background/10 min-w-[160px] transition-all duration-300 hover:scale-105 ${
+            isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+          }`}
+          style={{ transitionDelay: `${150 + index * 50}ms` }}
+        >
+          <div className="text-3xl font-bold text-accent mb-1">{stat.value}</div>
+          <div className="text-sm text-background/60">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+));
+StatsCards.displayName = "StatsCards";
 
 export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   const { data: slides } = useHeroSlides();
@@ -20,7 +63,9 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   }];
 
   useEffect(() => {
-    setIsVisible(true);
+    // Immediate visibility for faster perceived load
+    requestAnimationFrame(() => setIsVisible(true));
+    
     if (activeSlides.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
@@ -29,6 +74,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   }, [activeSlides.length]);
 
   const currentSlideData = activeSlides[currentSlide];
+  const backgroundImage = currentSlideData?.image_url || heroBackground;
 
   const scrollToNext = () => {
     window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
@@ -36,18 +82,19 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
   return (
     <section ref={ref} className="relative min-h-screen overflow-hidden">
-      {/* Full-screen background image */}
+      {/* Full-screen background image with optimized loading */}
       <div className="absolute inset-0">
         <img 
-          src={currentSlideData?.image_url || heroBackground}
-          alt="Hero background"
-          className="w-full h-full object-cover transition-transform duration-[2000ms] scale-105"
+          src={backgroundImage}
+          alt=""
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          className="w-full h-full object-cover"
         />
         {/* Layered gradient overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-foreground/30" />
-        {/* Animated grain texture */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 256 256%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noise%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.9%22 numOctaves=%224%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noise)%22/%3E%3C/svg%3E')]" />
       </div>
 
       {/* Content container */}
@@ -55,7 +102,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
         <div className="max-w-4xl">
           {/* Animated badge */}
           <div 
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 backdrop-blur-sm border border-accent/30 mb-8 transition-all duration-700 ${
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 backdrop-blur-sm border border-accent/30 mb-8 transition-all duration-300 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
           >
@@ -63,10 +110,10 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
             <span className="text-sm font-medium text-background/90">Enrollment now open for 2026 cohorts</span>
           </div>
 
-          {/* Main headline with staggered animation */}
+          {/* Main headline with fast animation */}
           <h1 
             key={currentSlide}
-            className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-background leading-[1.05] tracking-tight mb-6 transition-all duration-700 delay-100 ${
+            className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-background leading-[1.05] tracking-tight mb-6 transition-all duration-300 delay-75 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -84,7 +131,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
           {/* Subtitle */}
           <p 
-            className={`text-lg md:text-xl lg:text-2xl text-background/70 max-w-2xl leading-relaxed mb-10 transition-all duration-700 delay-200 ${
+            className={`text-lg md:text-xl lg:text-2xl text-background/70 max-w-2xl leading-relaxed mb-10 transition-all duration-300 delay-100 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -93,7 +140,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
           {/* CTA Section */}
           <div 
-            className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-16 transition-all duration-700 delay-300 ${
+            className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-16 transition-all duration-300 delay-150 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -119,7 +166,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
           {/* Trust indicators */}
           <div 
-            className={`flex flex-wrap items-center gap-8 pt-8 border-t border-background/10 transition-all duration-700 delay-400 ${
+            className={`flex flex-wrap items-center gap-8 pt-8 border-t border-background/10 transition-all duration-300 delay-200 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -130,44 +177,13 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
               <span className="ml-2 text-sm text-background/70">4.9/5 from 2,000+ reviews</span>
             </div>
             <div className="h-6 w-px bg-background/20 hidden sm:block" />
-            <div className="flex -space-x-2">
-              {[...Array(4)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className="w-10 h-10 rounded-full border-2 border-background bg-gradient-to-br from-accent to-primary flex items-center justify-center text-xs font-bold text-white"
-                >
-                  {['JD', 'MK', 'AS', 'RN'][i]}
-                </div>
-              ))}
-              <div className="w-10 h-10 rounded-full border-2 border-background bg-foreground flex items-center justify-center text-xs font-medium text-background">
-                +10K
-              </div>
-            </div>
+            <TrustAvatars />
             <span className="text-sm text-background/70">Graduates worldwide</span>
           </div>
         </div>
 
         {/* Floating stats cards */}
-        <div className="hidden xl:block absolute right-8 top-1/2 -translate-y-1/2">
-          <div className="flex flex-col gap-4">
-            {[
-              { value: "98%", label: "Completion Rate" },
-              { value: "15+", label: "Industry Partners" },
-              { value: "50+", label: "Programs" },
-            ].map((stat, index) => (
-              <div 
-                key={index}
-                className={`glass-dark rounded-2xl p-5 backdrop-blur-xl border border-background/10 min-w-[160px] transition-all duration-700 hover:scale-105 ${
-                  isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-                }`}
-                style={{ transitionDelay: `${500 + index * 100}ms` }}
-              >
-                <div className="text-3xl font-bold text-accent mb-1">{stat.value}</div>
-                <div className="text-sm text-background/60">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <StatsCards isVisible={isVisible} />
       </div>
 
       {/* Slide indicators */}
