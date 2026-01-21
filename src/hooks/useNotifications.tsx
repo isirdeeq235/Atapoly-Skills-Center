@@ -30,7 +30,6 @@ export interface Notification {
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [realtimeEnabled, setRealtimeEnabled] = useState(false);
 
   // Fetch notifications
   const { data: notifications, isLoading, refetch } = useQuery({
@@ -51,7 +50,7 @@ export function useNotifications() {
 
   // Set up realtime subscription
   useEffect(() => {
-    if (!user || realtimeEnabled) return;
+    if (!user) return;
 
     const channel = supabase
       .channel(`notifications-${user.id}`)
@@ -110,13 +109,10 @@ export function useNotifications() {
       )
       .subscribe();
 
-    setRealtimeEnabled(true);
-
     return () => {
       supabase.removeChannel(channel);
-      setRealtimeEnabled(false);
     };
-  }, [user, queryClient, realtimeEnabled]);
+  }, [user?.id, queryClient]);
 
   // Mark as read mutation
   const markAsReadMutation = useMutation({
