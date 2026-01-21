@@ -54,12 +54,11 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   const [isVisible, setIsVisible] = useState(false);
 
   const activeSlides = slides && slides.length > 0 ? slides : [{
-    id: 'default',
-    title: 'Transform Your Future Through Expert Training',
-    subtitle: 'Join thousands of professionals mastering in-demand skills with our industry-leading certification programs.',
-    cta_text: 'Start Learning Today',
-    cta_link: '/register',
-    image_url: null,
+    title: "Launch Your Tech Career",
+    subtitle: "Join our industry-leading programs and connect with top companies",
+    image_url: heroBackground,
+    cta_text: "Get Started",
+    cta_link: "/register"
   }];
 
   useEffect(() => {
