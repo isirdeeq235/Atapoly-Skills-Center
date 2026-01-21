@@ -14,7 +14,8 @@ export type NotificationType =
   | 'payment_verified'
   | 'registration_complete' 
   | 'system_announcement' 
-  | 'program_update';
+  | 'program_update'
+  | 'new_application_for_review';
 
 export interface Notification {
   id: string;
