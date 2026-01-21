@@ -11,7 +11,6 @@ import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { jsPDF } from "jspdf";
 import { 
   CreditCard, 
-  Download, 
   Search, 
   CheckCircle2,
   Clock,
