@@ -41,13 +41,25 @@ serve(async (req: Request) => {
       });
     }
 
-    // First check if payment is already completed
-    let paymentQuery = supabase.from("payments").select("*");
-    if (payment_id) {
-      paymentQuery = paymentQuery.eq("id", payment_id);
-    }
+    // First check if payment is already completed - query by reference or payment_id
+    let existingPayment = null;
     
-    const { data: existingPayment } = await paymentQuery.single();
+    if (payment_id) {
+      const { data } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("id", payment_id)
+        .single();
+      existingPayment = data;
+    } else if (reference) {
+      // Try to find payment by reference
+      const { data } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("provider_reference", reference)
+        .single();
+      existingPayment = data;
+    }
     
     if (existingPayment?.status === "completed") {
       console.log("Payment already verified as completed");
@@ -62,16 +74,42 @@ serve(async (req: Request) => {
       });
     }
 
+    // Determine the provider from the existing payment if not provided
+    const paymentProvider = provider || existingPayment?.provider;
+    // Use reference from request or from stored payment
+    const paymentReference = reference || existingPayment?.provider_reference;
+
+    if (!paymentReference) {
+      console.error("No payment reference found for verification");
+      return new Response(JSON.stringify({ 
+        error: "No payment reference found. Payment may still be processing.",
+        status: "pending"
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!paymentProvider) {
+      console.error("No payment provider found");
+      return new Response(JSON.stringify({ error: "Payment provider not found" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Using reference:", paymentReference, "provider:", paymentProvider);
+
     let verificationResult: { success: boolean; data?: any; error?: string } = { success: false };
 
-    if (provider === "paystack") {
+    if (paymentProvider === "paystack") {
       const paystackSecretKey = Deno.env.get("PAYSTACK_SECRET_KEY");
       if (!paystackSecretKey) {
         throw new Error("Paystack not configured");
       }
 
-      console.log("Verifying with Paystack, reference:", reference);
-      const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+      console.log("Verifying with Paystack, reference:", paymentReference);
+      const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(paymentReference)}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${paystackSecretKey}`,
@@ -86,14 +124,14 @@ serve(async (req: Request) => {
       } else {
         verificationResult = { success: false, error: data.message || "Payment not successful" };
       }
-    } else if (provider === "flutterwave") {
+    } else if (paymentProvider === "flutterwave") {
       const flutterwaveSecretKey = Deno.env.get("FLUTTERWAVE_SECRET_KEY");
       if (!flutterwaveSecretKey) {
         throw new Error("Flutterwave not configured");
       }
 
-      console.log("Verifying with Flutterwave, reference:", reference);
-      const response = await fetch(`https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`, {
+      console.log("Verifying with Flutterwave, reference:", paymentReference);
+      const response = await fetch(`https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(paymentReference)}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${flutterwaveSecretKey}`,
@@ -124,29 +162,51 @@ serve(async (req: Request) => {
 
     // Payment verified - update payment record
     const paymentData = verificationResult.data;
-    const metadata = provider === "paystack" ? paymentData.metadata : paymentData.meta;
+    const metadata = paymentProvider === "paystack" ? paymentData.metadata : paymentData.meta;
 
     console.log("Payment verified successfully, updating records...");
+    console.log("Payment metadata:", JSON.stringify(metadata));
+
+    // Determine payment_id from metadata, request, or existing payment
+    const resolvedPaymentId = metadata?.payment_id || payment_id || existingPayment?.id;
+
+    if (!resolvedPaymentId) {
+      console.error("Cannot find payment ID to update");
+      throw new Error("Payment ID not found");
+    }
 
     // Update payment record
     const { error: updateError } = await supabase
       .from("payments")
       .update({
         status: "completed",
-        provider_reference: reference,
+        provider_reference: paymentReference,
         metadata: paymentData,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", metadata?.payment_id || payment_id);
+      .eq("id", resolvedPaymentId);
 
     if (updateError) {
       console.error("Error updating payment:", updateError);
       throw updateError;
     }
 
-    const applicationId = metadata?.application_id;
-    const traineeId = metadata?.trainee_id;
-    const paymentType = metadata?.payment_type;
+    console.log("Payment record updated successfully:", resolvedPaymentId);
+
+    // Get the full payment data if we don't have it
+    let fullPayment = existingPayment;
+    if (!fullPayment) {
+      const { data } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("id", resolvedPaymentId)
+        .single();
+      fullPayment = data;
+    }
+
+    const applicationId = metadata?.application_id || fullPayment?.application_id;
+    const traineeId = metadata?.trainee_id || fullPayment?.trainee_id;
+    const paymentType = metadata?.payment_type || fullPayment?.payment_type;
 
     // Update application based on payment type
     if (paymentType === "application_fee") {

@@ -111,11 +111,24 @@ serve(async (req: Request) => {
         throw new Error(data.message || "Paystack initialization failed");
       }
 
+      // Store the reference immediately so we can verify later
+      const paystackReference = data.data.reference;
+      const { error: updateError } = await supabase
+        .from("payments")
+        .update({ provider_reference: paystackReference })
+        .eq("id", payment.id);
+
+      if (updateError) {
+        console.error("Error storing provider reference:", updateError);
+      } else {
+        console.log("Stored provider reference:", paystackReference, "for payment:", payment.id);
+      }
+
       console.log("Paystack payment initialized successfully, URL:", data.data.authorization_url);
       return new Response(JSON.stringify({
         success: true,
         authorization_url: data.data.authorization_url,
-        reference: data.data.reference,
+        reference: paystackReference,
         payment_id: payment.id,
       }), {
         status: 200,
@@ -165,6 +178,18 @@ serve(async (req: Request) => {
       if (data.status !== "success") {
         console.error("Flutterwave initialization failed:", data.message);
         throw new Error(data.message || "Flutterwave initialization failed");
+      }
+
+      // Store the reference immediately so we can verify later
+      const { error: updateError } = await supabase
+        .from("payments")
+        .update({ provider_reference: reference })
+        .eq("id", payment.id);
+
+      if (updateError) {
+        console.error("Error storing provider reference:", updateError);
+      } else {
+        console.log("Stored provider reference:", reference, "for payment:", payment.id);
       }
 
       console.log("Flutterwave payment initialized successfully, URL:", data.data.link);
