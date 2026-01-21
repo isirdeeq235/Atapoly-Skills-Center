@@ -30,11 +30,14 @@ import {
   Send,
   AlertCircle,
   Key,
-  Eye,
-  EyeOff,
   Pencil,
+  Shield,
+  Wifi,
+  Database,
   Plus,
-  Shield
+  HardDrive,
+  RefreshCw,
+  XCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -46,11 +49,108 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
+import { useConnectionStatus, ConnectionStatusType, ConnectionStatus } from "@/hooks/useConnectionStatus";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
+// Connection Status Item Component
+function ConnectionStatusItem({ connection, icon }: { connection: ConnectionStatus; icon: React.ReactNode }) {
+  const getStatusIcon = (status: ConnectionStatusType) => {
+    switch (status) {
+      case "connected":
+        return <CheckCircle2 className="w-4 h-4 text-success" />;
+      case "error":
+        return <XCircle className="w-4 h-4 text-destructive" />;
+      case "not_configured":
+        return <AlertCircle className="w-4 h-4 text-warning" />;
+      case "disconnected":
+        return <XCircle className="w-4 h-4 text-muted-foreground" />;
+      case "checking":
+      default:
+        return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
+    }
+  };
+
+  const getStatusBadge = (status: ConnectionStatusType) => {
+    switch (status) {
+      case "connected":
+        return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Connected</Badge>;
+      case "error":
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">Error</Badge>;
+      case "not_configured":
+        return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">Not Configured</Badge>;
+      case "disconnected":
+        return <Badge variant="outline" className="bg-muted text-muted-foreground">Disconnected</Badge>;
+      case "checking":
+      default:
+        return <Badge variant="outline" className="bg-muted text-muted-foreground">Checking...</Badge>;
+    }
+  };
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn(
+            "flex items-center justify-between p-4 rounded-lg border transition-colors",
+            connection.status === "connected" && "border-success/20 bg-success/5",
+            connection.status === "error" && "border-destructive/20 bg-destructive/5",
+            connection.status === "not_configured" && "border-warning/20 bg-warning/5",
+            connection.status === "disconnected" && "border-border bg-muted/30",
+            connection.status === "checking" && "border-border bg-muted/30"
+          )}>
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center",
+                connection.status === "connected" && "bg-success/10 text-success",
+                connection.status === "error" && "bg-destructive/10 text-destructive",
+                connection.status === "not_configured" && "bg-warning/10 text-warning",
+                connection.status === "disconnected" && "bg-muted text-muted-foreground",
+                connection.status === "checking" && "bg-muted text-muted-foreground"
+              )}>
+                {icon}
+              </div>
+              <div>
+                <p className="font-medium">{connection.name}</p>
+                <p className="text-sm text-muted-foreground truncate max-w-[300px]">
+                  {connection.message || "No status message"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {getStatusBadge(connection.status)}
+              {getStatusIcon(connection.status)}
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="max-w-xs">
+          <div className="space-y-1">
+            <p className="font-medium">{connection.name}</p>
+            <p className="text-sm text-muted-foreground">{connection.message}</p>
+            {connection.lastChecked && (
+              <p className="text-xs text-muted-foreground">
+                Last checked: {new Date(connection.lastChecked).toLocaleTimeString()}
+              </p>
+            )}
+            {connection.details && (
+              <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
+                {Object.entries(connection.details).map(([key, value]) => (
+                  <p key={key}>{key}: {JSON.stringify(value)}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 const SuperAdminSettings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { connections, isLoading: connectionsLoading, refetch: refetchConnections, overallStatus, connectedCount, totalCount } = useConnectionStatus();
   const { data: siteConfig, isLoading: siteLoading, refetch: refetchSiteConfig } = useSiteConfig();
   const { data: paymentSettings, isLoading: paymentLoading, refetch: refetchPaymentSettings } = usePaymentSettings();
   const [testingSmtp, setTestingSmtp] = useState(false);
@@ -268,8 +368,12 @@ const SuperAdminSettings = () => {
 
   return (
     <DashboardLayout role="super-admin" title="Settings" subtitle="Manage platform configuration">
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full max-w-2xl grid-cols-5">
+      <Tabs defaultValue="connections" className="space-y-6">
+        <TabsList className="grid w-full max-w-3xl grid-cols-6">
+          <TabsTrigger value="connections" className="flex items-center gap-2">
+            <Wifi className="w-4 h-4" />
+            Connections
+          </TabsTrigger>
           <TabsTrigger value="general" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             General
@@ -291,6 +395,94 @@ const SuperAdminSettings = () => {
             API Keys
           </TabsTrigger>
         </TabsList>
+
+        {/* Connections Status */}
+        <TabsContent value="connections">
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Wifi className="w-5 h-5" />
+                    System Connections
+                  </CardTitle>
+                  <CardDescription>
+                    Real-time status of all backend services and integrations
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    className={cn(
+                      "px-3 py-1",
+                      overallStatus === "connected" && "bg-success/10 text-success border-success/20",
+                      overallStatus === "error" && "bg-destructive/10 text-destructive border-destructive/20",
+                      overallStatus === "checking" && "bg-muted text-muted-foreground",
+                      (overallStatus === "disconnected" || overallStatus === "not_configured") && "bg-warning/10 text-warning border-warning/20"
+                    )}
+                  >
+                    {overallStatus === "connected" && <><CheckCircle2 className="w-3 h-3 mr-1" />All Systems Operational</>}
+                    {overallStatus === "error" && <><AlertCircle className="w-3 h-3 mr-1" />Connection Issues</>}
+                    {overallStatus === "checking" && <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Checking...</>}
+                    {(overallStatus === "disconnected" || overallStatus === "not_configured") && <><AlertCircle className="w-3 h-3 mr-1" />Some Services Unavailable</>}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetchConnections()}
+                    disabled={connectionsLoading}
+                  >
+                    <RefreshCw className={cn("w-4 h-4", connectionsLoading && "animate-spin")} />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Connection Items */}
+              <div className="grid gap-3">
+                {/* Database */}
+                <ConnectionStatusItem 
+                  connection={connections.database}
+                  icon={<Database className="w-5 h-5" />}
+                />
+                
+                {/* Storage */}
+                <ConnectionStatusItem 
+                  connection={connections.storage}
+                  icon={<HardDrive className="w-5 h-5" />}
+                />
+                
+                {/* SMTP */}
+                <ConnectionStatusItem 
+                  connection={connections.smtp}
+                  icon={<Mail className="w-5 h-5" />}
+                />
+                
+                {/* Paystack */}
+                <ConnectionStatusItem 
+                  connection={connections.paystack}
+                  icon={<CreditCard className="w-5 h-5" />}
+                />
+                
+                {/* Flutterwave */}
+                <ConnectionStatusItem 
+                  connection={connections.flutterwave}
+                  icon={<CreditCard className="w-5 h-5" />}
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-muted-foreground">
+                  {connectedCount} of {totalCount} services connected
+                </p>
+                <p className="text-muted-foreground">
+                  Auto-refreshes every 60 seconds
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* General Settings */}
         <TabsContent value="general">
@@ -733,10 +925,27 @@ const SuperAdminSettings = () => {
                         <TableCell className="font-mono text-sm">PAYSTACK_SECRET_KEY</TableCell>
                         <TableCell className="text-muted-foreground">Paystack API secret key</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Configured
-                          </Badge>
+                          {connections.paystack.status === "connected" ? (
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Connected
+                            </Badge>
+                          ) : connections.paystack.status === "error" ? (
+                            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Error
+                            </Badge>
+                          ) : connections.paystack.status === "checking" ? (
+                            <Badge variant="outline" className="bg-muted text-muted-foreground">
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              Checking...
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Not Configured
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button 
@@ -757,10 +966,27 @@ const SuperAdminSettings = () => {
                         <TableCell className="font-mono text-sm">FLUTTERWAVE_SECRET_KEY</TableCell>
                         <TableCell className="text-muted-foreground">Flutterwave API secret key</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Configured
-                          </Badge>
+                          {connections.flutterwave.status === "connected" ? (
+                            <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Connected
+                            </Badge>
+                          ) : connections.flutterwave.status === "error" ? (
+                            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Error
+                            </Badge>
+                          ) : connections.flutterwave.status === "checking" ? (
+                            <Badge variant="outline" className="bg-muted text-muted-foreground">
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              Checking...
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Not Configured
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button 
@@ -780,6 +1006,17 @@ const SuperAdminSettings = () => {
                     </TableBody>
                   </Table>
                 </div>
+                {/* Show connection messages */}
+                {(connections.paystack.status === "error" || connections.flutterwave.status === "error") && (
+                  <div className="text-sm space-y-1 text-muted-foreground">
+                    {connections.paystack.status === "error" && (
+                      <p className="text-destructive">Paystack: {connections.paystack.message}</p>
+                    )}
+                    {connections.flutterwave.status === "error" && (
+                      <p className="text-destructive">Flutterwave: {connections.flutterwave.message}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* SMTP Keys */}
