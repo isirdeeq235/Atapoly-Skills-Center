@@ -1,8 +1,9 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, memo } from "react";
 import { ArrowRight, Quote, Star, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useHomepageContent } from "@/hooks/useHomepageContent";
+import { useInView } from "@/hooks/useInView";
 
 const testimonials = [
   {
@@ -35,27 +36,68 @@ const benefits = [
   "Job placement assistance",
 ];
 
+// Memoized testimonial card
+const TestimonialCard = memo(({ testimonial, index, isVisible }: {
+  testimonial: typeof testimonials[0];
+  index: number;
+  isVisible: boolean;
+}) => (
+  <div 
+    className={`group relative bg-background p-8 rounded-3xl border border-border hover:border-accent/30 transition-all duration-300 hover:shadow-2xl hover:shadow-accent/5 hover:-translate-y-2 ${
+      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+    }`}
+    style={{ transitionDelay: `${50 + index * 50}ms` }}
+  >
+    {/* Quote mark decoration */}
+    <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+      <Quote className="w-6 h-6 text-accent/40" />
+    </div>
+
+    {/* Rating */}
+    <div className="flex gap-1 mb-6">
+      {[...Array(testimonial.rating)].map((_, i) => (
+        <Star key={i} className="w-5 h-5 text-accent fill-accent" />
+      ))}
+    </div>
+    
+    <p className="text-foreground text-lg leading-relaxed mb-8">
+      "{testimonial.quote}"
+    </p>
+    
+    <div className="flex items-center gap-4 pt-6 border-t border-border">
+      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-bold">
+        {testimonial.name.charAt(0)}
+      </div>
+      <div>
+        <p className="font-semibold text-foreground">{testimonial.name}</p>
+        <p className="text-sm text-muted-foreground">{testimonial.role}, {testimonial.company}</p>
+      </div>
+    </div>
+  </div>
+));
+TestimonialCard.displayName = "TestimonialCard";
+
+// Memoized stats grid
+const StatsGrid = memo(() => (
+  <div className="grid grid-cols-2 gap-8">
+    {[
+      { value: "10,000+", label: "Graduates" },
+      { value: "98%", label: "Completion Rate" },
+      { value: "50+", label: "Programs" },
+      { value: "4.9/5", label: "Average Rating" },
+    ].map((stat, index) => (
+      <div key={index} className="text-center">
+        <div className="text-3xl lg:text-4xl font-bold text-accent mb-2">{stat.value}</div>
+        <div className="text-sm text-background/60">{stat.label}</div>
+      </div>
+    ))}
+  </div>
+));
+StatsGrid.displayName = "StatsGrid";
+
 export const CTA = forwardRef<HTMLElement>(function CTA(_, ref) {
   const { data: content } = useHomepageContent();
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
+  const { ref: sectionRef, isVisible } = useInView();
 
   const ctaTitle = content?.cta_title || "Ready to transform your career?";
   const ctaSubtitle = content?.cta_subtitle || "Join thousands of professionals who have accelerated their careers through our programs.";
@@ -70,7 +112,7 @@ export const CTA = forwardRef<HTMLElement>(function CTA(_, ref) {
         <div className="py-24 lg:py-32 bg-card">
           <div ref={sectionRef} className="container mx-auto px-4">
             <div 
-              className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 ${
+              className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-300 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
             >
@@ -85,39 +127,12 @@ export const CTA = forwardRef<HTMLElement>(function CTA(_, ref) {
 
             <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
               {testimonials.map((testimonial, index) => (
-                <div 
-                  key={index}
-                  className={`group relative bg-background p-8 rounded-3xl border border-border hover:border-accent/30 transition-all duration-500 hover:shadow-2xl hover:shadow-accent/5 hover:-translate-y-2 ${
-                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                  }`}
-                  style={{ transitionDelay: `${100 + index * 100}ms` }}
-                >
-                  {/* Quote mark decoration */}
-                  <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                    <Quote className="w-6 h-6 text-accent/40" />
-                  </div>
-
-                  {/* Rating */}
-                  <div className="flex gap-1 mb-6">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-accent fill-accent" />
-                    ))}
-                  </div>
-                  
-                  <p className="text-foreground text-lg leading-relaxed mb-8">
-                    "{testimonial.quote}"
-                  </p>
-                  
-                  <div className="flex items-center gap-4 pt-6 border-t border-border">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center text-white font-bold">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}, {testimonial.company}</p>
-                    </div>
-                  </div>
-                </div>
+                <TestimonialCard 
+                  key={index} 
+                  testimonial={testimonial} 
+                  index={index} 
+                  isVisible={isVisible} 
+                />
               ))}
             </div>
           </div>
@@ -141,7 +156,7 @@ export const CTA = forwardRef<HTMLElement>(function CTA(_, ref) {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center max-w-6xl mx-auto">
             {/* Left content */}
             <div 
-              className={`transition-all duration-700 delay-300 ${
+              className={`transition-all duration-300 delay-100 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
               }`}
             >
@@ -188,24 +203,12 @@ export const CTA = forwardRef<HTMLElement>(function CTA(_, ref) {
 
             {/* Right - Stats card */}
             <div 
-              className={`transition-all duration-700 delay-400 ${
+              className={`transition-all duration-300 delay-150 ${
                 isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
               }`}
             >
               <div className="relative bg-background/10 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-background/10">
-                <div className="grid grid-cols-2 gap-8">
-                  {[
-                    { value: "10,000+", label: "Graduates" },
-                    { value: "98%", label: "Completion Rate" },
-                    { value: "50+", label: "Programs" },
-                    { value: "4.9/5", label: "Average Rating" },
-                  ].map((stat, index) => (
-                    <div key={index} className="text-center">
-                      <div className="text-3xl lg:text-4xl font-bold text-accent mb-2">{stat.value}</div>
-                      <div className="text-sm text-background/60">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
+                <StatsGrid />
                 
                 {/* Decorative badge */}
                 <div className="absolute -top-4 -right-4 w-20 h-20 bg-accent rounded-2xl flex items-center justify-center rotate-12 shadow-lg">
