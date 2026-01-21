@@ -1,51 +1,8 @@
 import { forwardRef, useState, useEffect, memo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, ChevronDown, Star } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { useHeroSlides } from "@/hooks/useHeroSlides";
-
-// Memoized trust indicator avatars
-const TrustAvatars = memo(() => (
-  <div className="flex -space-x-2">
-    {['JD', 'MK', 'AS', 'RN'].map((initials, i) => (
-      <div 
-        key={i} 
-        className="w-10 h-10 rounded-full border-2 border-background bg-gradient-to-br from-accent to-primary flex items-center justify-center text-xs font-bold text-white"
-      >
-        {initials}
-      </div>
-    ))}
-    <div className="w-10 h-10 rounded-full border-2 border-background bg-foreground flex items-center justify-center text-xs font-medium text-background">
-      +10K
-    </div>
-  </div>
-));
-TrustAvatars.displayName = "TrustAvatars";
-
-// Memoized stats cards
-const StatsCards = memo(({ isVisible }: { isVisible: boolean }) => (
-  <div className="hidden xl:block absolute right-8 top-1/2 -translate-y-1/2">
-    <div className="flex flex-col gap-4">
-      {[
-        { value: "98%", label: "Completion Rate" },
-        { value: "15+", label: "Industry Partners" },
-        { value: "50+", label: "Programs" },
-      ].map((stat, index) => (
-        <div 
-          key={index}
-          className={`glass-dark rounded-2xl p-5 backdrop-blur-xl border border-background/10 min-w-[160px] transition-all duration-300 hover:scale-105 ${
-            isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-          }`}
-          style={{ transitionDelay: `${150 + index * 50}ms` }}
-        >
-          <div className="text-3xl font-bold text-accent mb-1">{stat.value}</div>
-          <div className="text-sm text-background/60">{stat.label}</div>
-        </div>
-      ))}
-    </div>
-  </div>
-));
-StatsCards.displayName = "StatsCards";
 
 export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   const { data: slides } = useHeroSlides();
@@ -103,16 +60,6 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
       {/* Content container */}
       <div className="relative z-10 container mx-auto px-4 min-h-screen flex flex-col justify-center pt-20 lg:pt-0">
         <div className="max-w-4xl">
-          {/* Animated badge */}
-          <div 
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 backdrop-blur-sm border border-accent/30 mb-8 transition-all duration-300 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-sm font-medium text-background/90">Enrollment now open for 2026 cohorts</span>
-          </div>
-
           {/* Main headline with fast animation */}
           <h1 
             key={currentSlide}
@@ -143,7 +90,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
           {/* CTA Section */}
           <div 
-            className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-16 transition-all duration-300 delay-150 ${
+            className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 delay-150 ${
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}
           >
@@ -166,27 +113,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
               </Button>
             </Link>
           </div>
-
-          {/* Trust indicators */}
-          <div 
-            className={`flex flex-wrap items-center gap-8 pt-8 border-t border-background/10 transition-all duration-300 delay-200 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-5 h-5 text-accent fill-accent" />
-              ))}
-              <span className="ml-2 text-sm text-background/70">4.9/5 from 2,000+ reviews</span>
-            </div>
-            <div className="h-6 w-px bg-background/20 hidden sm:block" />
-            <TrustAvatars />
-            <span className="text-sm text-background/70">Graduates worldwide</span>
-          </div>
         </div>
-
-        {/* Floating stats cards */}
-        <StatsCards isVisible={isVisible} />
       </div>
 
       {/* Slide indicators */}
