@@ -7,17 +7,19 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { jsPDF } from "jspdf";
 import { 
   CreditCard, 
   Download, 
   Search, 
-  Filter,
   CheckCircle2,
   Clock,
   XCircle,
   Receipt,
   Loader2,
-  Calendar
+  Calendar,
+  FileText
 } from "lucide-react";
 import {
   Table,
@@ -56,10 +58,12 @@ interface Payment {
 }
 
 const PaymentHistory = () => {
-  const { user, role } = useAuth();
+  const { user, role, profile } = useAuth();
+  const { data: siteConfig } = useSiteConfig();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [downloadingReceipt, setDownloadingReceipt] = useState<string | null>(null);
 
   const { data: payments, isLoading } = useQuery({
     queryKey: ['payments', user?.id, role],
@@ -115,35 +119,147 @@ const PaymentHistory = () => {
   };
 
   const handleDownloadReceipt = async (receiptNumber: string) => {
-    // For now, generate a simple receipt - in production this would fetch a PDF
-    const receipt = filteredPayments.find(p => p.receipts?.[0]?.receipt_number === receiptNumber);
-    if (!receipt) return;
+    const payment = filteredPayments.find(p => p.receipts?.[0]?.receipt_number === receiptNumber);
+    if (!payment) return;
 
-    const receiptContent = `
-PAYMENT RECEIPT
-================
-Receipt Number: ${receiptNumber}
-Date: ${format(new Date(receipt.created_at), 'PPP')}
-
-Program: ${receipt.applications?.programs?.title}
-Payment Type: ${receipt.payment_type === 'application_fee' ? 'Application Fee' : 'Registration Fee'}
-Amount: ₦${receipt.amount.toLocaleString()}
-Status: ${receipt.status.toUpperCase()}
-Provider: ${receipt.provider.toUpperCase()}
-Reference: ${receipt.provider_reference || 'N/A'}
-
-Thank you for your payment!
-    `;
-
-    const blob = new Blob([receiptContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `receipt-${receiptNumber}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setDownloadingReceipt(receiptNumber);
+    
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const siteName = siteConfig?.site_name || "Training Center";
+      const contactEmail = siteConfig?.contact_email || "";
+      const contactPhone = siteConfig?.contact_phone || "";
+      const address = siteConfig?.address || "";
+      
+      // Header background
+      doc.setFillColor(234, 88, 12); // Primary orange color
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Header text
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text(siteName, pageWidth / 2, 20, { align: "center" });
+      
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
+      doc.text("PAYMENT RECEIPT", pageWidth / 2, 35, { align: "center" });
+      
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      
+      // Receipt details box
+      doc.setFillColor(249, 250, 251);
+      doc.roundedRect(15, 55, pageWidth - 30, 25, 3, 3, 'F');
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Receipt Number:", 20, 65);
+      doc.text("Date:", 20, 73);
+      
+      doc.setFont("helvetica", "normal");
+      doc.text(receiptNumber, 60, 65);
+      doc.text(format(new Date(payment.created_at), 'MMMM d, yyyy'), 60, 73);
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("Status:", pageWidth - 70, 65);
+      
+      // Status badge
+      if (payment.status === 'completed') {
+        doc.setFillColor(34, 197, 94);
+        doc.roundedRect(pageWidth - 50, 59, 35, 8, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.text("COMPLETED", pageWidth - 48, 65);
+      } else {
+        doc.setFillColor(234, 179, 8);
+        doc.roundedRect(pageWidth - 50, 59, 35, 8, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.text(payment.status.toUpperCase(), pageWidth - 48, 65);
+      }
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      
+      // Customer info section
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Customer Information", 15, 95);
+      
+      doc.setDrawColor(229, 231, 235);
+      doc.line(15, 98, pageWidth - 15, 98);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Name: ${profile?.full_name || 'N/A'}`, 15, 108);
+      doc.text(`Email: ${profile?.email || 'N/A'}`, 15, 116);
+      
+      // Payment details section
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("Payment Details", 15, 135);
+      
+      doc.setDrawColor(229, 231, 235);
+      doc.line(15, 138, pageWidth - 15, 138);
+      
+      // Payment table
+      const tableTop = 148;
+      doc.setFillColor(249, 250, 251);
+      doc.rect(15, tableTop - 6, pageWidth - 30, 10, 'F');
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Description", 20, tableTop);
+      doc.text("Amount", pageWidth - 50, tableTop);
+      
+      doc.setFont("helvetica", "normal");
+      const programTitle = payment.applications?.programs?.title || 'Program';
+      const paymentType = payment.payment_type === 'application_fee' ? 'Application Fee' : 'Registration Fee';
+      
+      doc.text(`${programTitle} - ${paymentType}`, 20, tableTop + 12);
+      doc.text(`₦${Number(payment.amount).toLocaleString()}`, pageWidth - 50, tableTop + 12);
+      
+      // Total line
+      doc.setDrawColor(229, 231, 235);
+      doc.line(15, tableTop + 20, pageWidth - 15, tableTop + 20);
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("Total Paid:", 20, tableTop + 30);
+      doc.setFontSize(12);
+      doc.text(`₦${Number(payment.amount).toLocaleString()}`, pageWidth - 50, tableTop + 30);
+      
+      // Payment method
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Payment Method: ${payment.provider.charAt(0).toUpperCase() + payment.provider.slice(1)}`, 15, tableTop + 45);
+      if (payment.provider_reference) {
+        doc.text(`Reference: ${payment.provider_reference}`, 15, tableTop + 53);
+      }
+      
+      // Footer
+      doc.setFillColor(249, 250, 251);
+      doc.rect(0, 260, pageWidth, 37, 'F');
+      
+      doc.setFontSize(9);
+      doc.setTextColor(107, 114, 128);
+      doc.text("Thank you for your payment!", pageWidth / 2, 270, { align: "center" });
+      
+      if (contactEmail || contactPhone) {
+        doc.text(`Contact: ${contactEmail}${contactEmail && contactPhone ? ' | ' : ''}${contactPhone}`, pageWidth / 2, 278, { align: "center" });
+      }
+      if (address) {
+        doc.text(address, pageWidth / 2, 286, { align: "center" });
+      }
+      
+      // Save PDF
+      doc.save(`Receipt-${receiptNumber}.pdf`);
+    } catch (error) {
+      console.error("Error generating receipt:", error);
+    } finally {
+      setDownloadingReceipt(null);
+    }
   };
 
   const totalPayments = filteredPayments.length;
@@ -319,9 +435,14 @@ Thank you for your payment!
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDownloadReceipt(payment.receipts[0].receipt_number)}
+                          disabled={downloadingReceipt === payment.receipts[0].receipt_number}
                         >
-                          <Download className="w-4 h-4 mr-1" />
-                          Download
+                          {downloadingReceipt === payment.receipts[0].receipt_number ? (
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4 mr-1" />
+                          )}
+                          PDF
                         </Button>
                       ) : (
                         <span className="text-muted-foreground text-sm">—</span>
