@@ -28,8 +28,23 @@ import {
   Receipt,
   ExternalLink,
   Send,
-  AlertCircle
+  AlertCircle,
+  Key,
+  Eye,
+  EyeOff,
+  Pencil,
+  Plus,
+  Shield
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 
 const SuperAdminSettings = () => {
@@ -254,7 +269,7 @@ const SuperAdminSettings = () => {
   return (
     <DashboardLayout role="super-admin" title="Settings" subtitle="Manage platform configuration">
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full max-w-lg grid-cols-4">
+        <TabsList className="grid w-full max-w-2xl grid-cols-5">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             General
@@ -270,6 +285,10 @@ const SuperAdminSettings = () => {
           <TabsTrigger value="payments" className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
             Payments
+          </TabsTrigger>
+          <TabsTrigger value="api-keys" className="flex items-center gap-2">
+            <Key className="w-4 h-4" />
+            API Keys
           </TabsTrigger>
         </TabsList>
 
@@ -664,6 +683,241 @@ const SuperAdminSettings = () => {
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Save Payment Settings
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* API Keys Management */}
+        <TabsContent value="api-keys">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                API Keys & Secrets
+              </CardTitle>
+              <CardDescription>
+                View and manage all API keys and secrets configured in your project
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-amber-800 dark:text-amber-200">Security Notice</p>
+                    <p className="text-amber-700 dark:text-amber-300 mt-1">
+                      Secret values are encrypted and cannot be displayed. You can only update or add new secrets.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment API Keys */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  Payment Gateway Keys
+                </h3>
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Secret Name</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-mono text-sm">PAYSTACK_SECRET_KEY</TableCell>
+                        <TableCell className="text-muted-foreground">Paystack API secret key</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Configured
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "Update Secret",
+                                description: "Use the Lovable secrets manager to update this secret securely.",
+                              });
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-sm">FLUTTERWAVE_SECRET_KEY</TableCell>
+                        <TableCell className="text-muted-foreground">Flutterwave API secret key</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Configured
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "Update Secret",
+                                description: "Use the Lovable secrets manager to update this secret securely.",
+                              });
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* SMTP Keys */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-primary" />
+                  Email (SMTP) Configuration
+                </h3>
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Secret Name</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-mono text-sm">SMTP_HOST</TableCell>
+                        <TableCell className="text-muted-foreground">SMTP server hostname</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Configured
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-sm">SMTP_PORT</TableCell>
+                        <TableCell className="text-muted-foreground">SMTP server port (e.g., 587)</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Configured
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-sm">SMTP_USER</TableCell>
+                        <TableCell className="text-muted-foreground">SMTP username/email</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Configured
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-sm">SMTP_PASS</TableCell>
+                        <TableCell className="text-muted-foreground">SMTP password or app password</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Configured
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-mono text-sm">SMTP_FROM_EMAIL</TableCell>
+                        <TableCell className="text-muted-foreground">Default sender email address</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Configured
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <Separator />
+              
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Quick Actions</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Card className="p-4 border-dashed">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Plus className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium">Add New API Key</h4>
+                        <p className="text-sm text-muted-foreground">Configure additional integrations</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      To add new secrets, contact support or use the Lovable dashboard secrets manager.
+                    </p>
+                  </Card>
+                  
+                  <Card className="p-4 border-dashed">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-accent" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium">Security Best Practices</h4>
+                        <p className="text-sm text-muted-foreground">Keep your keys secure</p>
+                      </div>
+                    </div>
+                    <ul className="text-xs text-muted-foreground mt-3 space-y-1 list-disc list-inside">
+                      <li>Never share API keys publicly</li>
+                      <li>Rotate keys periodically</li>
+                      <li>Use separate keys for test/production</li>
+                    </ul>
+                  </Card>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
