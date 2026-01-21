@@ -4,10 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 
 export type OnboardingStep = 
   | 'select_program'        // Step 1: Select program and pay application fee
-  | 'complete_profile'      // Step 2: Complete profile after application fee paid
-  | 'pending_approval'      // Step 3: Waiting for admin approval
-  | 'pay_registration_fee'  // Step 4: Approved - need to pay registration fee
-  | 'fully_enrolled'        // Step 5: Fully enrolled with ID card
+  | 'complete_profile'      // Step 2: Complete profile information
+  | 'fill_application'      // Step 3: Fill program-specific application form
+  | 'pending_approval'      // Step 4: Waiting for admin approval
+  | 'pay_registration_fee'  // Step 5: Approved - need to pay registration fee
+  | 'fully_enrolled'        // Step 6: Fully enrolled with ID card
   | 'rejected';             // Application was rejected
 
 export interface OnboardingStatus {
@@ -104,28 +105,32 @@ export function useOnboardingStatus() {
 
       // Determine current step - UPDATED FLOW:
       // 1. Select program & pay application fee FIRST
-      // 2. Complete profile form & submit application
-      // 3. Admin approval (only after submission)
-      // 4. Pay registration fee
-      // 5. Fully enrolled
+      // 2. Complete profile form (personal info)
+      // 3. Fill application form (program-specific questions) & submit
+      // 4. Admin approval (only after submission)
+      // 5. Pay registration fee
+      // 6. Fully enrolled
       let currentStep: OnboardingStep = 'select_program';
 
       if (!application.exists || !application.applicationFeePaid) {
         // Step 1: Must select program and pay application fee first
         currentStep = 'select_program';
-      } else if (!isProfileComplete || !application.submitted) {
-        // Step 2: After application fee paid, complete profile and submit
+      } else if (!isProfileComplete) {
+        // Step 2: After application fee paid, complete profile
         currentStep = 'complete_profile';
+      } else if (!application.submitted) {
+        // Step 3: After profile is complete, fill application form and submit
+        currentStep = 'fill_application';
       } else if (application.status === 'pending' && application.submitted) {
-        // Step 3: Waiting for admin approval (only after submission)
+        // Step 4: Waiting for admin approval (only after submission)
         currentStep = 'pending_approval';
       } else if (application.status === 'rejected') {
         currentStep = 'rejected';
       } else if (application.status === 'approved' && !application.registrationFeePaid) {
-        // Step 4: Pay registration fee
+        // Step 5: Pay registration fee
         currentStep = 'pay_registration_fee';
       } else if (application.status === 'approved' && application.registrationFeePaid) {
-        // Step 5: Fully enrolled
+        // Step 6: Fully enrolled
         currentStep = 'fully_enrolled';
       }
 
