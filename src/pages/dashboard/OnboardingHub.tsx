@@ -488,7 +488,7 @@ const OnboardingHub = () => {
   const currentStep = status?.currentStep || 'select_program';
   
   // Calculate progress percentage
-  const stepOrder = ['select_program', 'complete_profile', 'pending_approval', 'pay_registration_fee', 'fully_enrolled'];
+  const stepOrder = ['select_program', 'complete_profile', 'fill_application', 'pending_approval', 'pay_registration_fee', 'fully_enrolled'];
   const currentStepIndex = stepOrder.indexOf(currentStep === 'rejected' ? 'pending_approval' : currentStep);
   const progressPercent = ((currentStepIndex + 1) / stepOrder.length) * 100;
 
@@ -503,15 +503,23 @@ const OnboardingHub = () => {
     },
     {
       id: 'complete_profile',
-      title: 'Step 2: Complete & Submit Application',
-      description: 'Fill in your personal information, upload a passport photograph, and submit your application for review',
+      title: 'Step 2: Complete Profile',
+      description: 'Fill in your personal information and upload a passport photograph',
       icon: User,
       route: '/dashboard/complete-profile',
       feeType: null,
     },
     {
+      id: 'fill_application',
+      title: 'Step 3: Submit Application',
+      description: 'Complete program-specific application questions and submit for review',
+      icon: FileText,
+      route: status?.application.applicationId ? `/dashboard/application-form/${status.application.applicationId}` : null,
+      feeType: null,
+    },
+    {
       id: 'pending_approval',
-      title: 'Step 3: Application Under Review',
+      title: 'Step 4: Application Under Review',
       description: 'Your application has been submitted and is being reviewed by our admissions team. You will be notified of the decision.',
       icon: Clock,
       route: null,
@@ -519,7 +527,7 @@ const OnboardingHub = () => {
     },
     {
       id: 'pay_registration_fee',
-      title: 'Step 4: Pay Registration Fee',
+      title: 'Step 5: Pay Registration Fee',
       description: 'Congratulations! Your application has been approved. Pay the registration fee to complete your enrollment.',
       icon: CreditCard,
       route: null, // Will handle inline
@@ -527,7 +535,7 @@ const OnboardingHub = () => {
     },
     {
       id: 'fully_enrolled',
-      title: 'Step 5: Access Full Dashboard',
+      title: 'Step 6: Access Full Dashboard',
       description: 'You are now fully enrolled! Access your ID card, certificates, and trainee dashboard',
       icon: GraduationCap,
       route: '/dashboard',
@@ -691,6 +699,15 @@ const OnboardingHub = () => {
               <Link to="/dashboard/complete-profile">
                 <Button size="lg" className="w-full sm:w-auto">
                   Complete Profile
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            )}
+            {currentStep === 'fill_application' && status?.application.applicationId && (
+              <Link to={`/dashboard/application-form/${status.application.applicationId}`}>
+                <Button size="lg" className="w-full sm:w-auto">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Fill Application Form
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>

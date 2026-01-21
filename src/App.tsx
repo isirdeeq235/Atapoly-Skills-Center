@@ -38,6 +38,7 @@ import ProfileSettings from "./pages/dashboard/ProfileSettings";
 import AdminUsers from "./pages/dashboard/AdminUsers";
 import AdminHeroSlides from "./pages/dashboard/AdminHeroSlides";
 import CompleteProfile from "./pages/dashboard/CompleteProfile";
+import ApplicationForm from "./pages/dashboard/ApplicationForm";
 import Notifications from "./pages/dashboard/Notifications";
 import MyCertificates from "./pages/dashboard/MyCertificates";
 import AdminBatches from "./pages/dashboard/AdminBatches";
@@ -82,8 +83,17 @@ const App = () => (
             {/* Trainee Complete Profile - Step 2: After application fee is paid */}
             <Route path="/dashboard/complete-profile" element={
               <ProtectedRoute allowedRoles={['trainee']}>
-                <TraineeOnboardingGuard allowedSteps={['complete_profile']}>
+                <TraineeOnboardingGuard allowedSteps={['complete_profile', 'fill_application']}>
                   <CompleteProfile />
+                </TraineeOnboardingGuard>
+              </ProtectedRoute>
+            } />
+            
+            {/* Trainee Application Form - Step 3: After profile is complete */}
+            <Route path="/dashboard/application-form/:applicationId" element={
+              <ProtectedRoute allowedRoles={['trainee']}>
+                <TraineeOnboardingGuard allowedSteps={['fill_application']}>
+                  <ApplicationForm />
                 </TraineeOnboardingGuard>
               </ProtectedRoute>
             } />
@@ -91,7 +101,7 @@ const App = () => (
             {/* Onboarding Hub - Central onboarding page for all steps */}
             <Route path="/dashboard/onboarding" element={
               <ProtectedRoute allowedRoles={['trainee']}>
-                <TraineeOnboardingGuard allowedSteps={['select_program', 'complete_profile', 'pending_approval', 'pay_registration_fee', 'rejected']}>
+                <TraineeOnboardingGuard allowedSteps={['select_program', 'complete_profile', 'fill_application', 'pending_approval', 'pay_registration_fee', 'rejected']}>
                   <OnboardingHub />
                 </TraineeOnboardingGuard>
               </ProtectedRoute>

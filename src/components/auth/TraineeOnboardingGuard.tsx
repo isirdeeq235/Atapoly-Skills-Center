@@ -13,9 +13,10 @@ interface TraineeOnboardingGuardProps {
 const stepRoutes: Record<OnboardingStep, string> = {
   select_program: '/dashboard/onboarding',           // Step 1: Hub shows program selection
   complete_profile: '/dashboard/onboarding',         // Step 2: Hub redirects to profile completion
-  pending_approval: '/dashboard/onboarding',         // Step 3: Hub shows waiting status
-  pay_registration_fee: '/dashboard/onboarding',     // Step 4: Hub shows payment CTA
-  fully_enrolled: '/dashboard',                      // Step 5: Full access
+  fill_application: '/dashboard/onboarding',         // Step 3: Hub redirects to application form
+  pending_approval: '/dashboard/onboarding',         // Step 4: Hub shows waiting status
+  pay_registration_fee: '/dashboard/onboarding',     // Step 5: Hub shows payment CTA
+  fully_enrolled: '/dashboard',                      // Step 6: Full access
   rejected: '/dashboard/onboarding',                 // Hub shows rejection info
 };
 

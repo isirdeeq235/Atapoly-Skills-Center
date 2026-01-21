@@ -212,7 +212,7 @@ const CompleteProfile = () => {
 
     setIsLoading(true);
     try {
-      // Update profile
+      // Update profile only - do NOT submit application here
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -235,10 +235,12 @@ const CompleteProfile = () => {
 
       if (profileError) throw profileError;
 
-      // Mark the latest application as submitted for admin review
+      await refreshProfile();
+
+      // Get the latest application to redirect to application form
       const { data: latestApplication } = await supabase
         .from('applications')
-        .select('id, programs(title)')
+        .select('id')
         .eq('trainee_id', user.id)
         .eq('application_fee_paid', true)
         .eq('submitted', false)
@@ -246,42 +248,17 @@ const CompleteProfile = () => {
         .limit(1)
         .single();
 
-      if (latestApplication) {
-        const { error: submitError } = await supabase
-          .from('applications')
-          .update({ 
-            submitted: true, 
-            submitted_at: new Date().toISOString() 
-          })
-          .eq('id', latestApplication.id);
-
-        if (submitError) {
-          console.error('Error submitting application:', submitError);
-        } else {
-          // Notify all admins about the new application submission
-          try {
-            const programTitle = (latestApplication.programs as any)?.title || 'Unknown Program';
-            await supabase.rpc('notify_admins_new_application', {
-              p_trainee_name: formData.full_name,
-              p_program_title: programTitle,
-              p_application_id: latestApplication.id
-            });
-            console.log('Admins notified about new application');
-          } catch (notifyError) {
-            console.error('Error notifying admins:', notifyError);
-          }
-        }
-      }
-
-      await refreshProfile();
-
       toast({
-        title: "Application Submitted! 🎉",
-        description: "Your application has been submitted for admin review. You'll be notified once a decision is made.",
+        title: "Profile Saved! ✓",
+        description: "Now complete your application form to submit for review.",
       });
 
-      // Navigate to onboarding hub to see pending status
-      navigate('/dashboard/onboarding');
+      // Navigate to application form if we have an application, otherwise to onboarding hub
+      if (latestApplication) {
+        navigate(`/dashboard/application-form/${latestApplication.id}`);
+      } else {
+        navigate('/dashboard/onboarding');
+      }
     } catch (error: any) {
       toast({
         title: "Error saving profile",
@@ -306,26 +283,30 @@ const CompleteProfile = () => {
       <div className="max-w-3xl mx-auto">
         {/* Progress Indicator - Updated for new flow */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-success text-white flex items-center justify-center text-sm font-semibold">✓</div>
-              <span className="font-medium text-success">Application Fee Paid</span>
+          <div className="flex items-center justify-between mb-4 text-xs sm:text-sm">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-success text-white flex items-center justify-center text-xs sm:text-sm font-semibold">✓</div>
+              <span className="font-medium text-success hidden sm:inline">App Fee</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold">2</div>
-              <span className="font-medium">Complete Profile</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-accent text-white flex items-center justify-center text-xs sm:text-sm font-semibold">2</div>
+              <span className="font-medium">Profile</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">3</div>
-              <span>Admin Approval</span>
+            <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center text-xs sm:text-sm font-semibold">3</div>
+              <span className="hidden sm:inline">Application</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">4</div>
-              <span>Pay & Enroll</span>
+            <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center text-xs sm:text-sm font-semibold">4</div>
+              <span className="hidden sm:inline">Review</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center text-xs sm:text-sm font-semibold">5</div>
+              <span className="hidden sm:inline">Enroll</span>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-accent w-1/2 transition-all" />
+            <div className="h-full bg-accent w-1/3 transition-all" />
           </div>
         </div>
 
@@ -574,7 +555,7 @@ const CompleteProfile = () => {
                   </>
                 ) : (
                   <>
-                    Continue to Program Selection
+                    Save & Continue to Application Form
                     <CheckCircle2 className="w-4 h-4 ml-2" />
                   </>
                 )}
