@@ -67,11 +67,13 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('role', 'trainee');
 
-      // Get pending applications
+      // Get pending applications (only submitted ones awaiting review)
       const { count: pendingCount } = await supabase
         .from('applications')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .eq('submitted', true)
+        .eq('application_fee_paid', true);
 
       // Get total revenue (completed payments)
       const { data: payments } = await supabase
@@ -96,7 +98,7 @@ const AdminDashboard = () => {
     }
   });
 
-  // Fetch recent applications
+  // Fetch recent applications (only submitted ones)
   const { data: recentApplications, isLoading: applicationsLoading } = useQuery({
     queryKey: ['admin-recent-applications'],
     queryFn: async () => {
@@ -106,10 +108,14 @@ const AdminDashboard = () => {
           id,
           status,
           created_at,
+          submitted_at,
+          submitted,
           profiles!applications_trainee_id_fkey(full_name, email),
           programs(title)
         `)
-        .order('created_at', { ascending: false })
+        .eq('submitted', true)
+        .eq('application_fee_paid', true)
+        .order('submitted_at', { ascending: false })
         .limit(5);
 
       if (error) throw error;
@@ -327,7 +333,10 @@ const AdminDashboard = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {format(new Date(app.created_at), 'MMM d, yyyy')}
+                          {app.submitted_at 
+                            ? format(new Date(app.submitted_at), 'MMM d, yyyy')
+                            : format(new Date(app.created_at), 'MMM d, yyyy')
+                          }
                         </TableCell>
                         <TableCell>
                           <Link to="/admin/applications">
