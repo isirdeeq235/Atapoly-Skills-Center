@@ -496,23 +496,23 @@ const OnboardingHub = () => {
     {
       id: 'select_program',
       title: 'Step 1: Pay Application Fee',
-      description: 'Choose your training program and pay the non-refundable application fee to submit your application',
+      description: 'Choose your training program and pay the non-refundable application fee',
       icon: CreditCard,
       route: '/dashboard/apply',
       feeType: 'Application Fee',
     },
     {
       id: 'complete_profile',
-      title: 'Step 2: Complete Your Profile',
-      description: 'Provide your personal information and upload a passport photograph',
+      title: 'Step 2: Complete & Submit Application',
+      description: 'Fill in your personal information, upload a passport photograph, and submit your application for review',
       icon: User,
       route: '/dashboard/complete-profile',
       feeType: null,
     },
     {
       id: 'pending_approval',
-      title: 'Step 3: Application Review',
-      description: 'Your application is being reviewed by our admissions team. You will be notified once approved.',
+      title: 'Step 3: Application Under Review',
+      description: 'Your application has been submitted and is being reviewed by our admissions team. You will be notified of the decision.',
       icon: Clock,
       route: null,
       feeType: null,
@@ -520,7 +520,7 @@ const OnboardingHub = () => {
     {
       id: 'pay_registration_fee',
       title: 'Step 4: Pay Registration Fee',
-      description: 'Your application has been approved! Pay the registration fee to complete your enrollment',
+      description: 'Congratulations! Your application has been approved. Pay the registration fee to complete your enrollment.',
       icon: CreditCard,
       route: null, // Will handle inline
       feeType: 'Registration Fee',

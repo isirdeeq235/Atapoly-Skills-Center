@@ -212,7 +212,8 @@ const CompleteProfile = () => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      // Update profile
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: formData.full_name,
@@ -232,17 +233,41 @@ const CompleteProfile = () => {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Mark the latest application as submitted for admin review
+      const { data: latestApplication } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('trainee_id', user.id)
+        .eq('application_fee_paid', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestApplication) {
+        const { error: submitError } = await supabase
+          .from('applications')
+          .update({ 
+            submitted: true, 
+            submitted_at: new Date().toISOString() 
+          })
+          .eq('id', latestApplication.id);
+
+        if (submitError) {
+          console.error('Error submitting application:', submitError);
+        }
+      }
 
       await refreshProfile();
 
       toast({
-        title: "Profile completed",
-        description: "Your profile has been saved. Your application is now pending admin approval.",
+        title: "Application Submitted! 🎉",
+        description: "Your application has been submitted for admin review. You'll be notified once a decision is made.",
       });
 
-      // Navigate to applications page to see pending status
-      navigate('/dashboard/applications');
+      // Navigate to onboarding hub to see pending status
+      navigate('/dashboard/onboarding');
     } catch (error: any) {
       toast({
         title: "Error saving profile",
