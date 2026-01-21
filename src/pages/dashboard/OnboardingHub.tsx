@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,10 +22,14 @@ import {
   GraduationCap,
   Loader2,
   Sparkles,
-  Shield
+  Shield,
+  RefreshCw
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+
+const RETRY_INTERVAL = 10000; // 10 seconds
+const MAX_RETRY_DURATION = 120000; // 2 minutes
 
 const OnboardingHub = () => {
   const { user, profile } = useAuth();
@@ -36,7 +40,13 @@ const OnboardingHub = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isPaying, setIsPaying] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isAutoRetrying, setIsAutoRetrying] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState(0);
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const queryClient = useQueryClient();
+  const retryIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const retryStartTimeRef = useRef<number | null>(null);
 
   // Verify payment with the backend
   const verifyPayment = useCallback(async (reference: string, paymentType: 'application' | 'registration') => {
@@ -93,7 +103,134 @@ const OnboardingHub = () => {
     }
   }, [provider, user?.id, queryClient, refetch, toast, navigate]);
 
-  // Handle payment success redirects
+  // Stop auto-retry function
+  const stopAutoRetry = useCallback(() => {
+    if (retryIntervalRef.current) {
+      clearInterval(retryIntervalRef.current);
+      retryIntervalRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setIsAutoRetrying(false);
+    setRetryCountdown(0);
+    setRetryAttempt(0);
+    retryStartTimeRef.current = null;
+  }, []);
+
+  // Auto-retry verification function
+  const startAutoRetry = useCallback(async (paymentType: 'application' | 'registration') => {
+    if (!user || !provider) return;
+    
+    setIsAutoRetrying(true);
+    retryStartTimeRef.current = Date.now();
+    setRetryCountdown(RETRY_INTERVAL / 1000);
+    
+    toast({
+      title: "Verifying Payment",
+      description: "We're checking your payment status. This will retry automatically for up to 2 minutes.",
+    });
+
+    // Countdown timer
+    countdownIntervalRef.current = setInterval(() => {
+      setRetryCountdown(prev => (prev > 0 ? prev - 1 : RETRY_INTERVAL / 1000));
+    }, 1000);
+
+    // Retry interval
+    const checkPayment = async () => {
+      if (!retryStartTimeRef.current) return;
+      
+      const elapsed = Date.now() - retryStartTimeRef.current;
+      if (elapsed >= MAX_RETRY_DURATION) {
+        stopAutoRetry();
+        toast({
+          title: "Verification Timeout",
+          description: "Payment verification timed out. You can try manually verifying or contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setRetryAttempt(prev => prev + 1);
+      setRetryCountdown(RETRY_INTERVAL / 1000);
+
+      try {
+        // Query latest payment
+        const { data: payments } = await supabase
+          .from("payments")
+          .select("id, provider_reference, provider, status")
+          .eq("trainee_id", user.id)
+          .eq("payment_type", paymentType === 'application' ? "application_fee" : "registration_fee")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (payments && payments.length > 0) {
+          const payment = payments[0];
+          
+          if (payment.status === 'completed') {
+            stopAutoRetry();
+            queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
+            await refetch();
+            toast({
+              title: paymentType === 'application' ? "Application Fee Verified! 🎉" : "Registration Complete! 🎓",
+              description: paymentType === 'application' 
+                ? "Your payment has been confirmed. Please complete your profile."
+                : "Welcome to your dashboard!",
+            });
+            if (paymentType === 'registration') {
+              setTimeout(() => navigate('/dashboard'), 1500);
+            }
+            return;
+          }
+
+          // Try to verify with provider if we have a reference
+          if (payment.provider_reference) {
+            const { data, error } = await supabase.functions.invoke("verify-payment", {
+              body: { 
+                reference: payment.provider_reference, 
+                provider: payment.provider || provider,
+                payment_id: payment.id
+              }
+            });
+
+            if (!error && data?.success) {
+              stopAutoRetry();
+              queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
+              await refetch();
+              toast({
+                title: paymentType === 'application' ? "Application Fee Verified! 🎉" : "Registration Complete! 🎓",
+                description: paymentType === 'application' 
+                  ? "Your payment has been confirmed. Please complete your profile."
+                  : "Welcome to your dashboard!",
+              });
+              if (paymentType === 'registration') {
+                setTimeout(() => navigate('/dashboard'), 1500);
+              }
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Auto-retry verification error:", error);
+      }
+    };
+
+    // Initial check
+    await checkPayment();
+
+    // Set up interval for subsequent checks
+    retryIntervalRef.current = setInterval(checkPayment, RETRY_INTERVAL);
+  }, [user, provider, queryClient, refetch, toast, navigate, stopAutoRetry]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopAutoRetry();
+    };
+  }, [stopAutoRetry]);
+
+  // Handle payment success redirects with auto-retry
   useEffect(() => {
     const payment = searchParams.get('payment');
     const reference = searchParams.get('reference') || searchParams.get('trxref');
@@ -101,19 +238,19 @@ const OnboardingHub = () => {
     if (payment === 'success' && reference) {
       setSearchParams({});
       verifyPayment(reference, 'application');
+      // Start auto-retry in case initial verification fails
+      startAutoRetry('application');
     } else if (payment === 'registration_success' && reference) {
       setSearchParams({});
       verifyPayment(reference, 'registration');
+      startAutoRetry('registration');
     } else if (payment === 'success' || payment === 'registration_success') {
-      // Fallback if no reference - still try to refresh
+      // Fallback if no reference - start auto-retry
       setSearchParams({});
-      refetch();
-      toast({
-        title: payment === 'success' ? "Payment Processing" : "Registration Processing",
-        description: "Your payment is being verified. This may take a moment.",
-      });
+      const paymentType = payment === 'success' ? 'application' : 'registration';
+      startAutoRetry(paymentType);
     }
-  }, [searchParams, setSearchParams, verifyPayment, refetch, toast]);
+  }, [searchParams, setSearchParams, verifyPayment, startAutoRetry]);
 
   // Auto-redirect to dashboard when fully enrolled
   useEffect(() => {
@@ -437,6 +574,41 @@ const OnboardingHub = () => {
           <Progress value={progressPercent} className="h-3" />
         </CardContent>
       </Card>
+
+      {/* Auto-Retry Status Indicator */}
+      {isAutoRetrying && (
+        <Card className="mb-6 border-primary/30 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <RefreshCw className="w-6 h-6 text-primary animate-spin" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">Verifying Payment...</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Attempt {retryAttempt} • Next check in {retryCountdown}s • Auto-stops after 2 minutes
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={stopAutoRetry}
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Stop
+              </Button>
+            </div>
+            <div className="mt-4">
+              <Progress 
+                value={Math.min(100, ((Date.now() - (retryStartTimeRef.current || Date.now())) / MAX_RETRY_DURATION) * 100)} 
+                className="h-2" 
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Rejection Alert */}
       {currentStep === 'rejected' && (
