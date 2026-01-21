@@ -48,10 +48,12 @@ const StatsCards = memo(({ isVisible, stats }: {
 StatsCards.displayName = "StatsCards";
 
 export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
-  const { data: slides } = useHeroSlides();
-  const { data: homepageContent } = useHomepageContent();
+  const { data: slides, isLoading: slidesLoading } = useHeroSlides();
+  const { data: homepageContent, isLoading: contentLoading } = useHomepageContent();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+
+  const isLoading = slidesLoading || contentLoading;
 
   const activeSlides = slides && slides.length > 0 ? slides : [{
     id: 'default',
@@ -61,6 +63,27 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
     cta_link: '/register',
     image_url: null,
   }];
+
+  // Show a minimal loading state to prevent flash of default content
+  if (isLoading) {
+    return (
+      <section ref={ref} className="relative min-h-screen overflow-hidden bg-foreground">
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground/95 to-primary/20" />
+        <div className="relative z-10 container mx-auto px-4 min-h-screen flex flex-col justify-center pt-20 lg:pt-0">
+          <div className="max-w-4xl animate-pulse">
+            <div className="h-6 w-48 bg-background/10 rounded-full mb-8" />
+            <div className="h-16 md:h-20 lg:h-24 w-full max-w-3xl bg-background/10 rounded-lg mb-4" />
+            <div className="h-16 md:h-20 lg:h-24 w-3/4 bg-background/10 rounded-lg mb-6" />
+            <div className="h-6 w-full max-w-2xl bg-background/10 rounded-lg mb-10" />
+            <div className="flex gap-4">
+              <div className="h-14 w-40 bg-accent/20 rounded-full" />
+              <div className="h-14 w-40 bg-background/10 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   useEffect(() => {
     requestAnimationFrame(() => setIsVisible(true));
