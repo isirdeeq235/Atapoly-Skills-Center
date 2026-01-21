@@ -81,16 +81,17 @@ serve(async (req: Request) => {
           .update({ application_fee_paid: true, updated_at: new Date().toISOString() })
           .eq("id", metadata.application_id);
 
-        // Create notification for trainee
+        // Create notification for trainee - redirect to complete profile
         await supabase.rpc("create_notification", {
           p_user_id: metadata.trainee_id,
           p_type: "payment_success",
           p_title: "Application Fee Paid ✓",
-          p_message: "Your application fee has been received. Your application is now under review.",
+          p_message: "Your application fee has been received. Please complete your profile to continue.",
           p_metadata: { 
             payment_id: metadata.payment_id,
             application_id: metadata.application_id,
-            amount: data.amount / 100 
+            amount: data.amount / 100,
+            next_step: "complete_profile"
           }
         });
 

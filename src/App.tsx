@@ -10,6 +10,7 @@ import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { TraineeOnboardingGuard, ProfileCompletionGuard, RequireFullEnrollment } from "@/components/auth/TraineeOnboardingGuard";
 import { DynamicHead } from "@/components/DynamicHead";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { RealTimeSync } from "@/components/RealTimeSync";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
@@ -61,6 +62,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <RealTimeSync>
             <PermissionsProvider>
             <DynamicHead />
             <Routes>
@@ -308,6 +310,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </PermissionsProvider>
+          </RealTimeSync>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

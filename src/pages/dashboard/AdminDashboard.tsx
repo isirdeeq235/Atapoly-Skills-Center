@@ -36,11 +36,15 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { useAdminPaymentSync } from "@/hooks/usePaymentSync";
 
 const AdminDashboard = () => {
   const { role, profile } = useAuth();
   const location = useLocation();
   const isSuperAdmin = role === 'super_admin';
+  
+  // Enable real-time sync for admin dashboard
+  useAdminPaymentSync();
 
   // Show access denied toast if redirected from a restricted page
   useEffect(() => {
