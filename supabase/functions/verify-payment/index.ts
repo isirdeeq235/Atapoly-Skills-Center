@@ -260,12 +260,103 @@ serve(async (req: Request) => {
       receipt_number: receiptNumber,
     });
 
+    // Get trainee profile for email
+    const { data: traineeProfile } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", traineeId)
+      .single();
+
+    // Get receipt template settings
+    const { data: receiptTemplate } = await supabase
+      .from("receipt_template")
+      .select("*")
+      .single();
+
+    // Get site config for site name
+    const { data: siteConfig } = await supabase
+      .from("site_config")
+      .select("site_name")
+      .single();
+
+    // Get program title
+    let programTitle = "Program";
+    if (metadata?.application_id) {
+      const { data: app } = await supabase
+        .from("applications")
+        .select("programs(title)")
+        .eq("id", metadata.application_id)
+        .single();
+      // programs is returned as an object when using .single() with a foreign key join
+      const programs = (app as any)?.programs;
+      if (programs?.title) {
+        programTitle = programs.title;
+      }
+    }
+
+    // Send receipt email if enabled
+    if (receiptTemplate?.send_email_on_verification && traineeProfile?.email) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+        const paymentTypeLabel = paymentType === "application_fee" ? "Application Fee" : "Registration Fee";
+        const amountValue = provider === "paystack" ? paymentData.amount / 100 : paymentData.amount;
+        
+        // Replace placeholders in email template
+        const emailData: Record<string, string> = {
+          name: traineeProfile.full_name || "Trainee",
+          email: traineeProfile.email,
+          payment_type: paymentTypeLabel,
+          amount: amountValue.toLocaleString(),
+          receipt_number: receiptNumber,
+          program: programTitle,
+          provider: provider.charAt(0).toUpperCase() + provider.slice(1),
+          reference: reference || "N/A",
+          date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+          dashboard_url: `${supabaseUrl.replace('.supabase.co', '')}/dashboard/payments`,
+          site_name: siteConfig?.site_name || receiptTemplate.organization_name || "Training Center",
+          year: new Date().getFullYear().toString(),
+        };
+
+        // Replace placeholders in subject and body
+        let emailSubject = receiptTemplate.email_subject_template || "Payment Receipt - {{payment_type}}";
+        let emailBody = receiptTemplate.email_body_template || "";
+
+        Object.entries(emailData).forEach(([key, value]) => {
+          const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+          emailSubject = emailSubject.replace(regex, value);
+          emailBody = emailBody.replace(regex, value);
+        });
+
+        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            to: traineeProfile.email,
+            subject: emailSubject,
+            html: emailBody,
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          console.error("Failed to send receipt email:", await emailResponse.text());
+        } else {
+          console.log("Receipt email sent successfully to:", traineeProfile.email);
+        }
+      } catch (emailError) {
+        console.error("Error sending receipt email:", emailError);
+      }
+    }
+
     console.log("Payment verification and processing completed successfully");
 
     return new Response(JSON.stringify({ 
       success: true, 
       status: "completed",
       payment_type: paymentType,
+      receipt_number: receiptNumber,
       message: paymentType === "application_fee" 
         ? "Application fee verified. Please complete your profile."
         : "Registration complete! You can now access your dashboard."

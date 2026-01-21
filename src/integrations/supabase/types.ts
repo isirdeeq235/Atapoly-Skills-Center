@@ -891,6 +891,57 @@ export type Database = {
           },
         ]
       }
+      receipt_template: {
+        Row: {
+          created_at: string
+          email_body_template: string
+          email_subject_template: string
+          footer_text: string
+          header_text: string
+          id: string
+          include_qr_code: boolean
+          organization_name: string
+          primary_color: string
+          secondary_color: string
+          send_email_on_verification: boolean
+          show_logo: boolean
+          singleton: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_body_template?: string
+          email_subject_template?: string
+          footer_text?: string
+          header_text?: string
+          id?: string
+          include_qr_code?: boolean
+          organization_name?: string
+          primary_color?: string
+          secondary_color?: string
+          send_email_on_verification?: boolean
+          show_logo?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_body_template?: string
+          email_subject_template?: string
+          footer_text?: string
+          header_text?: string
+          id?: string
+          include_qr_code?: boolean
+          organization_name?: string
+          primary_color?: string
+          secondary_color?: string
+          send_email_on_verification?: boolean
+          show_logo?: boolean
+          singleton?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       receipts: {
         Row: {
           created_at: string

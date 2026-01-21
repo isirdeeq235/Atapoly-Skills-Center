@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,11 +24,14 @@ import {
   MapPin,
   Image,
   FileSignature,
-  CheckCircle2
+  CheckCircle2,
+  Receipt,
+  ExternalLink
 } from "lucide-react";
 
 const SuperAdminSettings = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { data: siteConfig, isLoading: siteLoading, refetch: refetchSiteConfig } = useSiteConfig();
   const { data: paymentSettings, isLoading: paymentLoading, refetch: refetchPaymentSettings } = usePaymentSettings();
 
@@ -462,6 +466,27 @@ const SuperAdminSettings = () => {
                     Flutterwave is enabled and API keys are configured in secrets
                   </p>
                 )}
+              </div>
+
+              <Separator />
+
+              {/* Receipt Template Link */}
+              <div className="space-y-4 p-4 border border-border rounded-lg bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Receipt className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Receipt Template</h3>
+                      <p className="text-sm text-muted-foreground">Customize payment receipt emails and PDF appearance</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" onClick={() => navigate("/admin/receipt-template")}>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Configure
+                  </Button>
+                </div>
               </div>
 
               <Button onClick={handleSavePaymentSettings} disabled={saving}>

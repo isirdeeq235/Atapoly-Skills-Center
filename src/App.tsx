@@ -48,6 +48,7 @@ import AdminFormBuilder from "./pages/dashboard/AdminFormBuilder";
 import AdminNotificationTemplates from "./pages/dashboard/AdminNotificationTemplates";
 import AdminEmailTemplates from "./pages/dashboard/AdminEmailTemplates";
 import AdminRolePermissions from "./pages/dashboard/AdminRolePermissions";
+import AdminReceiptTemplate from "./pages/dashboard/AdminReceiptTemplate";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -295,6 +296,11 @@ const App = () => (
             <Route path="/admin/role-permissions" element={
               <ProtectedRoute allowedRoles={['super_admin']}>
                 <AdminRolePermissions />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/receipt-template" element={
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <AdminReceiptTemplate />
               </ProtectedRoute>
             } />
             
