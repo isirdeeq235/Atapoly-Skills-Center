@@ -440,11 +440,26 @@ export type Database = {
           features_subtitle: string
           features_title: string
           footer_about: string
+          hero_badge_text: string
+          hero_badge_visible: boolean
           hero_cta_link: string
           hero_cta_text: string
           hero_image_url: string | null
+          hero_secondary_cta_link: string
+          hero_secondary_cta_text: string
+          hero_stat_1_label: string
+          hero_stat_1_value: string
+          hero_stat_2_label: string
+          hero_stat_2_value: string
+          hero_stat_3_label: string
+          hero_stat_3_value: string
+          hero_stats_visible: boolean
           hero_subtitle: string
           hero_title: string
+          hero_trust_graduates_text: string
+          hero_trust_rating: string
+          hero_trust_reviews_count: string
+          hero_trust_visible: boolean
           id: string
           show_how_it_works: boolean
           show_programs_section: boolean
@@ -473,11 +488,26 @@ export type Database = {
           features_subtitle?: string
           features_title?: string
           footer_about?: string
+          hero_badge_text?: string
+          hero_badge_visible?: boolean
           hero_cta_link?: string
           hero_cta_text?: string
           hero_image_url?: string | null
+          hero_secondary_cta_link?: string
+          hero_secondary_cta_text?: string
+          hero_stat_1_label?: string
+          hero_stat_1_value?: string
+          hero_stat_2_label?: string
+          hero_stat_2_value?: string
+          hero_stat_3_label?: string
+          hero_stat_3_value?: string
+          hero_stats_visible?: boolean
           hero_subtitle?: string
           hero_title?: string
+          hero_trust_graduates_text?: string
+          hero_trust_rating?: string
+          hero_trust_reviews_count?: string
+          hero_trust_visible?: boolean
           id?: string
           show_how_it_works?: boolean
           show_programs_section?: boolean
@@ -506,11 +536,26 @@ export type Database = {
           features_subtitle?: string
           features_title?: string
           footer_about?: string
+          hero_badge_text?: string
+          hero_badge_visible?: boolean
           hero_cta_link?: string
           hero_cta_text?: string
           hero_image_url?: string | null
+          hero_secondary_cta_link?: string
+          hero_secondary_cta_text?: string
+          hero_stat_1_label?: string
+          hero_stat_1_value?: string
+          hero_stat_2_label?: string
+          hero_stat_2_value?: string
+          hero_stat_3_label?: string
+          hero_stat_3_value?: string
+          hero_stats_visible?: boolean
           hero_subtitle?: string
           hero_title?: string
+          hero_trust_graduates_text?: string
+          hero_trust_rating?: string
+          hero_trust_reviews_count?: string
+          hero_trust_visible?: boolean
           id?: string
           show_how_it_works?: boolean
           show_programs_section?: boolean

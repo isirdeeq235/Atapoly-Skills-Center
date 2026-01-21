@@ -123,7 +123,7 @@ const AdminHomepageEditor = () => {
           </TabsList>
 
           {/* Hero Section */}
-          <TabsContent value="hero">
+          <TabsContent value="hero" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Hero Section</CardTitle>
@@ -148,7 +148,7 @@ const AdminHomepageEditor = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>CTA Button Text</Label>
+                    <Label>Primary CTA Text</Label>
                     <Input
                       value={localContent.hero_cta_text || ''}
                       onChange={(e) => updateField('hero_cta_text', e.target.value)}
@@ -156,11 +156,27 @@ const AdminHomepageEditor = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>CTA Button Link</Label>
+                    <Label>Primary CTA Link</Label>
                     <Input
                       value={localContent.hero_cta_link || ''}
                       onChange={(e) => updateField('hero_cta_link', e.target.value)}
                       placeholder="/register"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Secondary CTA Text</Label>
+                    <Input
+                      value={localContent.hero_secondary_cta_text || ''}
+                      onChange={(e) => updateField('hero_secondary_cta_text', e.target.value)}
+                      placeholder="Explore Programs"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Secondary CTA Link</Label>
+                    <Input
+                      value={localContent.hero_secondary_cta_link || ''}
+                      onChange={(e) => updateField('hero_secondary_cta_link', e.target.value)}
+                      placeholder="/programs"
                     />
                   </div>
                 </div>
@@ -196,6 +212,150 @@ const AdminHomepageEditor = () => {
                         </Button>
                       </Label>
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Hero Badge Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Announcement Badge</CardTitle>
+                <CardDescription>The promotional badge shown above the title</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Show Badge</h4>
+                    <p className="text-sm text-muted-foreground">Display the announcement badge</p>
+                  </div>
+                  <Switch
+                    checked={localContent.hero_badge_visible || false}
+                    onCheckedChange={(checked) => updateField('hero_badge_visible', checked)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Badge Text</Label>
+                  <Input
+                    value={localContent.hero_badge_text || ''}
+                    onChange={(e) => updateField('hero_badge_text', e.target.value)}
+                    placeholder="Enrollment now open for 2026 cohorts"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Hero Stats Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistics Cards</CardTitle>
+                <CardDescription>Floating stats displayed on the right side</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Show Stats</h4>
+                    <p className="text-sm text-muted-foreground">Display floating statistics cards</p>
+                  </div>
+                  <Switch
+                    checked={localContent.hero_stats_visible || false}
+                    onCheckedChange={(checked) => updateField('hero_stats_visible', checked)}
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Stat 1 Value</Label>
+                    <Input
+                      value={localContent.hero_stat_1_value || ''}
+                      onChange={(e) => updateField('hero_stat_1_value', e.target.value)}
+                      placeholder="98%"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Stat 1 Label</Label>
+                    <Input
+                      value={localContent.hero_stat_1_label || ''}
+                      onChange={(e) => updateField('hero_stat_1_label', e.target.value)}
+                      placeholder="Completion Rate"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Stat 2 Value</Label>
+                    <Input
+                      value={localContent.hero_stat_2_value || ''}
+                      onChange={(e) => updateField('hero_stat_2_value', e.target.value)}
+                      placeholder="15+"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Stat 2 Label</Label>
+                    <Input
+                      value={localContent.hero_stat_2_label || ''}
+                      onChange={(e) => updateField('hero_stat_2_label', e.target.value)}
+                      placeholder="Industry Partners"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Stat 3 Value</Label>
+                    <Input
+                      value={localContent.hero_stat_3_value || ''}
+                      onChange={(e) => updateField('hero_stat_3_value', e.target.value)}
+                      placeholder="50+"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Stat 3 Label</Label>
+                    <Input
+                      value={localContent.hero_stat_3_label || ''}
+                      onChange={(e) => updateField('hero_stat_3_label', e.target.value)}
+                      placeholder="Programs"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Hero Trust Indicators */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Trust Indicators</CardTitle>
+                <CardDescription>Social proof section with ratings and reviews</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Show Trust Section</h4>
+                    <p className="text-sm text-muted-foreground">Display ratings and social proof</p>
+                  </div>
+                  <Switch
+                    checked={localContent.hero_trust_visible || false}
+                    onCheckedChange={(checked) => updateField('hero_trust_visible', checked)}
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>Rating</Label>
+                    <Input
+                      value={localContent.hero_trust_rating || ''}
+                      onChange={(e) => updateField('hero_trust_rating', e.target.value)}
+                      placeholder="4.9/5"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Reviews Count</Label>
+                    <Input
+                      value={localContent.hero_trust_reviews_count || ''}
+                      onChange={(e) => updateField('hero_trust_reviews_count', e.target.value)}
+                      placeholder="2,000+"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Graduates Text</Label>
+                    <Input
+                      value={localContent.hero_trust_graduates_text || ''}
+                      onChange={(e) => updateField('hero_trust_graduates_text', e.target.value)}
+                      placeholder="Graduates worldwide"
+                    />
                   </div>
                 </div>
               </CardContent>
