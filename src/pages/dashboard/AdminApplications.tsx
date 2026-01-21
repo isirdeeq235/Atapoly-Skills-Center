@@ -96,8 +96,7 @@ const AdminApplications = () => {
   const { data: applications, isLoading } = useQuery({
     queryKey: ['admin-applications'],
     queryFn: async () => {
-      // Fetch all applications that have been submitted by trainees
-      // Applications must have: submitted = true (meaning trainee completed their profile and submitted)
+      // Fetch ALL applications to show the full pipeline
       const { data, error } = await supabase
         .from("applications")
         .select(`
@@ -105,8 +104,7 @@ const AdminApplications = () => {
           profiles!applications_trainee_id_fkey(id, full_name, email, phone, avatar_url, date_of_birth, gender, address, state),
           programs(id, title, application_fee, registration_fee)
         `)
-        .eq("submitted", true)
-        .order("submitted_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Application[];
