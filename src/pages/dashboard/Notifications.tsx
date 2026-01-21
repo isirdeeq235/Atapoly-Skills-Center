@@ -80,6 +80,7 @@ const Notifications = () => {
       registration_complete: 'Enrolled',
       system_announcement: 'Announcement',
       program_update: 'Program',
+      new_application_for_review: 'New Application',
     };
     
     const variants: Record<NotificationType, 'default' | 'approved' | 'rejected' | 'pending' | 'outline'> = {
@@ -92,6 +93,7 @@ const Notifications = () => {
       registration_complete: 'approved',
       system_announcement: 'outline',
       program_update: 'default',
+      new_application_for_review: 'pending',
     };
 
     return <Badge variant={variants[type]}>{labels[type]}</Badge>;

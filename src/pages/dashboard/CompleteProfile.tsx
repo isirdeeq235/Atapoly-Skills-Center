@@ -238,9 +238,10 @@ const CompleteProfile = () => {
       // Mark the latest application as submitted for admin review
       const { data: latestApplication } = await supabase
         .from('applications')
-        .select('id')
+        .select('id, programs(title)')
         .eq('trainee_id', user.id)
         .eq('application_fee_paid', true)
+        .eq('submitted', false)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -256,6 +257,19 @@ const CompleteProfile = () => {
 
         if (submitError) {
           console.error('Error submitting application:', submitError);
+        } else {
+          // Notify all admins about the new application submission
+          try {
+            const programTitle = (latestApplication.programs as any)?.title || 'Unknown Program';
+            await supabase.rpc('notify_admins_new_application', {
+              p_trainee_name: formData.full_name,
+              p_program_title: programTitle,
+              p_application_id: latestApplication.id
+            });
+            console.log('Admins notified about new application');
+          } catch (notifyError) {
+            console.error('Error notifying admins:', notifyError);
+          }
         }
       }
 

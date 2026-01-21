@@ -1260,6 +1260,14 @@ export type Database = {
         Args: { p_application_id: string; p_issued_by?: string }
         Returns: string
       }
+      notify_admins_new_application: {
+        Args: {
+          p_application_id: string
+          p_program_title: string
+          p_trainee_name: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "instructor" | "trainee"
