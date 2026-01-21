@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, ChevronDown, Star } from "lucide-react";
 import { useHeroSlides } from "@/hooks/useHeroSlides";
-import heroBackground from "@/assets/hero-background.jpg";
 
 // Memoized trust indicator avatars
 const TrustAvatars = memo(() => (
@@ -74,7 +73,7 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
   }, [activeSlides.length]);
 
   const currentSlideData = activeSlides[currentSlide];
-  const backgroundImage = currentSlideData?.image_url || heroBackground;
+  const backgroundImage = currentSlideData?.image_url;
 
   const scrollToNext = () => {
     window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
@@ -82,16 +81,20 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
 
   return (
     <section ref={ref} className="relative min-h-screen overflow-hidden">
-      {/* Full-screen background image with optimized loading */}
+      {/* Full-screen background with optimized loading */}
       <div className="absolute inset-0">
-        <img 
-          src={backgroundImage}
-          alt=""
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          className="w-full h-full object-cover"
-        />
+        {backgroundImage ? (
+          <img 
+            src={backgroundImage}
+            alt=""
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-foreground via-foreground/95 to-primary/20" />
+        )}
         {/* Layered gradient overlays for depth */}
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-foreground/30" />
