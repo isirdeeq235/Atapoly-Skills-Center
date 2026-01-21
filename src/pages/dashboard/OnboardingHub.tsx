@@ -13,9 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { 
   CheckCircle2, 
-  Circle, 
   ArrowRight, 
-  CreditCard, 
+  CreditCard,
   FileText, 
   Clock,
   XCircle,
@@ -170,7 +169,92 @@ const OnboardingHub = () => {
     }
   };
 
-  // Handle verifying existing payment (for when user has paid but status not updated)
+  // Handle verifying existing application fee payment
+  const handleVerifyApplicationPayment = async () => {
+    if (!user) return;
+    
+    setIsVerifying(true);
+    try {
+      // Get the latest pending application fee payment for this user
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("id, provider_reference, provider, status, application_id")
+        .eq("trainee_id", user.id)
+        .eq("payment_type", "application_fee")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      
+      if (!payments || payments.length === 0) {
+        toast({
+          title: "No Payment Found",
+          description: "We couldn't find a pending application fee payment. Please select a program and pay.",
+          variant: "destructive",
+        });
+        setIsVerifying(false);
+        return;
+      }
+
+      const payment = payments[0];
+      
+      if (payment.status === 'completed') {
+        // Payment already completed, just refresh
+        queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
+        await refetch();
+        toast({
+          title: "Payment Already Verified",
+          description: "Your application fee has been processed. Refreshing your status...",
+        });
+        setIsVerifying(false);
+        return;
+      }
+
+      // If we have a reference, try to verify with payment provider
+      if (payment.provider_reference && provider) {
+        const { data, error } = await supabase.functions.invoke("verify-payment", {
+          body: { 
+            reference: payment.provider_reference, 
+            provider: payment.provider || provider,
+            payment_id: payment.id
+          }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.success) {
+          queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['existing-applications', user.id] });
+          await refetch();
+          toast({
+            title: "Application Fee Verified! 🎉",
+            description: "Your payment has been confirmed. Please complete your profile to continue.",
+          });
+        } else {
+          toast({
+            title: "Payment Not Yet Confirmed",
+            description: data?.error || "Your payment is still being processed. Please try again in a few minutes.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // No reference - try to query by checking the most recent transaction
+        toast({
+          title: "Payment Processing",
+          description: "Your payment may still be processing. Please wait a moment and try again, or contact support.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Application payment verification error:", error);
+      toast({
+        title: "Verification Failed",
+        description: "Unable to verify payment. Please contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Handle verifying existing registration fee payment (for when user has paid but status not updated)
   const handleVerifyExistingPayment = async () => {
     if (!user || !status?.application.applicationId) return;
     
@@ -404,12 +488,32 @@ const OnboardingHub = () => {
           </CardHeader>
           <CardContent>
             {currentStep === 'select_program' && (
-              <Link to="/dashboard/apply">
-                <Button size="lg" className="w-full sm:w-auto">
-                  Browse Programs
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link to="/dashboard/apply">
+                    <Button size="lg" className="w-full sm:w-auto">
+                      Browse Programs
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    onClick={handleVerifyApplicationPayment}
+                    disabled={isVerifying}
+                  >
+                    {isVerifying ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                    )}
+                    Already Paid? Verify
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  If you've already paid the application fee but it's not reflected, click "Already Paid? Verify" to check your payment status with Paystack.
+                </p>
+              </div>
             )}
             {currentStep === 'complete_profile' && (
               <Link to="/dashboard/complete-profile">
