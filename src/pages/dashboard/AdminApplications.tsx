@@ -59,12 +59,19 @@ interface Application {
   registration_fee_paid: boolean;
   registration_number: string | null;
   created_at: string;
+  submitted_at: string | null;
   admin_notes: string | null;
+  submitted: boolean;
   profiles: {
     id: string;
     full_name: string;
     email: string;
     phone: string | null;
+    avatar_url: string | null;
+    date_of_birth: string | null;
+    gender: string | null;
+    address: string | null;
+    state: string | null;
   };
   programs: {
     id: string;
@@ -89,13 +96,17 @@ const AdminApplications = () => {
   const { data: applications, isLoading } = useQuery({
     queryKey: ['admin-applications'],
     queryFn: async () => {
+      // Only fetch applications that have been submitted by trainees
+      // Applications must have: application_fee_paid = true AND submitted = true
       const { data, error } = await supabase
         .from("applications")
         .select(`
           *,
-          profiles!applications_trainee_id_fkey(id, full_name, email, phone),
+          profiles!applications_trainee_id_fkey(id, full_name, email, phone, avatar_url, date_of_birth, gender, address, state),
           programs(id, title, application_fee, registration_fee)
         `)
+        .eq("submitted", true)
+        .eq("application_fee_paid", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -333,6 +344,9 @@ const AdminApplications = () => {
     rejected: applications?.filter(a => a.status === 'rejected').length || 0,
   };
 
+  // Count pending applications awaiting review
+  const pendingReviewCount = applications?.filter(a => a.status === 'pending').length || 0;
+
   const dashboardRole = role === 'super_admin' ? 'super-admin' : (role as 'admin' | 'instructor');
 
   if (isLoading) {
@@ -459,9 +473,8 @@ const AdminApplications = () => {
                   <TableRow>
                     <TableHead>Applicant</TableHead>
                     <TableHead>Program</TableHead>
-                    <TableHead>App Fee</TableHead>
+                    <TableHead>Submitted</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -469,31 +482,37 @@ const AdminApplications = () => {
                   {filteredApplications.map((application) => (
                     <TableRow key={application.id}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{application.profiles?.full_name}</p>
-                          <p className="text-sm text-muted-foreground">{application.profiles?.email}</p>
+                        <div className="flex items-center gap-3">
+                          {application.profiles?.avatar_url ? (
+                            <img 
+                              src={application.profiles.avatar_url} 
+                              alt=""
+                              className="w-10 h-12 object-cover rounded-md border"
+                            />
+                          ) : (
+                            <div className="w-10 h-12 bg-muted rounded-md flex items-center justify-center">
+                              <UserCheck className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium">{application.profiles?.full_name}</p>
+                            <p className="text-sm text-muted-foreground">{application.profiles?.email}</p>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <p className="font-medium">{application.programs?.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          ₦{application.programs?.registration_fee?.toLocaleString()} reg fee
+                        </p>
                       </TableCell>
-                      <TableCell>
-                        {application.application_fee_paid ? (
-                          <Badge variant="approved" className="gap-1">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Paid
-                          </Badge>
-                        ) : (
-                          <Badge variant="pending" className="gap-1">
-                            <Clock className="w-3 h-3" />
-                            Unpaid
-                          </Badge>
-                        )}
+                      <TableCell className="text-muted-foreground">
+                        {application.submitted_at 
+                          ? format(new Date(application.submitted_at), 'MMM d, yyyy')
+                          : format(new Date(application.created_at), 'MMM d, yyyy')
+                        }
                       </TableCell>
                       <TableCell>{getStatusBadge(application.status)}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(application.created_at), 'MMM d, yyyy')}
-                      </TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="outline" 
@@ -525,30 +544,83 @@ const AdminApplications = () => {
 
           {selectedApplication && (
             <div className="space-y-6">
+              {/* Applicant Profile Header */}
+              <div className="flex items-start gap-4 p-4 bg-secondary/30 rounded-lg">
+                {selectedApplication.profiles?.avatar_url ? (
+                  <img 
+                    src={selectedApplication.profiles.avatar_url} 
+                    alt={selectedApplication.profiles.full_name}
+                    className="w-20 h-24 object-cover rounded-lg border-2 border-background shadow-md"
+                  />
+                ) : (
+                  <div className="w-20 h-24 bg-muted rounded-lg border-2 border-background shadow-md flex items-center justify-center">
+                    <UserCheck className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold">{selectedApplication.profiles?.full_name}</h3>
+                  <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Mail className="w-4 h-4" />
+                      {selectedApplication.profiles?.email}
+                    </span>
+                    {selectedApplication.profiles?.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="w-4 h-4" />
+                        {selectedApplication.profiles.phone}
+                      </span>
+                    )}
+                  </div>
+                  {selectedApplication.submitted_at && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Submitted: {format(new Date(selectedApplication.submitted_at), 'PPP, p')}
+                    </p>
+                  )}
+                </div>
+                <div className="text-right">
+                  {getStatusBadge(selectedApplication.status)}
+                  {selectedApplication.registration_number && (
+                    <p className="text-xs font-mono mt-2 text-muted-foreground">
+                      #{selectedApplication.registration_number}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* Applicant Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Applicant Details</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Personal Information</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">{selectedApplication.profiles?.full_name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{selectedApplication.profiles?.email}</span>
-                    </div>
-                    {selectedApplication.profiles?.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{selectedApplication.profiles?.phone}</span>
+                  <CardContent className="space-y-2 text-sm">
+                    {selectedApplication.profiles?.date_of_birth && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Date of Birth:</span>
+                        <span>{format(new Date(selectedApplication.profiles.date_of_birth), 'PPP')}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">Applied: {format(new Date(selectedApplication.created_at), 'PPP')}</span>
+                    {selectedApplication.profiles?.gender && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Gender:</span>
+                        <span className="capitalize">{selectedApplication.profiles.gender}</span>
+                      </div>
+                    )}
+                    {selectedApplication.profiles?.address && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground shrink-0">Address:</span>
+                        <span className="text-right">{selectedApplication.profiles.address}</span>
+                      </div>
+                    )}
+                    {selectedApplication.profiles?.state && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">State:</span>
+                        <span>{selectedApplication.profiles.state}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Applied:</span>
+                      <span>{format(new Date(selectedApplication.created_at), 'PPP')}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -566,7 +638,7 @@ const AdminApplications = () => {
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm">
-                          Application Fee: ₦{selectedApplication.programs?.application_fee?.toLocaleString()}
+                          App Fee: ₦{selectedApplication.programs?.application_fee?.toLocaleString()}
                         </span>
                         {selectedApplication.application_fee_paid ? (
                           <Badge variant="approved">Paid</Badge>
@@ -594,7 +666,7 @@ const AdminApplications = () => {
                       <div className="flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-muted-foreground" />
                         <span className="text-sm">
-                          Registration Fee: ₦{selectedApplication.programs?.registration_fee?.toLocaleString()}
+                          Reg Fee: ₦{selectedApplication.programs?.registration_fee?.toLocaleString()}
                         </span>
                         {selectedApplication.registration_fee_paid ? (
                           <Badge variant="approved">Paid</Badge>
@@ -618,10 +690,6 @@ const AdminApplications = () => {
                         </Button>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">Current Status:</span>
-                      {getStatusBadge(selectedApplication.status)}
-                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -636,15 +704,6 @@ const AdminApplications = () => {
                   rows={3}
                 />
               </div>
-
-              {/* Warning for unpaid applications */}
-              {!selectedApplication.application_fee_paid && selectedApplication.status === 'pending' && (
-                <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
-                  <p className="text-sm text-warning-foreground">
-                    ⚠️ The applicant has not paid the application fee yet. You may want to wait for payment before approving.
-                  </p>
-                </div>
-              )}
             </div>
           )}
 

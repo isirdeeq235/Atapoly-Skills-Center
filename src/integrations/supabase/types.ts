@@ -28,6 +28,8 @@ export type Database = {
           registration_fee_paid: boolean
           registration_number: string | null
           status: Database["public"]["Enums"]["application_status"]
+          submitted: boolean
+          submitted_at: string | null
           trainee_id: string
           updated_at: string
         }
@@ -44,6 +46,8 @@ export type Database = {
           registration_fee_paid?: boolean
           registration_number?: string | null
           status?: Database["public"]["Enums"]["application_status"]
+          submitted?: boolean
+          submitted_at?: string | null
           trainee_id: string
           updated_at?: string
         }
@@ -60,6 +64,8 @@ export type Database = {
           registration_fee_paid?: boolean
           registration_number?: string | null
           status?: Database["public"]["Enums"]["application_status"]
+          submitted?: boolean
+          submitted_at?: string | null
           trainee_id?: string
           updated_at?: string
         }

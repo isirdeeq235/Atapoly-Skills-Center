@@ -21,6 +21,7 @@ export interface OnboardingStatus {
     status: string | null;
     applicationFeePaid: boolean;
     registrationFeePaid: boolean;
+    submitted: boolean;
     applicationId: string | null;
     programId: string | null;
     programTitle: string | null;
@@ -46,6 +47,7 @@ export function useOnboardingStatus() {
             status: null,
             applicationFeePaid: false,
             registrationFeePaid: false,
+            submitted: false,
             applicationId: null,
             programId: null,
             programTitle: null,
@@ -92,6 +94,7 @@ export function useOnboardingStatus() {
         status: applicationData?.status || null,
         applicationFeePaid: applicationData?.application_fee_paid || false,
         registrationFeePaid: applicationData?.registration_fee_paid || false,
+        submitted: applicationData?.submitted || false,
         applicationId: applicationData?.id || null,
         programId: applicationData?.program_id || null,
         programTitle: applicationData?.programs?.title || null,
@@ -99,10 +102,10 @@ export function useOnboardingStatus() {
         registrationNumber: applicationData?.registration_number || null,
       };
 
-      // Determine current step - NEW FLOW:
+      // Determine current step - UPDATED FLOW:
       // 1. Select program & pay application fee FIRST
-      // 2. Complete profile form
-      // 3. Admin approval
+      // 2. Complete profile form & submit application
+      // 3. Admin approval (only after submission)
       // 4. Pay registration fee
       // 5. Fully enrolled
       let currentStep: OnboardingStep = 'select_program';
@@ -110,11 +113,11 @@ export function useOnboardingStatus() {
       if (!application.exists || !application.applicationFeePaid) {
         // Step 1: Must select program and pay application fee first
         currentStep = 'select_program';
-      } else if (!isProfileComplete) {
-        // Step 2: After application fee paid, complete profile
+      } else if (!isProfileComplete || !application.submitted) {
+        // Step 2: After application fee paid, complete profile and submit
         currentStep = 'complete_profile';
-      } else if (application.status === 'pending') {
-        // Step 3: Waiting for admin approval
+      } else if (application.status === 'pending' && application.submitted) {
+        // Step 3: Waiting for admin approval (only after submission)
         currentStep = 'pending_approval';
       } else if (application.status === 'rejected') {
         currentStep = 'rejected';
