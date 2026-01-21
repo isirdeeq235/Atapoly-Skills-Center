@@ -64,6 +64,21 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
     image_url: null,
   }];
 
+  // All hooks must be called before any conditional returns
+  useEffect(() => {
+    if (isLoading) return;
+    requestAnimationFrame(() => setIsVisible(true));
+    
+    if (activeSlides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [activeSlides.length, isLoading]);
+
+  const currentSlideData = activeSlides[currentSlide];
+  const backgroundImage = currentSlideData?.image_url;
+
   // Show a minimal loading state to prevent flash of default content
   if (isLoading) {
     return (
@@ -84,20 +99,6 @@ export const Hero = forwardRef<HTMLElement>(function Hero(_, ref) {
       </section>
     );
   }
-
-  useEffect(() => {
-    requestAnimationFrame(() => setIsVisible(true));
-    
-    if (activeSlides.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
-    }, 8000);
-    return () => clearInterval(timer);
-  }, [activeSlides.length]);
-
-  const currentSlideData = activeSlides[currentSlide];
-  const backgroundImage = currentSlideData?.image_url;
-
   // Get dynamic content from homepage settings
   const badgeText = homepageContent?.hero_badge_text || 'Enrollment now open';
   const badgeVisible = homepageContent?.hero_badge_visible ?? true;
