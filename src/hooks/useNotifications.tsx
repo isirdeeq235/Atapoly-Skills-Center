@@ -73,13 +73,21 @@ export function useNotifications() {
           // Invalidate and refetch notifications
           queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
           
-          // If notification is about application status change, also refetch applications
+          // If notification is about application/payment status change, sync all related data
           if (newNotification.type === 'application_approved' || 
               newNotification.type === 'application_rejected' ||
-              newNotification.type === 'registration_complete') {
+              newNotification.type === 'registration_complete' ||
+              newNotification.type === 'payment_success' ||
+              newNotification.type === 'payment_verified') {
+            // Sync trainee data
             queryClient.invalidateQueries({ queryKey: ['trainee-applications', user.id] });
             queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
             queryClient.invalidateQueries({ queryKey: ['existing-applications', user.id] });
+            // Sync admin data
+            queryClient.invalidateQueries({ queryKey: ['applications'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+            queryClient.invalidateQueries({ queryKey: ['payments'] });
           }
         }
       )

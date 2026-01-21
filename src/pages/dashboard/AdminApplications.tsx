@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { useAdminPaymentSync } from "@/hooks/usePaymentSync";
 
 interface Application {
   id: string;
@@ -81,6 +82,9 @@ const AdminApplications = () => {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  
+  // Enable real-time sync for applications
+  useAdminPaymentSync();
 
   const { data: applications, isLoading } = useQuery({
     queryKey: ['admin-applications'],
