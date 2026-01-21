@@ -26,14 +26,20 @@ import {
   FileSignature,
   CheckCircle2,
   Receipt,
-  ExternalLink
+  ExternalLink,
+  Send,
+  AlertCircle
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const SuperAdminSettings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { data: siteConfig, isLoading: siteLoading, refetch: refetchSiteConfig } = useSiteConfig();
   const { data: paymentSettings, isLoading: paymentLoading, refetch: refetchPaymentSettings } = usePaymentSettings();
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   // Site config state
   const [siteName, setSiteName] = useState("");
@@ -137,6 +143,68 @@ const SuperAdminSettings = () => {
     }
   };
 
+  const handleTestSmtp = async () => {
+    if (!profile?.email) {
+      toast({
+        title: "No email found",
+        description: "Your profile doesn't have an email address configured.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTestingSmtp(true);
+    setSmtpTestResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("send-email", {
+        body: {
+          to: profile.email,
+          subject: `SMTP Test - ${siteName || "Training Platform"}`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"></head>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
+              <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <h1 style="color: #10b981; margin: 0;">✓ SMTP Test Successful</h1>
+                </div>
+                <p style="color: #333; font-size: 16px;">Hello,</p>
+                <p style="color: #666; line-height: 1.6;">This is a test email to verify your SMTP configuration is working correctly.</p>
+                <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+                  <p style="margin: 0; color: #166534;"><strong>Configuration Status:</strong> Working ✓</p>
+                  <p style="margin: 5px 0 0 0; color: #166534;">Sent at: ${new Date().toLocaleString()}</p>
+                </div>
+                <p style="color: #666; line-height: 1.6;">Your email system is properly configured and ready to send transactional emails.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px; text-align: center;">© ${new Date().getFullYear()} ${siteName || "Training Platform"}. All rights reserved.</p>
+              </div>
+            </body>
+            </html>
+          `,
+        },
+      });
+
+      if (error) throw error;
+
+      setSmtpTestResult({ success: true, message: `Test email sent to ${profile.email}` });
+      toast({
+        title: "SMTP Test Successful",
+        description: `Test email sent to ${profile.email}. Check your inbox!`,
+      });
+    } catch (error: any) {
+      setSmtpTestResult({ success: false, message: error.message || "Failed to send test email" });
+      toast({
+        title: "SMTP Test Failed",
+        description: error.message || "Failed to send test email. Check your SMTP configuration.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "favicon" | "signature") => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -186,7 +254,7 @@ const SuperAdminSettings = () => {
   return (
     <DashboardLayout role="super-admin" title="Settings" subtitle="Manage platform configuration">
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-lg grid-cols-4">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             General
@@ -194,6 +262,10 @@ const SuperAdminSettings = () => {
           <TabsTrigger value="branding" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
             Branding
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center gap-2">
+            <Mail className="w-4 h-4" />
+            Email
           </TabsTrigger>
           <TabsTrigger value="payments" className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
@@ -398,6 +470,105 @@ const SuperAdminSettings = () => {
                 {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Save Branding Settings
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Email Settings */}
+        <TabsContent value="email">
+          <Card>
+            <CardHeader>
+              <CardTitle>Email Configuration</CardTitle>
+              <CardDescription>
+                Test and verify your SMTP email configuration
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-info/10 rounded-lg text-sm">
+                <p className="text-muted-foreground">
+                  SMTP credentials are securely stored in environment secrets (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM_EMAIL). 
+                  Use the test button below to verify your configuration.
+                </p>
+              </div>
+
+              {/* SMTP Test Section */}
+              <div className="space-y-4 p-6 border border-border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-lg">SMTP Test</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Send a test email to verify your configuration
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Test email will be sent to:</span>
+                    <span className="font-medium">{profile?.email || "No email configured"}</span>
+                  </div>
+
+                  {smtpTestResult && (
+                    <div className={`p-4 rounded-lg flex items-start gap-3 ${
+                      smtpTestResult.success 
+                        ? "bg-success/10 border border-success/20" 
+                        : "bg-destructive/10 border border-destructive/20"
+                    }`}>
+                      {smtpTestResult.success ? (
+                        <CheckCircle2 className="w-5 h-5 text-success mt-0.5" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
+                      )}
+                      <div>
+                        <p className={`font-medium ${smtpTestResult.success ? "text-success" : "text-destructive"}`}>
+                          {smtpTestResult.success ? "Test Successful" : "Test Failed"}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {smtpTestResult.message}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button 
+                    onClick={handleTestSmtp} 
+                    disabled={testingSmtp || !profile?.email}
+                    className="w-full sm:w-auto"
+                  >
+                    {testingSmtp ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2" />
+                    )}
+                    {testingSmtp ? "Sending Test Email..." : "Send Test Email"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Email Templates Link */}
+              <div className="space-y-4 p-4 border border-border rounded-lg bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Mail className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Email Templates</h3>
+                      <p className="text-sm text-muted-foreground">Customize transactional email content</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" onClick={() => navigate("/admin/email-templates")}>
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Manage Templates
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
