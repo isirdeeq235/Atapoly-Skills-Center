@@ -96,8 +96,8 @@ const AdminApplications = () => {
   const { data: applications, isLoading } = useQuery({
     queryKey: ['admin-applications'],
     queryFn: async () => {
-      // Only fetch applications that have been submitted by trainees
-      // Applications must have: application_fee_paid = true AND submitted = true
+      // Fetch all applications that have been submitted by trainees
+      // Applications must have: submitted = true (meaning trainee completed their profile and submitted)
       const { data, error } = await supabase
         .from("applications")
         .select(`
@@ -106,8 +106,7 @@ const AdminApplications = () => {
           programs(id, title, application_fee, registration_fee)
         `)
         .eq("submitted", true)
-        .eq("application_fee_paid", true)
-        .order("created_at", { ascending: false });
+        .order("submitted_at", { ascending: false });
 
       if (error) throw error;
       return data as Application[];
