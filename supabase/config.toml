@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.initialize-payment]
 verify_jwt = false
+
+[functions.update-batch-statuses]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.check-connections]
+verify_jwt = false
