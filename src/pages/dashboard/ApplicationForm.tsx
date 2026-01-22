@@ -168,28 +168,36 @@ const ApplicationForm = () => {
       subtitle={`Complete your application for ${programData?.title}`}
     >
       <div className="max-w-3xl mx-auto">
-        {/* Progress Indicator */}
+        {/* Progress Indicator - 6 Step Flow */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-success text-white flex items-center justify-center text-sm font-semibold">✓</div>
-              <span className="font-medium text-success">Application Fee Paid</span>
+          <div className="flex items-center justify-between mb-4 text-xs sm:text-sm">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-success text-white flex items-center justify-center text-xs sm:text-sm font-semibold">✓</div>
+              <span className="font-medium text-success hidden sm:inline">App Fee</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center text-sm font-semibold">2</div>
-              <span className="font-medium">Application Form</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-success text-white flex items-center justify-center text-xs sm:text-sm font-semibold">✓</div>
+              <span className="font-medium text-success hidden sm:inline">Profile</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">3</div>
-              <span>Admin Approval</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-accent text-white flex items-center justify-center text-xs sm:text-sm font-semibold">3</div>
+              <span className="font-medium">Application</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">4</div>
-              <span>Pay & Enroll</span>
+            <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center text-xs sm:text-sm font-semibold">4</div>
+              <span className="hidden sm:inline">Review</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center text-xs sm:text-sm font-semibold">5</div>
+              <span className="hidden sm:inline">Reg Fee</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2 text-muted-foreground">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center text-xs sm:text-sm font-semibold">6</div>
+              <span className="hidden sm:inline">Enrolled</span>
             </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div className="h-full bg-accent w-1/2 transition-all" />
+            <div className="h-full bg-accent w-[42%] transition-all" />
           </div>
         </div>
 
@@ -217,9 +225,9 @@ const ApplicationForm = () => {
                 Applicant Information
                 <span className="text-xs font-normal text-muted-foreground ml-2">(from your profile)</span>
               </CardTitle>
-              <CardDescription>
-                This information is pulled from your profile. <a href="/dashboard/profile" className="text-accent underline">Edit your profile</a> to make changes.
-              </CardDescription>
+            <CardDescription>
+              This information is pulled from your profile. <a href="/dashboard/complete-profile" className="text-accent underline">Edit your profile</a> to make changes.
+            </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">

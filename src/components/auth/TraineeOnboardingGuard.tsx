@@ -106,3 +106,38 @@ export function ProfileCompletionGuard({ children }: { children: React.ReactNode
 
   return <>{children}</>;
 }
+
+// Helper component for application form page - ensures profile is complete first
+export function ApplicationFormGuard({ children }: { children: React.ReactNode }) {
+  const { data: status, isLoading } = useOnboardingStatus();
+  const { role } = useAuth();
+
+  if (role !== 'trainee') {
+    return <>{children}</>;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  // Redirect to apply page if application fee not paid yet
+  if (status?.currentStep === 'select_program') {
+    return <Navigate to="/dashboard/apply" replace />;
+  }
+
+  // Redirect to complete profile if profile is not complete
+  if (status?.currentStep === 'complete_profile' || !status?.profile.isComplete) {
+    return <Navigate to="/dashboard/complete-profile" replace />;
+  }
+
+  // If application is already submitted, redirect to onboarding hub
+  if (status?.application.submitted) {
+    return <Navigate to="/dashboard/onboarding" replace />;
+  }
+
+  return <>{children}</>;
+}
