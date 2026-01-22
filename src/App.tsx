@@ -7,7 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { PermissionsProvider } from "@/hooks/usePermissions";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PermissionGuard } from "@/components/auth/PermissionGuard";
-import { TraineeOnboardingGuard, ProfileCompletionGuard, RequireFullEnrollment } from "@/components/auth/TraineeOnboardingGuard";
+import { TraineeOnboardingGuard, ProfileCompletionGuard, RequireFullEnrollment, ApplicationFormGuard } from "@/components/auth/TraineeOnboardingGuard";
 import { DynamicHead } from "@/components/DynamicHead";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { RealTimeSync } from "@/components/RealTimeSync";
@@ -92,9 +92,9 @@ const App = () => (
             {/* Trainee Application Form - Step 3: After profile is complete */}
             <Route path="/dashboard/application-form/:applicationId" element={
               <ProtectedRoute allowedRoles={['trainee']}>
-                <TraineeOnboardingGuard allowedSteps={['fill_application']}>
+                <ApplicationFormGuard>
                   <ApplicationForm />
-                </TraineeOnboardingGuard>
+                </ApplicationFormGuard>
               </ProtectedRoute>
             } />
             

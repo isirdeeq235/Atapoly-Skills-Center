@@ -86,6 +86,7 @@ const AdminApplications = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [pipelineFilter, setPipelineFilter] = useState<string>("all");
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -322,8 +323,28 @@ const AdminApplications = () => {
     
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    // Pipeline filter matching
+    let matchesPipeline = pipelineFilter === "all";
+    if (pipelineFilter === "fee_pending") matchesPipeline = !app.application_fee_paid;
+    else if (pipelineFilter === "draft") matchesPipeline = app.application_fee_paid && !app.submitted;
+    else if (pipelineFilter === "under_review") matchesPipeline = app.submitted && app.status === 'pending';
+    else if (pipelineFilter === "awaiting_reg") matchesPipeline = app.status === 'approved' && !app.registration_fee_paid;
+    else if (pipelineFilter === "enrolled") matchesPipeline = app.status === 'approved' && app.registration_fee_paid;
+    else if (pipelineFilter === "rejected") matchesPipeline = app.status === 'rejected';
+    
+    return matchesSearch && matchesStatus && matchesPipeline;
   });
+
+  // Get pipeline status for each application
+  const getPipelineStatus = (app: Application) => {
+    if (!app.application_fee_paid) return { label: 'Fee Pending', key: 'fee_pending', color: 'bg-orange-500/10 text-orange-600 border-orange-200' };
+    if (!app.submitted) return { label: 'Draft', key: 'draft', color: 'bg-slate-500/10 text-slate-600 border-slate-200' };
+    if (app.status === 'pending') return { label: 'Under Review', key: 'under_review', color: 'bg-yellow-500/10 text-yellow-600 border-yellow-200' };
+    if (app.status === 'rejected') return { label: 'Rejected', key: 'rejected', color: 'bg-red-500/10 text-red-600 border-red-200' };
+    if (app.status === 'approved' && !app.registration_fee_paid) return { label: 'Awaiting Reg Fee', key: 'awaiting_reg', color: 'bg-blue-500/10 text-blue-600 border-blue-200' };
+    if (app.status === 'approved' && app.registration_fee_paid) return { label: 'Enrolled', key: 'enrolled', color: 'bg-green-500/10 text-green-600 border-green-200' };
+    return { label: app.status, key: 'other', color: 'bg-gray-500/10 text-gray-600 border-gray-200' };
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -336,13 +357,16 @@ const AdminApplications = () => {
 
   const stats = {
     total: applications?.length || 0,
-    pending: applications?.filter(a => a.status === 'pending').length || 0,
-    approved: applications?.filter(a => a.status === 'approved').length || 0,
+    feePending: applications?.filter(a => !a.application_fee_paid).length || 0,
+    draft: applications?.filter(a => a.application_fee_paid && !a.submitted).length || 0,
+    underReview: applications?.filter(a => a.submitted && a.status === 'pending').length || 0,
+    approved: applications?.filter(a => a.status === 'approved' && !a.registration_fee_paid).length || 0,
+    enrolled: applications?.filter(a => a.status === 'approved' && a.registration_fee_paid).length || 0,
     rejected: applications?.filter(a => a.status === 'rejected').length || 0,
   };
 
   // Count pending applications awaiting review
-  const pendingReviewCount = applications?.filter(a => a.status === 'pending').length || 0;
+  const pendingReviewCount = stats.underReview;
 
   const dashboardRole = role === 'super_admin' ? 'super-admin' : (role as 'admin' | 'instructor');
 
@@ -363,55 +387,94 @@ const AdminApplications = () => {
       subtitle="Review and manage trainee applications"
     >
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 mb-6">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-primary" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-xl font-bold">{stats.total}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-warning" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-orange-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-xl font-bold">{stats.feePending}</p>
+                <p className="text-xs text-muted-foreground">Fee Pending</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-success" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-slate-500/10 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-slate-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.approved}</p>
-                <p className="text-sm text-muted-foreground">Approved</p>
+                <p className="text-xl font-bold">{stats.draft}</p>
+                <p className="text-xs text-muted-foreground">Draft</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-destructive" />
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-warning/10 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.rejected}</p>
-                <p className="text-sm text-muted-foreground">Rejected</p>
+                <p className="text-xl font-bold">{stats.underReview}</p>
+                <p className="text-xs text-muted-foreground">Under Review</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{stats.approved}</p>
+                <p className="text-xs text-muted-foreground">Awaiting Reg</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-success" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{stats.enrolled}</p>
+                <p className="text-xs text-muted-foreground">Enrolled</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <XCircle className="w-4 h-4 text-destructive" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{stats.rejected}</p>
+                <p className="text-xs text-muted-foreground">Rejected</p>
               </div>
             </div>
           </CardContent>
@@ -431,10 +494,24 @@ const AdminApplications = () => {
                 className="pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={pipelineFilter} onValueChange={setPipelineFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Pipeline Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Pipeline</SelectItem>
+                <SelectItem value="fee_pending">Fee Pending</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="under_review">Under Review</SelectItem>
+                <SelectItem value="awaiting_reg">Awaiting Reg Fee</SelectItem>
+                <SelectItem value="enrolled">Enrolled</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
@@ -470,6 +547,7 @@ const AdminApplications = () => {
                   <TableRow>
                     <TableHead>Applicant</TableHead>
                     <TableHead>Program</TableHead>
+                    <TableHead>Pipeline Status</TableHead>
                     <TableHead>Submitted</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -503,10 +581,22 @@ const AdminApplications = () => {
                           ₦{application.programs?.registration_fee?.toLocaleString()} reg fee
                         </p>
                       </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const pipeline = getPipelineStatus(application);
+                          return (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${pipeline.color}`}>
+                              {pipeline.label}
+                            </span>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {application.submitted_at 
-                          ? format(new Date(application.submitted_at), 'MMM d, yyyy')
-                          : format(new Date(application.created_at), 'MMM d, yyyy')
+                        {application.submitted 
+                          ? (application.submitted_at 
+                              ? format(new Date(application.submitted_at), 'MMM d, yyyy')
+                              : 'Submitted')
+                          : <span className="text-orange-500 text-xs">Not submitted</span>
                         }
                       </TableCell>
                       <TableCell>{getStatusBadge(application.status)}</TableCell>
