@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -26,7 +26,7 @@ import {
   RefreshCw
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { ResubmissionDialog } from "@/components/dashboard/ResubmissionDialog";
 
 const RETRY_INTERVAL = 10000; // 10 seconds
 const MAX_RETRY_DURATION = 120000; // 2 minutes
@@ -43,6 +43,7 @@ const OnboardingHub = () => {
   const [isAutoRetrying, setIsAutoRetrying] = useState(false);
   const [retryCountdown, setRetryCountdown] = useState(0);
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [showResubmitDialog, setShowResubmitDialog] = useState(false);
   const queryClient = useQueryClient();
   const retryIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -618,7 +619,7 @@ const OnboardingHub = () => {
         </Card>
       )}
 
-      {/* Rejection Alert */}
+      {/* Rejection Alert with Resubmit */}
       {currentStep === 'rejected' && (
         <Card className="mb-6 border-destructive/30 bg-destructive/5">
           <CardContent className="pt-6">
@@ -626,22 +627,39 @@ const OnboardingHub = () => {
               <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
                 <XCircle className="w-6 h-6 text-destructive" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-1">Application Not Approved</h3>
                 <p className="text-muted-foreground mb-4">
                   Unfortunately, your application for {status?.application.programTitle} was not approved. 
-                  Please contact our support team for more information or apply for a different program.
+                  You can update your information and resubmit for review.
                 </p>
-                <Link to="/dashboard/apply">
-                  <Button variant="outline">
-                    Apply for Another Program
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                <div className="flex gap-3">
+                  <Button onClick={() => setShowResubmitDialog(true)}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Resubmit Application
                   </Button>
-                </Link>
+                  <Link to="/dashboard/apply">
+                    <Button variant="outline">
+                      Apply for Another Program
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Resubmission Dialog */}
+      {status?.application.applicationId && (
+        <ResubmissionDialog
+          open={showResubmitDialog}
+          onOpenChange={setShowResubmitDialog}
+          applicationId={status.application.applicationId}
+          programTitle={status.application.programTitle || 'Unknown Program'}
+          onSuccess={() => refetch()}
+        />
       )}
 
       {/* Current Step Highlight */}

@@ -27,6 +27,7 @@ export type Database = {
           program_id: string
           registration_fee_paid: boolean
           registration_number: string | null
+          resubmission_count: number | null
           status: Database["public"]["Enums"]["application_status"]
           submitted: boolean
           submitted_at: string | null
@@ -45,6 +46,7 @@ export type Database = {
           program_id: string
           registration_fee_paid?: boolean
           registration_number?: string | null
+          resubmission_count?: number | null
           status?: Database["public"]["Enums"]["application_status"]
           submitted?: boolean
           submitted_at?: string | null
@@ -63,6 +65,7 @@ export type Database = {
           program_id?: string
           registration_fee_paid?: boolean
           registration_number?: string | null
+          resubmission_count?: number | null
           status?: Database["public"]["Enums"]["application_status"]
           submitted?: boolean
           submitted_at?: string | null
@@ -1267,6 +1270,10 @@ export type Database = {
           p_trainee_name: string
         }
         Returns: number
+      }
+      resubmit_application: {
+        Args: { p_application_id: string }
+        Returns: boolean
       }
     }
     Enums: {

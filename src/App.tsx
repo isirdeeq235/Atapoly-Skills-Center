@@ -51,6 +51,8 @@ import AdminNotificationTemplates from "./pages/dashboard/AdminNotificationTempl
 import AdminEmailTemplates from "./pages/dashboard/AdminEmailTemplates";
 import AdminRolePermissions from "./pages/dashboard/AdminRolePermissions";
 import AdminReceiptTemplate from "./pages/dashboard/AdminReceiptTemplate";
+import AdminPayments from "./pages/dashboard/AdminPayments";
+import AdminStatusHistory from "./pages/dashboard/AdminStatusHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -250,8 +252,13 @@ const App = () => (
             <Route path="/admin/payments" element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                 <PermissionGuard requiredPermission="view_payments">
-                  <PaymentHistory />
+                  <AdminPayments />
                 </PermissionGuard>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/status-history" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <AdminStatusHistory />
               </ProtectedRoute>
             } />
             <Route path="/admin/hero-slides" element={
