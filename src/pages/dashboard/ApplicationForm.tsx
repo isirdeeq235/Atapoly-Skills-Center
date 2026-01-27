@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -226,7 +226,7 @@ const ApplicationForm = () => {
                 <span className="text-xs font-normal text-muted-foreground ml-2">(from your profile)</span>
               </CardTitle>
             <CardDescription>
-              This information is pulled from your profile. <a href="/dashboard/complete-profile" className="text-accent underline">Edit your profile</a> to make changes.
+              This information is pulled from your profile. <Link to="/dashboard/complete-profile" className="text-accent underline">Edit your profile</Link> to make changes.
             </CardDescription>
             </CardHeader>
             <CardContent>
