@@ -534,11 +534,24 @@ const AdminApplications = () => {
             <div className="text-center py-12">
               <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Applications Found</h3>
-              <p className="text-muted-foreground">
-                {searchQuery || statusFilter !== "all" 
-                  ? "Try adjusting your filters" 
-                  : "No applications have been submitted yet"}
+              <p className="text-muted-foreground mb-4">
+                {searchQuery || statusFilter !== "all" || pipelineFilter !== "all"
+                  ? "Try adjusting your search or filters" 
+                  : "Applications will appear here once trainees complete the payment and submission process."}
               </p>
+              {!searchQuery && statusFilter === "all" && pipelineFilter === "all" && (
+                <div className="max-w-md mx-auto text-left bg-secondary/50 rounded-lg p-4 text-sm">
+                  <p className="font-medium mb-2">Application Flow:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>Trainee pays application fee</li>
+                    <li>Trainee completes profile</li>
+                    <li>Trainee fills & submits application form</li>
+                    <li><strong className="text-foreground">Application appears here for review</strong></li>
+                    <li>Admin approves/rejects</li>
+                    <li>If approved, trainee pays registration fee</li>
+                  </ol>
+                </div>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -21,35 +21,26 @@ export function useStatusHistory(applicationId?: string) {
   return useQuery({
     queryKey: ['status-history', applicationId || user?.id],
     queryFn: async () => {
-      // Use raw SQL query for newly created table
-      let sql = `SELECT * FROM status_history`;
-      const params: Record<string, string> = {};
+      // Use REST API for the status_history table
+      const session = await supabase.auth.getSession();
+      let url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/status_history?order=created_at.desc&limit=50`;
       
       if (applicationId) {
-        sql += ` WHERE application_id = $1`;
-        params['$1'] = applicationId;
+        url += `&application_id=eq.${applicationId}`;
       } else if (user?.id) {
-        sql += ` WHERE trainee_id = $1`;
-        params['$1'] = user.id;
+        url += `&trainee_id=eq.${user.id}`;
       }
-      
-      sql += ` ORDER BY created_at DESC LIMIT 50`;
 
-      // Direct fetch using REST API
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/status_history?${
-          applicationId ? `application_id=eq.${applicationId}` : `trainee_id=eq.${user?.id}`
-        }&order=created_at.desc&limit=50`,
-        {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          },
-        }
-      );
+      const response = await fetch(url, {
+        headers: {
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Authorization': `Bearer ${session.data.session?.access_token}`,
+        },
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch status history');
+        console.error('Failed to fetch status history:', response.statusText);
+        return [];
       }
 
       const data = await response.json();
@@ -63,18 +54,20 @@ export function useApplicationTimeline(applicationId: string) {
   return useQuery({
     queryKey: ['application-timeline', applicationId],
     queryFn: async () => {
+      const session = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/status_history?application_id=eq.${applicationId}&order=created_at.asc`,
         {
           headers: {
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'Authorization': `Bearer ${session.data.session?.access_token}`,
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch application timeline');
+        console.error('Failed to fetch application timeline:', response.statusText);
+        return [];
       }
 
       const data = await response.json();

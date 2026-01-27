@@ -299,7 +299,8 @@ const AdminDashboard = () => {
               {!recentApplications || recentApplications.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>No applications yet</p>
+                  <p className="mb-2">No applications yet</p>
+                  <p className="text-xs">Applications appear after trainees pay the application fee and submit their form.</p>
                 </div>
               ) : (
                 <Table>
@@ -368,7 +369,8 @@ const AdminDashboard = () => {
             {!recentPayments || recentPayments.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <CreditCard className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No payments yet</p>
+                <p className="mb-2">No payments yet</p>
+                <p className="text-xs">Payments appear when trainees pay application or registration fees.</p>
               </div>
             ) : (
               <div className="space-y-4">
