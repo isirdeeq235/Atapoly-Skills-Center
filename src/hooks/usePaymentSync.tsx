@@ -11,6 +11,7 @@ import { toast } from "sonner";
  * This hook listens to changes in:
  * - payments table: For payment status updates
  * - applications table: For application status updates
+ * - status_history table: For audit trail updates
  * 
  * And automatically invalidates relevant queries to keep UI in sync.
  */
@@ -40,14 +41,19 @@ export function usePaymentSync() {
           queryClient.invalidateQueries({ queryKey: ['payments'] });
           queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
           queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-recent-payments'] });
           
           // If payment is completed, also refresh applications and onboarding
           if (updatedPayment.status === 'completed') {
             queryClient.invalidateQueries({ queryKey: ['applications'] });
             queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-recent-applications'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
             queryClient.invalidateQueries({ queryKey: ['trainee-applications', user.id] });
             queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
             queryClient.invalidateQueries({ queryKey: ['existing-applications', user.id] });
+            queryClient.invalidateQueries({ queryKey: ['status-history'] });
+            queryClient.invalidateQueries({ queryKey: ['status-history-admin'] });
             
             // Show toast for the user
             if (updatedPayment.trainee_id === user.id) {
@@ -73,12 +79,27 @@ export function usePaymentSync() {
           // Invalidate application-related queries
           queryClient.invalidateQueries({ queryKey: ['applications'] });
           queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-recent-applications'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['status-history'] });
+          queryClient.invalidateQueries({ queryKey: ['status-history-admin'] });
           
           // If it's the current user's application, sync their specific data
           if (updatedApplication.trainee_id === user.id) {
             queryClient.invalidateQueries({ queryKey: ['trainee-applications', user.id] });
             queryClient.invalidateQueries({ queryKey: ['onboarding-status', user.id] });
             queryClient.invalidateQueries({ queryKey: ['existing-applications', user.id] });
+            
+            // Show toast for approval/rejection
+            if (updatedApplication.status === 'approved') {
+              toast.success("Application Approved! 🎉", {
+                description: "Your application has been approved. Please pay the registration fee to continue.",
+              });
+            } else if (updatedApplication.status === 'rejected') {
+              toast.info("Application Update", {
+                description: "Your application status has been updated. Please check your dashboard for details.",
+              });
+            }
           }
           
           // Sync program enrollment counts
@@ -98,6 +119,8 @@ export function usePaymentSync() {
         () => {
           queryClient.invalidateQueries({ queryKey: ['applications'] });
           queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-recent-applications'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
           queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
         }
       )
@@ -112,7 +135,9 @@ export function usePaymentSync() {
         () => {
           queryClient.invalidateQueries({ queryKey: ['payments'] });
           queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-recent-payments'] });
           queryClient.invalidateQueries({ queryKey: ['payment-history'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
         }
       )
       .subscribe((status) => {
@@ -146,8 +171,10 @@ export function useAdminPaymentSync() {
         (payload) => {
           console.log("Admin: Payment change detected:", payload.eventType);
           queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-recent-payments'] });
           queryClient.invalidateQueries({ queryKey: ['payments'] });
           queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
           queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         }
       )
@@ -161,10 +188,26 @@ export function useAdminPaymentSync() {
         (payload) => {
           console.log("Admin: Application change detected:", payload.eventType);
           queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-recent-applications'] });
           queryClient.invalidateQueries({ queryKey: ['applications'] });
           queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
           queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
           queryClient.invalidateQueries({ queryKey: ['programs'] });
+          queryClient.invalidateQueries({ queryKey: ['status-history-admin'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'status_history',
+        },
+        () => {
+          console.log("Admin: Status history change detected");
+          queryClient.invalidateQueries({ queryKey: ['status-history-admin'] });
+          queryClient.invalidateQueries({ queryKey: ['status-history'] });
         }
       )
       .subscribe((status) => {
