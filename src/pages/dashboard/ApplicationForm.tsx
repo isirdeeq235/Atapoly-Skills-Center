@@ -95,6 +95,7 @@ const ApplicationForm = () => {
           custom_field_values: customFieldValues,
           submitted: true,
           submitted_at: new Date().toISOString(),
+          status: 'pending', // Ensure status is set to pending when submitted
           updated_at: new Date().toISOString(),
         })
         .eq('id', applicationId);
