@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { logger } from '@/lib/logger';
 
 interface Permission {
   permission_key: string;
@@ -61,7 +62,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
         .eq('role', role as string);
 
       if (error) {
-        console.error('Error fetching permissions:', error);
+        logger.error('Error fetching permissions:', error);
         return [];
       }
 

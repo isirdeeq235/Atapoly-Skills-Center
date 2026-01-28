@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { jsPDF } from "jspdf";
+import { logger } from "@/lib/logger";
 import { 
   CreditCard, 
   Search, 
@@ -255,7 +256,7 @@ const PaymentHistory = () => {
       // Save PDF
       doc.save(`Receipt-${receiptNumber}.pdf`);
     } catch (error) {
-      console.error("Error generating receipt:", error);
+      logger.error("Error generating receipt:", error);
     } finally {
       setDownloadingReceipt(null);
     }

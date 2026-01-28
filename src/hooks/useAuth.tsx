@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 type AppRole = 'super_admin' | 'admin' | 'instructor' | 'trainee';
 
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (profileError) {
-        console.error('Error fetching profile:', profileError);
+        logger.error('Error fetching profile:', profileError);
         return;
       }
 
@@ -57,13 +58,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (roleError) {
-        console.error('Error fetching role:', roleError);
+        logger.error('Error fetching role:', roleError);
         return;
       }
 
       setRole(roleData.role as AppRole);
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      logger.error('Error fetching user data:', error);
     }
   };
 

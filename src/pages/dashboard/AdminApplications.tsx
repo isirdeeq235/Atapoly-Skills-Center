@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createNotification } from "@/hooks/useNotifications";
+import { logger } from "@/lib/logger";
 import { 
   FileText, 
   Loader2, 
@@ -127,7 +128,7 @@ const AdminApplications = () => {
           .rpc('generate_registration_number', { program_title: application.programs?.title || 'PRG' });
         
         if (regError) {
-          console.error('Error generating registration number:', regError);
+          logger.error('Error generating registration number:', regError);
           regNumber = `REG-${Date.now().toString(36).toUpperCase()}`;
         } else {
           regNumber = regData;
@@ -164,9 +165,9 @@ const AdminApplications = () => {
             registration_number: regNumber || null,
           }
         );
-        console.log("In-app notification created successfully");
+        logger.debug("In-app notification created successfully");
       } catch (notifError) {
-        console.error("Failed to create in-app notification:", notifError);
+        logger.error("Failed to create in-app notification:", notifError);
       }
 
       // Send email notification to trainee about status change
@@ -187,9 +188,9 @@ const AdminApplications = () => {
             },
           },
         });
-        console.log("Email notification sent successfully");
+        logger.debug("Email notification sent successfully");
       } catch (emailError) {
-        console.error("Failed to send email notification:", emailError);
+        logger.error("Failed to send email notification:", emailError);
         // Don't throw - email failure shouldn't block the approval
       }
 
@@ -204,7 +205,7 @@ const AdminApplications = () => {
     },
     onError: (error) => {
       toast.error("Failed to update application");
-      console.error(error);
+      logger.error(error);
     },
   });
 
@@ -276,7 +277,7 @@ const AdminApplications = () => {
     },
     onError: (error) => {
       toast.error("Failed to update payment status");
-      console.error(error);
+      logger.error(error);
     },
   });
 

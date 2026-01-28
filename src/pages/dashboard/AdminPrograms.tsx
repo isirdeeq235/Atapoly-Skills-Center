@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { 
   BookOpen, 
   Loader2, 
@@ -186,7 +187,7 @@ const AdminPrograms = () => {
     },
     onError: (error) => {
       toast.error("Failed to create program");
-      console.error(error);
+      logger.error(error);
     },
   });
 
@@ -214,7 +215,7 @@ const AdminPrograms = () => {
     },
     onError: (error) => {
       toast.error("Failed to update program");
-      console.error(error);
+      logger.error(error);
     },
   });
 
@@ -235,7 +236,7 @@ const AdminPrograms = () => {
     },
     onError: (error) => {
       toast.error("Failed to delete program. It may have associated applications.");
-      console.error(error);
+      logger.error(error);
     },
   });
 
@@ -262,7 +263,7 @@ const AdminPrograms = () => {
     },
     onError: (error) => {
       toast.error("Failed to create cohort");
-      console.error(error);
+      logger.error(error);
     },
   });
 
@@ -288,7 +289,7 @@ const AdminPrograms = () => {
     },
     onError: (error) => {
       toast.error("Failed to update cohort");
-      console.error(error);
+      logger.error(error);
     },
   });
 
@@ -307,7 +308,7 @@ const AdminPrograms = () => {
     },
     onError: (error) => {
       toast.error("Failed to delete cohort. It may have associated applications.");
-      console.error(error);
+      logger.error(error);
     },
   });
 

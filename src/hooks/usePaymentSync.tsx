@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 /**
  * Hook that provides real-time synchronization for payment and application status
@@ -35,7 +36,7 @@ export function usePaymentSync() {
         },
         (payload) => {
           const updatedPayment = payload.new as Record<string, unknown>;
-          console.log("Payment updated:", updatedPayment);
+          logger.debug("Payment updated:", updatedPayment);
           
           // Invalidate payment-related queries
           queryClient.invalidateQueries({ queryKey: ['payments'] });
@@ -74,7 +75,7 @@ export function usePaymentSync() {
         },
         (payload) => {
           const updatedApplication = payload.new as Record<string, unknown>;
-          console.log("Application updated:", updatedApplication);
+          logger.debug("Application updated:", updatedApplication);
           
           // Invalidate application-related queries
           queryClient.invalidateQueries({ queryKey: ['applications'] });
@@ -142,7 +143,7 @@ export function usePaymentSync() {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log("Payment sync channel connected");
+          logger.debug("Payment sync channel connected");
         }
       });
 
@@ -169,7 +170,7 @@ export function useAdminPaymentSync() {
           table: 'payments',
         },
         (payload) => {
-          console.log("Admin: Payment change detected:", payload.eventType);
+          logger.debug("Admin: Payment change detected:", payload.eventType);
           queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
           queryClient.invalidateQueries({ queryKey: ['admin-recent-payments'] });
           queryClient.invalidateQueries({ queryKey: ['payments'] });
@@ -186,7 +187,7 @@ export function useAdminPaymentSync() {
           table: 'applications',
         },
         (payload) => {
-          console.log("Admin: Application change detected:", payload.eventType);
+          logger.debug("Admin: Application change detected:", payload.eventType);
           queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
           queryClient.invalidateQueries({ queryKey: ['admin-recent-applications'] });
           queryClient.invalidateQueries({ queryKey: ['applications'] });
@@ -205,14 +206,14 @@ export function useAdminPaymentSync() {
           table: 'status_history',
         },
         () => {
-          console.log("Admin: Status history change detected");
+          logger.debug("Admin: Status history change detected");
           queryClient.invalidateQueries({ queryKey: ['status-history-admin'] });
           queryClient.invalidateQueries({ queryKey: ['status-history'] });
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log("Admin payment sync channel connected");
+          logger.debug("Admin payment sync channel connected");
         }
       });
 

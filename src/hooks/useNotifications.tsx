@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import type { Json } from "@/integrations/supabase/types";
 
 export type NotificationType = 
@@ -218,7 +219,7 @@ export async function createNotification(
   });
 
   if (error) {
-    console.error('Failed to create notification:', error);
+    logger.error('Failed to create notification:', error);
     throw error;
   }
 
@@ -240,7 +241,7 @@ export async function broadcastAnnouncement(
   });
 
   if (error) {
-    console.error('Failed to broadcast announcement:', error);
+    logger.error('Failed to broadcast announcement:', error);
     throw error;
   }
 

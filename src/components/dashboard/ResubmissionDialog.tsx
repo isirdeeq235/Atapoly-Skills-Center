@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 
 interface ResubmissionDialogProps {
@@ -57,7 +58,7 @@ export function ResubmissionDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
-      console.error("Resubmission error:", error);
+      logger.error("Resubmission error:", error);
       toast.error("Resubmission Failed", {
         description: error.message || "Please try again later."
       });

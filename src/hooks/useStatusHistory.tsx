@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { logger } from "@/lib/logger";
 
 export interface StatusHistoryEntry {
   id: string;
@@ -39,7 +40,7 @@ export function useStatusHistory(applicationId?: string) {
       });
 
       if (!response.ok) {
-        console.error('Failed to fetch status history:', response.statusText);
+        logger.error('Failed to fetch status history:', response.statusText);
         return [];
       }
 
@@ -66,9 +67,9 @@ export function useApplicationTimeline(applicationId: string) {
       );
 
       if (!response.ok) {
-        console.error('Failed to fetch application timeline:', response.statusText);
+        logger.error('Failed to fetch application timeline:', response.statusText);
         return [];
-      }
+      }}
 
       const data = await response.json();
       return (data || []) as StatusHistoryEntry[];

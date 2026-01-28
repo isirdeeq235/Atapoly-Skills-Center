@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { 
   Users, 
   Loader2, 
@@ -115,7 +116,7 @@ const AdminUsers = () => {
     },
     onError: (error) => {
       toast.error("Failed to update role");
-      console.error(error);
+      logger.error(error);
     },
   });
 

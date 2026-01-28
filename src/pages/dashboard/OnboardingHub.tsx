@@ -11,6 +11,7 @@ import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -55,16 +56,16 @@ const OnboardingHub = () => {
     
     setIsVerifying(true);
     try {
-      console.log("Verifying payment:", { reference, provider, paymentType });
+      logger.debug("Verifying payment:", { reference, provider, paymentType });
       
       const { data, error } = await supabase.functions.invoke("verify-payment", {
         body: { reference, provider }
       });
       
-      console.log("Verification response:", data);
+      logger.debug("Verification response:", data);
       
       if (error) {
-        console.error("Verification error:", error);
+        logger.error("Verification error:", error);
         throw error;
       }
       
@@ -96,7 +97,7 @@ const OnboardingHub = () => {
         });
       }
     } catch (error: any) {
-      console.error("Payment verification failed:", error);
+      logger.error("Payment verification failed:", error);
       // Still refetch in case webhook already processed it
       await refetch();
     } finally {
@@ -213,7 +214,7 @@ const OnboardingHub = () => {
           }
         }
       } catch (error) {
-        console.error("Auto-retry verification error:", error);
+        logger.error("Auto-retry verification error:", error);
       }
     };
 
@@ -381,7 +382,7 @@ const OnboardingHub = () => {
         });
       }
     } catch (error: any) {
-      console.error("Application payment verification error:", error);
+      logger.error("Application payment verification error:", error);
       toast({
         title: "Verification Failed",
         description: "Unable to verify payment. Please contact support.",
@@ -465,7 +466,7 @@ const OnboardingHub = () => {
         });
       }
     } catch (error: any) {
-      console.error("Payment verification error:", error);
+      logger.error("Payment verification error:", error);
       toast({
         title: "Verification Failed",
         description: "Unable to verify payment. Please contact support.",

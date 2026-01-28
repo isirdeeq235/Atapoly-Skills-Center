@@ -13,6 +13,7 @@ import { useCustomFormFields } from "@/hooks/useCustomFormFields";
 import { DynamicFormField } from "@/components/forms/DynamicFormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
 import { format } from "date-fns";
 import { 
   Clock, 
@@ -130,7 +131,7 @@ const ApplyForProgram = () => {
         return;
       }
 
-      console.log("Initializing payment with provider:", provider, "for application:", applicationId);
+      logger.debug("Initializing payment with provider:", provider, "for application:", applicationId);
 
       // Initialize payment - callback URL will include reference from payment provider
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
@@ -148,10 +149,10 @@ const ApplyForProgram = () => {
         }
       );
 
-      console.log("Payment initialization response:", paymentData);
+      logger.debug("Payment initialization response:", paymentData);
 
       if (paymentError) {
-        console.error("Payment error:", paymentError);
+        logger.error("Payment error:", paymentError);
         throw new Error(paymentError.message || "Payment initialization failed");
       }
 
@@ -161,7 +162,7 @@ const ApplyForProgram = () => {
         throw new Error("Failed to get payment URL from provider");
       }
     } catch (error: any) {
-      console.error("Application/payment error:", error);
+      logger.error("Application/payment error:", error);
       toast({
         title: "Application failed",
         description: error.message || "An error occurred. Please try again.",

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 import { 
   FileText, 
   Loader2, 
@@ -117,7 +118,7 @@ const MyApplications = () => {
         return;
       }
 
-      console.log("Initializing registration fee payment with provider:", provider);
+      logger.debug("Initializing registration fee payment with provider:", provider);
 
       // Initialize payment for registration fee
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
@@ -135,10 +136,10 @@ const MyApplications = () => {
         }
       );
 
-      console.log("Payment initialization response:", paymentData);
+      logger.debug("Payment initialization response:", paymentData);
 
       if (paymentError) {
-        console.error("Payment error:", paymentError);
+        logger.error("Payment error:", paymentError);
         throw new Error(paymentError.message || "Payment initialization failed");
       }
 

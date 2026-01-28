@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
+import { logger } from "@/lib/logger";
 import { 
   Award, 
   Download, 
@@ -130,7 +131,7 @@ const MyCertificates = () => {
       
       toast.success("Certificate downloaded successfully!");
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      logger.error('Error generating PDF:', error);
       toast.error("Failed to download certificate");
     } finally {
       setDownloadingId(null);

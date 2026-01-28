@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCustomFormFields } from "@/hooks/useCustomFormFields";
 import { DynamicFormField } from "@/components/forms/DynamicFormField";
 import { useQuery } from "@tanstack/react-query";
+import { logger } from "@/lib/logger";
 import { 
   FileText, 
   Loader2,
@@ -111,7 +112,7 @@ const ApplicationForm = () => {
           p_application_id: applicationId
         });
       } catch (notifyError) {
-        console.error('Error notifying admins:', notifyError);
+        logger.error('Error notifying admins:', notifyError);
       }
 
       toast({
