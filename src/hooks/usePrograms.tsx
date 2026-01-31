@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { apiFetch } from '@/lib/apiClient';
 
 export interface Program {
   id: string;
@@ -21,16 +21,9 @@ export function usePrograms(showAll: boolean = false) {
   return useQuery({
     queryKey: ['programs', showAll],
     queryFn: async () => {
-      let query = supabase.from('programs').select('*');
-      
-      if (!showAll) {
-        query = query.eq('status', 'published');
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Program[];
+      const q = showAll ? '/api/programs?showAll=true' : '/api/programs';
+      const data = await apiFetch(q) as Program[];
+      return data;
     },
   });
 }

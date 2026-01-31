@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createNotification } from "@/hooks/useNotifications";
@@ -99,105 +99,21 @@ const AdminApplications = () => {
   const { data: applications, isLoading } = useQuery({
     queryKey: ['admin-applications'],
     queryFn: async () => {
-      // Fetch ALL applications to show the full pipeline
-      const { data, error } = await supabase
-        .from("applications")
-        .select(`
-          *,
-          profiles!applications_trainee_id_fkey(id, full_name, email, phone, avatar_url, date_of_birth, gender, address, state),
-          programs(id, title, application_fee, registration_fee)
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      // Fetch ALL applications from server admin endpoint
+      const data = await apiFetch('/api/admin/applications');
       return data as Application[];
     },
   });
 
   const updateApplicationMutation = useMutation({
-    mutationFn: async ({ id, status, notes, application }: { id: string; status: string; notes?: string; application: Application }) => {
-      const updateData: Record<string, unknown> = { status };
-      let regNumber = '';
-      
-      if (notes) {
-        updateData.admin_notes = notes;
-      }
-      
-      // Generate registration number using database function for approved applications
-      if (status === 'approved') {
-        const { data: regData, error: regError } = await supabase
-          .rpc('generate_registration_number', { program_title: application.programs?.title || 'PRG' });
-        
-        if (regError) {
-          logger.error('Error generating registration number:', regError);
-          regNumber = `REG-${Date.now().toString(36).toUpperCase()}`;
-        } else {
-          regNumber = regData;
-        }
-        updateData.registration_number = regNumber;
-      }
-
-      const { error } = await supabase
-        .from("applications")
-        .update(updateData)
-        .eq("id", id);
-
-      if (error) throw error;
-
-      // Create in-app notification for trainee
-      try {
-        const notificationType = status === 'approved' ? 'application_approved' : 'application_rejected';
-        const notificationTitle = status === 'approved' 
-          ? 'Application Approved! 🎉' 
-          : 'Application Update';
-        const notificationMessage = status === 'approved'
-          ? `Your application for ${application.programs?.title} has been approved! Please proceed to pay the registration fee of ₦${application.programs?.registration_fee?.toLocaleString() || '0'}.`
-          : `Your application for ${application.programs?.title} has been reviewed. ${notes ? `Admin notes: ${notes}` : 'Please contact support for more information.'}`;
-
-        await createNotification(
-          application.profiles?.id,
-          notificationType,
-          notificationTitle,
-          notificationMessage,
-          {
-            application_id: id,
-            program_id: application.programs?.id,
-            program_title: application.programs?.title,
-            registration_number: regNumber || null,
-          }
-        );
-        logger.debug("In-app notification created successfully");
-      } catch (notifError) {
-        logger.error("Failed to create in-app notification:", notifError);
-      }
-
-      // Send email notification to trainee about status change
-      try {
-        const dashboardUrl = `${window.location.origin}/dashboard/applications`;
-        
-        await invokeFunction("send-email", {
-          to: application.profiles?.email,
-          template: status === 'approved' ? 'application_approved' : 'application_rejected',
-          data: {
-            name: application.profiles?.full_name,
-            program: application.programs?.title,
-            registration_number: regNumber,
-            registration_fee: application.programs?.registration_fee?.toLocaleString() || '0',
-            admin_notes: notes || '',
-            dashboard_url: dashboardUrl,
-          },
-        });
-        logger.debug("Email notification sent successfully");
-      } catch (emailError) {
-        logger.error("Failed to send email notification:", emailError);
-        // Don't throw - email failure shouldn't block the approval
-      }
-
+    mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
+      // Call server admin endpoint to update status and notify trainee
+      await apiFetch(`/api/applications/${id}/admin`, { method: 'PUT', body: JSON.stringify({ status, notes }) });
       return { status };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
-      toast.success(`Application ${data.status} successfully. Email notification sent.`);
+      toast.success(`Application ${data.status} successfully.`);
       setIsReviewDialogOpen(false);
       setSelectedApplication(null);
       setReviewNotes("");
@@ -210,64 +126,12 @@ const AdminApplications = () => {
 
   // Mutation to manually mark payment as complete (for admin verification)
   const markPaymentCompleteMutation = useMutation({
-    mutationFn: async ({ applicationId, paymentType, traineeId }: { 
+    mutationFn: async ({ applicationId, paymentType }: { 
       applicationId: string; 
       paymentType: 'application_fee' | 'registration_fee';
-      traineeId: string;
     }) => {
-      // Update application fee status
-      const updateField = paymentType === 'application_fee' 
-        ? { application_fee_paid: true } 
-        : { registration_fee_paid: true };
-      
-      const { error } = await supabase
-        .from("applications")
-        .update({ ...updateField, updated_at: new Date().toISOString() })
-        .eq("id", applicationId);
-
-      if (error) throw error;
-
-      // If marking registration fee as paid, also increment enrolled count and generate reg number if needed
-      if (paymentType === 'registration_fee') {
-        const { data: appData } = await supabase
-          .from("applications")
-          .select("registration_number, program_id, programs(title)")
-          .eq("id", applicationId)
-          .single();
-        
-        if (appData && !appData.registration_number) {
-          const { data: regNum } = await supabase.rpc("generate_registration_number", {
-            program_title: (appData.programs as any)?.title || "PROG"
-          });
-          
-          await supabase
-            .from("applications")
-            .update({ registration_number: regNum })
-            .eq("id", applicationId);
-            
-          // Increment enrolled count
-          await supabase.rpc("increment_enrolled_count", { program_id: appData.program_id });
-        }
-
-        // Notify trainee
-        await createNotification(
-          traineeId,
-          'registration_complete',
-          'Registration Complete! 🎓',
-          'Your registration fee has been verified. You now have full access to your dashboard and ID card.',
-          { application_id: applicationId }
-        );
-      } else {
-        // Notify trainee for application fee
-        await createNotification(
-          traineeId,
-          'payment_verified',
-          'Payment Verified ✓',
-          'Your application fee has been verified by admin. Please complete your profile to continue.',
-          { application_id: applicationId }
-        );
-      }
-
+      // Call server endpoint for marking payment complete
+      await apiFetch(`/api/applications/${applicationId}/mark-payment-complete`, { method: 'POST', body: JSON.stringify({ paymentType }) });
       return { paymentType };
     },
     onSuccess: (data) => {

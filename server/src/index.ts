@@ -55,7 +55,11 @@ app.use("/api/payments", paymentsRouter);
 app.use("/api/system", systemRouter);
 app.use("/api/functions", functionsPublicRouter);
 import profileRouter from "./routes/profile";
+import programsRouter from "./routes/programs";
+import applicationsRouter from "./routes/applications";
 app.use("/api/profile", profileRouter);
+app.use("/api/programs", programsRouter);
+app.use("/api/applications", applicationsRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

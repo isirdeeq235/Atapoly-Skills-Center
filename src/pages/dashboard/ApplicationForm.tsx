@@ -8,11 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useCustomFormFields } from "@/hooks/useCustomFormFields";
 import { DynamicFormField } from "@/components/forms/DynamicFormField";
-import { useQuery } from "@tanstack/react-query";
-import { logger } from "@/lib/logger";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { 
   FileText, 
   Loader2,
@@ -35,20 +35,12 @@ const ApplicationForm = () => {
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, any>>({});
 
   // Fetch the application details
+  const queryClient = useQueryClient();
+
   const { data: application, isLoading: appLoading } = useQuery({
     queryKey: ['application-form', applicationId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('applications')
-        .select(`
-          *,
-          programs(id, title, description, application_fee, registration_fee),
-          profiles!applications_trainee_id_fkey(full_name, email, phone, date_of_birth, gender, address, state, avatar_url)
-        `)
-        .eq('id', applicationId)
-        .single();
-      
-      if (error) throw error;
+      const data = await apiFetch(`/api/applications/${applicationId}`);
       return data;
     },
     enabled: !!applicationId,
@@ -88,38 +80,17 @@ const ApplicationForm = () => {
 
     setIsLoading(true);
     try {
-      // Update application with custom field values and mark as submitted
-      const { error } = await supabase
-        .from('applications')
-        .update({
-          custom_field_values: customFieldValues,
-          submitted: true,
-          submitted_at: new Date().toISOString(),
-          status: 'pending', // Ensure status is set to pending when submitted
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', applicationId);
-
-      if (error) throw error;
-
-      // Notify admins about the new application
-      try {
-        const programTitle = application.programs?.title || 'Unknown Program';
-        const traineeName = application.profiles?.full_name || profile?.full_name || 'Trainee';
-        
-        await supabase.rpc('notify_admins_new_application', {
-          p_trainee_name: traineeName,
-          p_program_title: programTitle,
-          p_application_id: applicationId
-        });
-      } catch (notifyError) {
-        logger.error('Error notifying admins:', notifyError);
-      }
+      await apiFetch(`/api/applications/${applicationId}`, { method: 'PUT', body: JSON.stringify({ custom_field_values: customFieldValues, submitted: true, submitted_at: new Date().toISOString(), status: 'pending', updated_at: new Date().toISOString() }) });
 
       toast({
         title: "Application Submitted! 🎉",
         description: "Your application has been submitted for review. You'll be notified once a decision is made.",
       });
+
+      // Invalidate relevant caches
+      queryClient.invalidateQueries({ queryKey: ['trainee-applications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['existing-applications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['application-form', applicationId] });
 
       navigate('/dashboard/onboarding');
     } catch (error: any) {
