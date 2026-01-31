@@ -172,11 +172,6 @@ const AdminApplications = () => {
       }
 
       // Send email notification to trainee about status change
-      } catch (notifError) {
-        logger.error("Failed to create in-app notification:", notifError);
-      }
-
-      // Send email notification to trainee about status change
       try {
         const dashboardUrl = `${window.location.origin}/dashboard/applications`;
         

@@ -297,8 +297,7 @@ const SuperAdminSettings = () => {
               </div>
             </body>
             </html>
-          `,
-        },
+          `
       });
 
       if (error) throw error;
