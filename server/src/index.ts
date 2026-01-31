@@ -29,6 +29,8 @@ if (missing.length) {
 }
 
 const app = express();
+// Trust proxy headers only from loopback (localhost) to avoid allowing client-supplied X-Forwarded-For values
+app.set('trust proxy', 'loopback');
 app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN || "*" }));
 app.use(morgan("dev"));
@@ -52,6 +54,8 @@ app.use("/api/payments", paymentsRouter);
 
 app.use("/api/system", systemRouter);
 app.use("/api/functions", functionsPublicRouter);
+import profileRouter from "./routes/profile";
+app.use("/api/profile", profileRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

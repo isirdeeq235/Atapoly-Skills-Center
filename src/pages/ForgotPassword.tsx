@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, Mail, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/apiClient";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -20,12 +20,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) throw error;
-
+      await apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
       setIsSubmitted(true);
       toast.success("Password reset email sent!");
     } catch (error: any) {

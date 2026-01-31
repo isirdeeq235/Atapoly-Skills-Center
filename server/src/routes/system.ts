@@ -16,7 +16,8 @@ router.get("/check-connections", async (_req, res) => {
 
   // DB check
   try {
-    await prisma.site_config.findFirst();
+    // Prisma exposes model clients in camelCase (SiteConfig -> siteConfig)
+    await prisma.siteConfig.findFirst();
     result.database = { name: "Database", status: "connected", message: "Database is connected and responding", lastChecked: now, details: {} };
   } catch (e: any) {
     result.database = { name: "Database", status: "error", message: e.message, lastChecked: now };

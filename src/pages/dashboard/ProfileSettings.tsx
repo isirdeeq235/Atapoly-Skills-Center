@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { apiFetch } from "@/lib/apiClient";
 import { 
   User, 
   Mail, 
@@ -42,29 +42,16 @@ const ProfileSettings = () => {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `avatar-${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      const form = new FormData();
+      form.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
+      // Upload to server which will store to S3 if configured
+      const resp: any = await apiFetch('/api/uploads/s3', { method: 'POST', body: form });
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
-
+      const publicUrl = resp.url;
       setAvatarUrl(publicUrl);
 
-      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
+      await apiFetch('/api/profile', { method: 'PUT', body: JSON.stringify({ avatar_url: publicUrl }) });
 
       toast({
         title: "Photo uploaded",
@@ -88,16 +75,7 @@ const ProfileSettings = () => {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: fullName,
-          phone,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
+      await apiFetch('/api/profile', { method: 'PUT', body: JSON.stringify({ full_name: fullName, phone }) });
 
       toast({
         title: "Profile updated",

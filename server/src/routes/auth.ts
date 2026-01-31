@@ -93,4 +93,22 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+router.get('/me', async (req, res) => {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+    const token = auth.split(' ')[1];
+    const jwtSecret = process.env.JWT_SECRET || 'change_me';
+    const payload: any = require('jsonwebtoken').verify(token, jwtSecret);
+
+    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json({ user: { id: user.id, email: user.email, name: user.name, created_at: user.createdAt } });
+  } catch (err: any) {
+    console.error(err);
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
 export default router;
