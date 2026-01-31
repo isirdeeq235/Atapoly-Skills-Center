@@ -118,12 +118,10 @@ export default function AdminEmailTemplates() {
         .replace(/\{\{program\}\}/g, "Web Development Bootcamp")
         .replace(/\{\{site_name\}\}/g, "Training Academy");
 
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: {
-          to: testEmailAddress,
-          subject: `[TEST] ${previewSubject}`,
-          html: previewHtml,
-        },
+      const { data, error } = await invokeFunction('send-email', {
+        to: testEmailAddress,
+        subject: `[TEST] ${previewSubject}`,
+        html: previewHtml,
       });
 
       if (error) throw error;

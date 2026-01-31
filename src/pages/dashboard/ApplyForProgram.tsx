@@ -14,6 +14,7 @@ import { DynamicFormField } from "@/components/forms/DynamicFormField";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
+import { invokeFunction } from "@/lib/functionsClient";
 import { format } from "date-fns";
 import { 
   Clock, 
@@ -134,20 +135,15 @@ const ApplyForProgram = () => {
       logger.debug("Initializing payment with provider:", provider, "for application:", applicationId);
 
       // Initialize payment - callback URL will include reference from payment provider
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-        "initialize-payment",
-        {
-          body: {
-            provider,
-            amount: program.application_fee,
-            email: profile?.email || user.email,
-            payment_type: "application_fee",
-            application_id: applicationId,
-            trainee_id: user.id,
-            callback_url: `${window.location.origin}/dashboard/onboarding?payment=success`,
-          },
-        }
-      );
+      const { data: paymentData, error: paymentError } = await invokeFunction("initialize-payment", {
+        provider,
+        amount: program.application_fee,
+        email: profile?.email || user.email,
+        payment_type: "application_fee",
+        application_id: applicationId,
+        trainee_id: user.id,
+        callback_url: `${window.location.origin}/dashboard/onboarding?payment=success`,
+      });
 
       logger.debug("Payment initialization response:", paymentData);
 

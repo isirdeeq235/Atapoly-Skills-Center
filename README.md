@@ -71,3 +71,51 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+---
+
+## Server: S3 uploads & migration 🚚
+
+If you want to move from Supabase Storage to AWS S3, the server includes a helper and a migration script.
+
+1. Configure env vars in `server/.env` (see `.env.example`):
+   - `AWS_S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET` (for migration)
+
+2. Install server deps and run the script:
+
+```sh
+cd server
+npm install
+npm run migrate:supabase-to-s3
+```
+
+The script will download objects from Supabase Storage and upload them to the configured S3 bucket; results are saved under `server/tmp_migration/migration_results.json`.
+
+Note: The migration script only copies files and logs a results file — updating DB records to point to the new S3 URLs must be done separately according to your app's data model.
+
+---
+
+## Webhooks (Paystack / Flutterwave) 🔔
+
+The server exposes webhook endpoints at:
+
+- `POST /api/webhooks/paystack`  (expects `x-paystack-signature` header)
+- `POST /api/webhooks/flutterwave` (expects `verif-hash` header)
+
+Both endpoints validate provider signatures and will call the internal `/api/payments/verify` endpoint (server-side) to process payments idempotently. Ensure `PAYSTACK_SECRET_KEY`, `FLUTTERWAVE_SECRET_KEY`, and `ADMIN_API_KEY` are set in production and that your provider webhook URL points to these endpoints.
+
+Security tips:
+- Use HTTPS and restrict the endpoint on your provider to only your server IPs if possible.
+- Use an `ADMIN_API_KEY` for internal verification calls and rotate it periodically.
+- Add monitoring/alerting for failed webhook deliveries.
+
+### Tests
+
+The server includes a small test suite (Vitest + Supertest) covering webhook signature validation. Run tests from the `server` folder:
+
+```sh
+cd server
+npm test
+```
+

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { usePaymentSettings } from "@/hooks/usePaymentSettings";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functionsClient";
 import { 
   Settings, 
   Palette, 
@@ -272,11 +273,10 @@ const SuperAdminSettings = () => {
     setSmtpTestResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-email", {
-        body: {
-          to: profile.email,
-          subject: `SMTP Test - ${siteName || "Training Platform"}`,
-          html: `
+      const { data, error } = await invokeFunction("send-email", {
+        to: profile.email,
+        subject: `SMTP Test - ${siteName || "Training Platform"}`,
+        html: `
             <!DOCTYPE html>
             <html>
             <head><meta charset="UTF-8"></head>

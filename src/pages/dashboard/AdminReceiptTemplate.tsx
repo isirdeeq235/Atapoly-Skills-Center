@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { invokeFunction } from "@/lib/functionsClient";
 import { 
   Receipt, 
   Save, 
@@ -130,13 +131,14 @@ const AdminReceiptTemplate = () => {
     try {
       toast.loading("Sending test email...", { id: "test-email" });
       
-      const { error } = await supabase.functions.invoke("send-email", {
-        body: {
-          to: profile.email,
-          subject: formData.email_subject_template?.replace("{{payment_type}}", "Registration Fee") || "Test Receipt",
-          html: previewHtml,
-        },
+      
+      const { data, error } = await invokeFunction("send-email", {
+        to: profile.email,
+        subject: formData.email_subject_template?.replace("{{payment_type}}", "Registration Fee") || "Test Receipt",
+        html: previewHtml,
       });
+
+      if (error) throw error;
 
       if (error) throw error;
       toast.success("Test email sent to " + profile.email, { id: "test-email" });

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functionsClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { 
@@ -91,9 +92,7 @@ const AdminPayments = () => {
   // Manual verification mutation
   const verifyPaymentMutation = useMutation({
     mutationFn: async ({ paymentId, reference, provider }: { paymentId: string; reference: string; provider: string }) => {
-      const { data, error } = await supabase.functions.invoke("verify-payment", {
-        body: { reference, provider, payment_id: paymentId }
-      });
+      const { data, error } = await invokeFunction("verify-payment", { reference, provider, payment_id: paymentId });
       
       if (error) throw error;
       return data;

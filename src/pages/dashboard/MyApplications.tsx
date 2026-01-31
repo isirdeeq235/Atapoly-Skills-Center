@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/lib/logger";
+import { invokeFunction } from "@/lib/functionsClient";
 import { 
   FileText, 
   Loader2, 
@@ -121,20 +122,15 @@ const MyApplications = () => {
       logger.debug("Initializing registration fee payment with provider:", provider);
 
       // Initialize payment for registration fee
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-        "initialize-payment",
-        {
-          body: {
-            provider,
-            amount: application.programs?.registration_fee || 0,
-            email: profile?.email || user.email,
-            payment_type: "registration_fee",
-            application_id: application.id,
-            trainee_id: user.id,
-            callback_url: `${window.location.origin}/dashboard/applications?payment=registration_success`,
-          },
-        }
-      );
+      const { data: paymentData, error: paymentError } = await invokeFunction("initialize-payment", {
+        provider,
+        amount: application.programs?.registration_fee || 0,
+        email: profile?.email || user.email,
+        payment_type: "registration_fee",
+        application_id: application.id,
+        trainee_id: user.id,
+        callback_url: `${window.location.origin}/dashboard/applications?payment=registration_success`,
+      });
 
       logger.debug("Payment initialization response:", paymentData);
 

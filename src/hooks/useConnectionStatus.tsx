@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/functionsClient";
 import { useEffect } from "react";
 
 export type ConnectionStatusType = "connected" | "disconnected" | "error" | "not_configured" | "checking";
@@ -34,14 +35,14 @@ export function useConnectionStatus() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["connection-status"],
     queryFn: async (): Promise<ConnectionsData> => {
-      const { data, error } = await supabase.functions.invoke("check-connections");
+      const { data, error } = await invokeFunction("check-connections");
       
       if (error) {
-        throw new Error(error.message);
+        throw new Error(error.message || 'Failed to call check-connections');
       }
       
-      if (!data.success) {
-        throw new Error(data.error || "Failed to check connections");
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to check connections");
       }
       
       return data.connections;

@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
+import { invokeFunction } from "@/lib/functionsClient";
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -58,9 +59,7 @@ const OnboardingHub = () => {
     try {
       logger.debug("Verifying payment:", { reference, provider, paymentType });
       
-      const { data, error } = await supabase.functions.invoke("verify-payment", {
-        body: { reference, provider }
-      });
+      const { data, error } = await invokeFunction("verify-payment", { reference, provider });
       
       logger.debug("Verification response:", data);
       
@@ -188,12 +187,10 @@ const OnboardingHub = () => {
 
           // Try to verify with provider if we have a reference
           if (payment.provider_reference) {
-            const { data, error } = await supabase.functions.invoke("verify-payment", {
-              body: { 
-                reference: payment.provider_reference, 
-                provider: payment.provider || provider,
-                payment_id: payment.id
-              }
+            const { data, error } = await invokeFunction("verify-payment", { 
+              reference: payment.provider_reference, 
+              provider: payment.provider || provider,
+              payment_id: payment.id
             });
 
             if (!error && data?.success) {
@@ -276,20 +273,15 @@ const OnboardingHub = () => {
         return;
       }
 
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-        "initialize-payment",
-        {
-          body: {
-            provider,
-            amount: status.application.registrationFee || 0,
-            email: profile?.email || user.email,
-            payment_type: "registration_fee",
-            application_id: status.application.applicationId,
-            trainee_id: user.id,
-            callback_url: `${window.location.origin}/dashboard/onboarding?payment=registration_success`,
-          },
-        }
-      );
+      const { data: paymentData, error: paymentError } = await invokeFunction("initialize-payment", {
+        provider,
+        amount: status.application.registrationFee || 0,
+        email: profile?.email || user.email,
+        payment_type: "registration_fee",
+        application_id: status.application.applicationId,
+        trainee_id: user.id,
+        callback_url: `${window.location.origin}/dashboard/onboarding?payment=registration_success`,
+      });
 
       if (paymentError) throw new Error(paymentError.message);
 
@@ -349,12 +341,10 @@ const OnboardingHub = () => {
 
       // If we have a reference, try to verify with payment provider
       if (payment.provider_reference && provider) {
-        const { data, error } = await supabase.functions.invoke("verify-payment", {
-          body: { 
-            reference: payment.provider_reference, 
-            provider: payment.provider || provider,
-            payment_id: payment.id
-          }
+        const { data, error } = await invokeFunction("verify-payment", { 
+          reference: payment.provider_reference, 
+          provider: payment.provider || provider,
+          payment_id: payment.id
         });
         
         if (error) throw error;
@@ -433,12 +423,10 @@ const OnboardingHub = () => {
 
       // If we have a reference, try to verify with payment provider
       if (payment.provider_reference && provider) {
-        const { data, error } = await supabase.functions.invoke("verify-payment", {
-          body: { 
-            reference: payment.provider_reference, 
-            provider: payment.provider || provider,
-            payment_id: payment.id
-          }
+        const { data, error } = await invokeFunction("verify-payment", { 
+          reference: payment.provider_reference, 
+          provider: payment.provider || provider,
+          payment_id: payment.id
         });
         
         if (error) throw error;

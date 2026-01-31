@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { createNotification } from "@/hooks/useNotifications";
 import { logger } from "@/lib/logger";
+import { invokeFunction } from "@/lib/functionsClient";
 import { 
   FileText, 
   Loader2, 
@@ -171,21 +172,24 @@ const AdminApplications = () => {
       }
 
       // Send email notification to trainee about status change
+      } catch (notifError) {
+        logger.error("Failed to create in-app notification:", notifError);
+      }
+
+      // Send email notification to trainee about status change
       try {
         const dashboardUrl = `${window.location.origin}/dashboard/applications`;
         
-        await supabase.functions.invoke("send-email", {
-          body: {
-            to: application.profiles?.email,
-            template: status === 'approved' ? 'application_approved' : 'application_rejected',
-            data: {
-              name: application.profiles?.full_name,
-              program: application.programs?.title,
-              registration_number: regNumber,
-              registration_fee: application.programs?.registration_fee?.toLocaleString() || '0',
-              admin_notes: notes || '',
-              dashboard_url: dashboardUrl,
-            },
+        await invokeFunction("send-email", {
+          to: application.profiles?.email,
+          template: status === 'approved' ? 'application_approved' : 'application_rejected',
+          data: {
+            name: application.profiles?.full_name,
+            program: application.programs?.title,
+            registration_number: regNumber,
+            registration_fee: application.programs?.registration_fee?.toLocaleString() || '0',
+            admin_notes: notes || '',
+            dashboard_url: dashboardUrl,
           },
         });
         logger.debug("Email notification sent successfully");

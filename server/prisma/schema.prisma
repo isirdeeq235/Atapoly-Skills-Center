@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Basic auth user used by server for admin tasks (local)
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+}
+
+// Existing app tables (subset of columns used by server)
+model Profile {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  full_name String?
+}
+
+model Program {
+  id           String  @id @default(uuid()) @db.Uuid
+  title        String
+  enrolled_count Int   @default(0)
+}
+
+model Application {
+  id                 String  @id @default(uuid()) @db.Uuid
+  trainee_id         String  @db.Uuid
+  program_id         String  @db.Uuid
+  application_fee_paid Boolean @default(false)
+  registration_fee_paid Boolean @default(false)
+  registration_number String?
+  updated_at         DateTime?
+  programs           Program? @relation(fields: [program_id], references: [id])
+}
+
+model Payment {
+  id                 String @id @default(uuid()) @db.Uuid
+  application_id     String @db.Uuid
+  trainee_id         String @db.Uuid
+  provider_reference String?
+  provider           String?
+  payment_type       String?
+  status             String @default("pending")
+  metadata           Json?
+  updated_at         DateTime?
+}
+
+model Receipt {
+  id            String @id @default(uuid()) @db.Uuid
+  payment_id    String @db.Uuid
+  trainee_id    String @db.Uuid
+  receipt_number String
+}
+
+model EmailTemplates {
+  id               String @id @default(uuid()) @db.Uuid
+  template_key     String @unique
+  subject_template String
+  html_template    String
+  is_enabled       Boolean @default(true)
+}
+
+model Notification {
+  id        String @id @default(uuid()) @db.Uuid
+  user_id   String @db.Uuid
+  type      String
+  title     String
+  message   String
+  metadata  Json?
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+}
+
+model SiteConfig {
+  id        String @id @default(uuid()) @db.Uuid
+  site_name String?
+}
