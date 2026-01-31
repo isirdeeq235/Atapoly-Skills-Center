@@ -27,6 +27,7 @@ model Program {
   id           String  @id @default(uuid()) @db.Uuid
   title        String
   enrolled_count Int   @default(0)
+  applications Application[]
 }
 
 model Application {
@@ -37,7 +38,7 @@ model Application {
   registration_fee_paid Boolean @default(false)
   registration_number String?
   updated_at         DateTime?
-  programs           Program? @relation(fields: [program_id], references: [id])
+  program            Program? @relation(fields: [program_id], references: [id])
 }
 
 model Payment {
