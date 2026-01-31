@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useCustomFormFields } from "@/hooks/useCustomFormFields";
 import { DynamicFormField } from "@/components/forms/DynamicFormField";
 import { 
@@ -147,21 +147,11 @@ const CompleteProfile = () => {
 
     setUploadingPhoto(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-passport.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      const form = new FormData();
+      form.append('file', file);
 
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+      const resp: any = await apiFetch('/api/uploads/s3', { method: 'POST', body: form });
+      const publicUrl = resp.url;
 
       setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
       

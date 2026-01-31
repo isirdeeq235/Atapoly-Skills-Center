@@ -11,8 +11,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { usePaymentSettings } from "@/hooks/usePaymentSettings";
-import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/functionsClient";
+import { apiFetch } from "@/lib/apiClient";
 import { 
   Settings, 
   Palette, 
@@ -324,19 +324,11 @@ const SuperAdminSettings = () => {
     if (!file) return;
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${type}-${Date.now()}.${fileExt}`;
-      const filePath = `${type}/${fileName}`;
+      const form = new FormData();
+      form.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("site-assets")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("site-assets")
-        .getPublicUrl(filePath);
+      const resp: any = await apiFetch('/api/uploads/s3', { method: 'POST', body: form });
+      const publicUrl = resp.url;
 
       if (type === "logo") setLogoUrl(publicUrl);
       else if (type === "favicon") setFaviconUrl(publicUrl);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { jsPDF } from "jspdf";
@@ -68,25 +68,7 @@ const PaymentHistory = () => {
   const { data: payments, isLoading } = useQuery({
     queryKey: ['payments', user?.id, role],
     queryFn: async () => {
-      let query = supabase
-        .from("payments")
-        .select(`
-          *,
-          applications!inner(
-            programs(title)
-          ),
-          receipts(id, receipt_number)
-        `)
-        .order("created_at", { ascending: false });
-
-      // If trainee, only show their own payments
-      if (role === 'trainee') {
-        query = query.eq("trainee_id", user?.id);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Payment[];
+      return await apiFetch('/api/payments');
     },
     enabled: !!user,
   });

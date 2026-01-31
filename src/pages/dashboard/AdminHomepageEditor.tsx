@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useHomepageContent, useUpdateHomepageContent, HomepageContent } from "@/hooks/useHomepageContent";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { 
   Loader2, 
   Save, 
@@ -61,19 +61,11 @@ const AdminHomepageEditor = () => {
     if (!file) return;
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `hero-${Date.now()}.${fileExt}`;
-      const filePath = `homepage/${fileName}`;
+      const form = new FormData();
+      form.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("site-assets")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("site-assets")
-        .getPublicUrl(filePath);
+      const resp: any = await apiFetch('/api/uploads/s3', { method: 'POST', body: form });
+      const publicUrl = resp.url;
 
       updateField('hero_image_url', publicUrl);
       toast({

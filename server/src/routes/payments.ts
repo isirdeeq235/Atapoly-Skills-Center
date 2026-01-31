@@ -1,8 +1,53 @@
 import { Router, Request, Response } from "express";
 import prisma from "../lib/prisma";
 import { requireAdmin } from "../middleware/admin";
+import { requireAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
+
+// List payments (trainee sees own payments; admins can pass trainee_id to view others)
+router.get("/", requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { trainee_id, application_id } = req.query as any;
+    const where: any = {};
+
+    if (application_id) where.application_id = String(application_id);
+    if (trainee_id) where.trainee_id = String(trainee_id);
+
+    // If no trainee provided, try to limit to the current user's profile
+    if (!where.trainee_id && req.userId) {
+      const user = await prisma.user.findUnique({ where: { id: Number(req.userId) } });
+      if (user) {
+        const profile = await prisma.profile.findUnique({ where: { email: user.email } });
+        if (profile) where.trainee_id = profile.id;
+      }
+    }
+
+    const payments = await prisma.payment.findMany({
+      where,
+      orderBy: { created_at: "desc" },
+      include: { applications: { include: { programs: true } } as any, receipts: true },
+    });
+
+    res.json(payments);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get payment by ID
+router.get("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const payment = await prisma.payment.findUnique({ where: { id }, include: { applications: { include: { programs: true } } as any, receipts: true } });
+    if (!payment) return res.status(404).json({ error: "Not found" });
+    res.json(payment);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post("/initialize", async (req: Request, res: Response) => {
   try {

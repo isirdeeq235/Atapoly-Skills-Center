@@ -14,7 +14,7 @@ import {
   useDeleteHeroSlide,
   HeroSlide 
 } from "@/hooks/useHeroSlides";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { 
   Plus, 
@@ -103,19 +103,11 @@ const AdminHeroSlides = () => {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `hero-${Date.now()}.${fileExt}`;
-      const filePath = `hero-slides/${fileName}`;
+      const form = new FormData();
+      form.append('file', file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("site-assets")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("site-assets")
-        .getPublicUrl(filePath);
+      const resp: any = await apiFetch('/api/uploads/s3', { method: 'POST', body: form });
+      const publicUrl = resp.url;
 
       setImageUrl(publicUrl);
       toast.success("Image uploaded successfully");
