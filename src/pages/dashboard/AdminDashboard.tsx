@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -57,91 +57,30 @@ const AdminDashboard = () => {
     }
   }, [location.state]);
 
-  // Fetch real stats from database
+  // Fetch admin stats (counts + recent activity)
   const { data: statsData, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-dashboard-stats'],
     queryFn: async () => {
-      // Get total trainees
-      const { count: traineesCount } = await supabase
-        .from('user_roles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'trainee');
-
-      // Get pending applications (only submitted ones awaiting review)
-      const { count: pendingCount } = await supabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .eq('submitted', true)
-        .eq('application_fee_paid', true);
-
-      // Get total revenue (completed payments)
-      const { data: payments } = await supabase
-        .from('payments')
-        .select('amount')
-        .eq('status', 'completed');
-      
-      const totalRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-
-      // Get active programs
-      const { count: activePrograms } = await supabase
-        .from('programs')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published');
-
-      return {
-        trainees: traineesCount || 0,
-        pending: pendingCount || 0,
-        revenue: totalRevenue,
-        programs: activePrograms || 0
-      };
+      const data = await apiFetch('/api/admin/stats');
+      return data;
     }
   });
 
-  // Fetch recent applications (only submitted ones)
+  // Use recent applications returned by admin stats
   const { data: recentApplications, isLoading: applicationsLoading } = useQuery({
     queryKey: ['admin-recent-applications'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('applications')
-        .select(`
-          id,
-          status,
-          created_at,
-          submitted_at,
-          submitted,
-          profiles!applications_trainee_id_fkey(full_name, email),
-          programs(title)
-        `)
-        .eq('submitted', true)
-        .eq('application_fee_paid', true)
-        .order('submitted_at', { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-      return data;
+      const data = await apiFetch('/api/admin/stats');
+      return data.recentApplications || [];
     }
   });
 
-  // Fetch recent payments
+  // Use recent payments returned by admin stats
   const { data: recentPayments, isLoading: paymentsLoading } = useQuery({
     queryKey: ['admin-recent-payments'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payments')
-        .select(`
-          id,
-          amount,
-          payment_type,
-          status,
-          created_at,
-          profiles!payments_trainee_id_fkey(full_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (error) throw error;
-      return data;
+      const data = await apiFetch('/api/admin/stats');
+      return data.recentPayments || [];
     }
   });
 

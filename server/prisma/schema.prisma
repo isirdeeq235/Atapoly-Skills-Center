@@ -26,11 +26,39 @@ model Profile {
   updated_at DateTime?
 }
 
+// User roles (migrated from Supabase user_roles table)
+model UserRole {
+  id      String @id @default(uuid()) @db.Uuid
+  user_id String @db.Uuid
+  role    String
+
+  @@unique([user_id])
+}
+
 model Program {
   id           String  @id @default(uuid()) @db.Uuid
   title        String
   enrolled_count Int   @default(0)
   applications Application[]
+  batches      Batch[]
+}
+
+model CustomFormField {
+  id              String   @id @default(uuid()) @db.Uuid
+  form_type       String
+  field_name      String
+  field_label     String
+  field_type      String
+  field_options   Json?
+  placeholder     String?
+  help_text       String?
+  is_required     Boolean  @default(false)
+  validation_rules Json?
+  display_order   Int      @default(0)
+  is_active       Boolean  @default(true)
+  program_id      String?  @db.Uuid
+  created_at      DateTime @default(now())
+  updated_at      DateTime?
 }
 
 model Application {
@@ -48,12 +76,15 @@ model Payment {
   id                 String @id @default(uuid()) @db.Uuid
   application_id     String @db.Uuid
   trainee_id         String @db.Uuid
-  provider_reference String?
+  provider_reference String?  
   provider           String?
   payment_type       String?
+  amount             Int?     // stored in minor units (kobo/cents)
   status             String @default("pending")
   metadata           Json?
   updated_at         DateTime?
+
+  @@unique([provider_reference])
 }
 
 model Receipt {
@@ -78,6 +109,54 @@ model Notification {
   title     String
   message   String
   metadata  Json?
+  read      Boolean @default(false)
+  created_at DateTime @default(now())
+}
+
+model StatusHistory {
+  id               String  @id @default(uuid()) @db.Uuid
+  application_id   String  @db.Uuid
+  trainee_id       String  @db.Uuid
+  previous_status  String?
+  new_status       String
+  changed_by       String?
+  change_type      String
+  notes            String?
+  metadata         Json?
+  created_at       DateTime @default(now())
+}
+
+model RolePermission {
+  id                 String   @id @default(uuid()) @db.Uuid
+  role               String
+  permission_key     String   @unique
+  permission_label   String
+  permission_category String
+  is_enabled         Boolean  @default(true)
+  created_at         DateTime @default(now())
+  updated_at         DateTime?
+}
+
+model Certificate {
+  id                String   @id @default(uuid()) @db.Uuid
+  certificate_number String
+  issued_at         DateTime @default(now())
+  application_id    String   @db.Uuid
+  program_id        String?  @db.Uuid
+  batch_id          String?  @db.Uuid
+  trainee_id        String   @db.Uuid
+}
+
+model Batch {
+  id           String  @id @default(uuid()) @db.Uuid
+  program_id   String  @db.Uuid
+  batch_name   String
+  start_date   DateTime?
+  end_date     DateTime?
+  max_capacity Int?
+  status       String?
+
+  program      Program? @relation(fields: [program_id], references: [id])
 }
 
 model PasswordReset {
@@ -91,4 +170,12 @@ model PasswordReset {
 model SiteConfig {
   id        String @id @default(uuid()) @db.Uuid
   site_name String?
+}
+
+// Generic key/value settings store for site-level configuration (theme, homepage, payment settings, hero slides, etc.)
+model SiteSetting {
+  id         String   @id @default(uuid()) @db.Uuid
+  key        String   @unique
+  value      Json
+  updated_at DateTime @updatedAt
 }

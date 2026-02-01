@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { 
   BookOpen, 
@@ -32,18 +32,8 @@ const TraineeDashboard = () => {
     queryKey: ['trainee-applications', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from("applications")
-        .select(`
-          *,
-          programs(id, title, description, duration, image_url),
-          batches(id, batch_name, start_date, end_date, status)
-        `)
-        .eq("trainee_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/applications');
+      return res;
     },
     enabled: !!user,
   });
@@ -53,15 +43,8 @@ const TraineeDashboard = () => {
     queryKey: ['trainee-payments', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("trainee_id", user.id)
-        .eq("status", "completed")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/payments');
+      return res;
     },
     enabled: !!user,
   });

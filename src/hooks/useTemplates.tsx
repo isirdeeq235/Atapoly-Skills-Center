@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { apiFetch } from '@/lib/apiClient';
 import { Json } from '@/integrations/supabase/types';
 
 export interface IdCardTemplate {
@@ -54,12 +54,7 @@ export function useIdCardTemplate() {
   return useQuery({
     queryKey: ['id-card-template'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('id_card_template')
-        .select('*')
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch('/api/site-config/id_card_template');
       return data as IdCardTemplate;
     },
     staleTime: 1000 * 60 * 5,
@@ -71,21 +66,7 @@ export function useUpdateIdCardTemplate() {
 
   return useMutation({
     mutationFn: async (updates: Partial<IdCardTemplate>) => {
-      const { data: existing } = await supabase
-        .from('id_card_template')
-        .select('id')
-        .single();
-
-      if (!existing) throw new Error('ID card template not found');
-
-      const { data, error } = await supabase
-        .from('id_card_template')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch('/api/site-config/id_card_template', { method: 'PUT', body: JSON.stringify(updates) });
       return data;
     },
     onSuccess: () => {
@@ -99,12 +80,7 @@ export function useCertificateTemplate() {
   return useQuery({
     queryKey: ['certificate-template'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('certificate_template')
-        .select('*')
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch('/api/site-config/certificate_template');
       return data as CertificateTemplate;
     },
     staleTime: 1000 * 60 * 5,
@@ -116,21 +92,7 @@ export function useUpdateCertificateTemplate() {
 
   return useMutation({
     mutationFn: async (updates: Partial<CertificateTemplate>) => {
-      const { data: existing } = await supabase
-        .from('certificate_template')
-        .select('id')
-        .single();
-
-      if (!existing) throw new Error('Certificate template not found');
-
-      const { data, error } = await supabase
-        .from('certificate_template')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch('/api/site-config/certificate_template', { method: 'PUT', body: JSON.stringify(updates) });
       return data;
     },
     onSuccess: () => {
@@ -144,13 +106,8 @@ export function useNotificationTemplates() {
   return useQuery({
     queryKey: ['notification-templates'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('notification_templates')
-        .select('*')
-        .order('template_key');
-
-      if (error) throw error;
-      return data as NotificationTemplate[];
+      const data = await apiFetch('/api/site-config/notification_templates');
+      return (data || []) as NotificationTemplate[];
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -161,14 +118,8 @@ export function useUpdateNotificationTemplate() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<NotificationTemplate> }) => {
-      const { data, error } = await supabase
-        .from('notification_templates')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      // We store notification templates as a keyed array under site-config; admin UI should send the updated array
+      const data = await apiFetch('/api/site-config/notification_templates', { method: 'PUT', body: JSON.stringify({ id, updates }) });
       return data;
     },
     onSuccess: () => {

@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { invokeFunction } from "@/lib/functionsClient";
@@ -63,11 +62,12 @@ const AdminReceiptTemplate = () => {
   const { data: template, isLoading } = useQuery({
     queryKey: ['receipt-template'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('receipt_template')
-        .select('*')
-        .single();
-      if (error) throw error;
+      const res = await fetch('/api/site-config/receipt_template');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Failed to load receipt template' }));
+        throw new Error(err.message || 'Failed to fetch');
+      }
+      const data = await res.json();
       return data as ReceiptTemplate;
     },
   });
@@ -104,21 +104,23 @@ const AdminReceiptTemplate = () => {
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<ReceiptTemplate>) => {
-      const { data, error } = await supabase
-        .from('receipt_template')
-        .update(updates)
-        .eq('id', template?.id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const res = await fetch('/api/site-config/receipt_template', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Failed to update receipt template' }));
+        throw new Error(err.message || 'Update failed');
+      }
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['receipt-template'] });
       toast.success("Receipt template saved successfully");
     },
-    onError: (error) => {
-      toast.error("Failed to save template: " + error.message);
+    onError: (error: any) => {
+      toast.error("Failed to save template: " + (error?.message || error));
     },
   });
 

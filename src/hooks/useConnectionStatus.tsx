@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/functionsClient";
 import { useEffect } from "react";
 
@@ -52,29 +51,10 @@ export function useConnectionStatus() {
     retry: 2,
   });
 
-  // Subscribe to real-time changes on settings tables to trigger refresh
+  // Polling/refetching is sufficient for connection status in a BFF architecture.
   useEffect(() => {
-    const channel = supabase
-      .channel("connection-status-sync")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "site_config" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["connection-status"] });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "payment_settings" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["connection-status"] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    const interval = setInterval(() => queryClient.invalidateQueries({ queryKey: ["connection-status"] }), 15000);
+    return () => clearInterval(interval);
   }, [queryClient]);
 
   const connections = data || defaultConnections;
@@ -107,4 +87,4 @@ export function useConnectionStatus() {
     connectedCount: getConnectedCount(),
     totalCount: getTotalCount(),
   };
-}
+} 

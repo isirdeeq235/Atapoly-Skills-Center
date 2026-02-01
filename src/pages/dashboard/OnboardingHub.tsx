@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
@@ -157,14 +157,8 @@ const OnboardingHub = () => {
       setRetryCountdown(RETRY_INTERVAL / 1000);
 
       try {
-        // Query latest payment
-        const { data: payments } = await supabase
-          .from("payments")
-          .select("id, provider_reference, provider, status")
-          .eq("trainee_id", user.id)
-          .eq("payment_type", paymentType === 'application' ? "application_fee" : "registration_fee")
-          .order("created_at", { ascending: false })
-          .limit(1);
+        // Query latest payment via server
+        const payments = await apiFetch(`/api/payments?trainee_id=${user.id}&payment_type=${paymentType === 'application' ? 'application_fee' : 'registration_fee'}`) as any[];
 
         if (payments && payments.length > 0) {
           const payment = payments[0];
@@ -306,14 +300,8 @@ const OnboardingHub = () => {
     
     setIsVerifying(true);
     try {
-      // Get the latest pending application fee payment for this user
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("id, provider_reference, provider, status, application_id")
-        .eq("trainee_id", user.id)
-        .eq("payment_type", "application_fee")
-        .order("created_at", { ascending: false })
-        .limit(1);
+      // Get the latest pending application fee payment for this user via server
+      const payments = await apiFetch(`/api/payments?trainee_id=${user.id}&payment_type=application_fee`) as any[];
       
       if (!payments || payments.length === 0) {
         toast({
@@ -389,14 +377,8 @@ const OnboardingHub = () => {
     
     setIsVerifying(true);
     try {
-      // First, get the latest pending payment for this application
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("id, provider_reference, provider, status")
-        .eq("application_id", status.application.applicationId)
-        .eq("payment_type", "registration_fee")
-        .order("created_at", { ascending: false })
-        .limit(1);
+      // First, get the latest pending payment for this application via server
+      const payments = await apiFetch(`/api/payments?application_id=${status.application.applicationId}&payment_type=registration_fee`) as any[];
       
       if (!payments || payments.length === 0) {
         toast({

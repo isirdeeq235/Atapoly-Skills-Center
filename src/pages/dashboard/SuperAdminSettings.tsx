@@ -9,8 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { usePaymentSettings } from "@/hooks/usePaymentSettings";
+import { useSiteConfig, useUpdateSiteConfig } from "@/hooks/useSiteConfig";
+import { usePaymentSettings, useUpdatePaymentSettings } from "@/hooks/usePaymentSettings";
 import { invokeFunction } from "@/lib/functionsClient";
 import { apiFetch } from "@/lib/apiClient";
 import { 
@@ -193,25 +193,21 @@ const SuperAdminSettings = () => {
     }
   }, [paymentSettings]);
 
+  const updateSiteConfig = useUpdateSiteConfig();
+
   const handleSaveSiteConfig = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("site_config")
-        .upsert({
-          id: siteConfig?.id || undefined,
-          site_name: siteName,
-          contact_email: contactEmail,
-          contact_phone: contactPhone,
-          address,
-          maintenance_mode: maintenanceMode,
-          logo_url: logoUrl,
-          favicon_url: faviconUrl,
-          certificate_signature_url: signatureUrl,
-          updated_at: new Date().toISOString(),
-        });
-
-      if (error) throw error;
+      await updateSiteConfig.mutateAsync({
+        site_name: siteName,
+        contact_email: contactEmail,
+        contact_phone: contactPhone,
+        address,
+        maintenance_mode: maintenanceMode,
+        logo_url: logoUrl,
+        favicon_url: faviconUrl,
+        certificate_signature_url: signatureUrl,
+      });
 
       toast({
         title: "Settings saved",
@@ -229,19 +225,15 @@ const SuperAdminSettings = () => {
     }
   };
 
+  const updatePaymentSettings = useUpdatePaymentSettings();
+
   const handleSavePaymentSettings = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("payment_settings")
-        .upsert({
-          id: paymentSettings?.id || undefined,
-          paystack_enabled: paystackEnabled,
-          flutterwave_enabled: flutterwaveEnabled,
-          updated_at: new Date().toISOString(),
-        });
-
-      if (error) throw error;
+      await updatePaymentSettings.mutateAsync({
+        paystack_enabled: paystackEnabled,
+        flutterwave_enabled: flutterwaveEnabled,
+      });
 
       toast({
         title: "Payment settings saved",

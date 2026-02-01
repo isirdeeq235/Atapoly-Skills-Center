@@ -1,9 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { apiFetch } from '@/lib/apiClient';
 import { useEffect } from 'react';
 
 export interface ThemeConfig {
-  id: string;
   primary_color: string;
   primary_foreground: string;
   secondary_color: string;
@@ -29,12 +28,7 @@ export function useThemeConfig() {
   return useQuery({
     queryKey: ['theme-config'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('theme_config')
-        .select('*')
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch('/api/site-config/theme_config');
       return data as ThemeConfig;
     },
     staleTime: 1000 * 60 * 5,
@@ -46,21 +40,7 @@ export function useUpdateThemeConfig() {
 
   return useMutation({
     mutationFn: async (updates: Partial<ThemeConfig>) => {
-      const { data: existing } = await supabase
-        .from('theme_config')
-        .select('id')
-        .single();
-
-      if (!existing) throw new Error('Theme config not found');
-
-      const { data, error } = await supabase
-        .from('theme_config')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch('/api/site-config/theme_config', { method: 'PUT', body: JSON.stringify(updates) });
       return data;
     },
     onSuccess: () => {

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 
 export interface RolePermission {
   id: string;
@@ -16,19 +16,9 @@ export function useRolePermissions(role?: 'admin' | 'instructor') {
   return useQuery({
     queryKey: ['role-permissions', role],
     queryFn: async () => {
-      let query = supabase
-        .from('role_permissions')
-        .select('*')
-        .order('permission_category')
-        .order('permission_label');
-
-      if (role) {
-        query = query.eq('role', role);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as RolePermission[];
+      const qs = role ? `?role=${role}` : '';
+      const res: any = await apiFetch(`/api/role-permissions${qs}`);
+      return res.perms as RolePermission[];
     },
   });
 }
@@ -38,15 +28,8 @@ export function useUpdateRolePermission() {
 
   return useMutation({
     mutationFn: async ({ id, is_enabled }: { id: string; is_enabled: boolean }) => {
-      const { data, error } = await supabase
-        .from('role_permissions')
-        .update({ is_enabled, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch(`/api/role-permissions/${id}`, { method: 'PUT', body: JSON.stringify({ is_enabled, updated_at: new Date().toISOString() }) });
+      return res.perm;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['role-permissions'] });
@@ -59,14 +42,8 @@ export function useBulkUpdateRolePermissions() {
 
   return useMutation({
     mutationFn: async ({ role, is_enabled }: { role: 'admin' | 'instructor'; is_enabled: boolean }) => {
-      const { data, error } = await supabase
-        .from('role_permissions')
-        .update({ is_enabled, updated_at: new Date().toISOString() })
-        .eq('role', role)
-        .select();
-
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch(`/api/role-permissions/bulk/${role}`, { method: 'PUT', body: JSON.stringify({ is_enabled }) });
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['role-permissions'] });

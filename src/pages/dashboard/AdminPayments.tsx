@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { invokeFunction } from "@/lib/functionsClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -75,16 +75,7 @@ const AdminPayments = () => {
   const { data: payments, isLoading } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select(`
-          *,
-          profiles!payments_trainee_id_fkey(full_name, email, phone),
-          applications!payments_application_id_fkey(programs(title))
-        `)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await apiFetch('/api/payments');
       return data as Payment[];
     },
   });
@@ -118,22 +109,10 @@ const AdminPayments = () => {
       applicationId: string; 
       paymentType: string;
     }) => {
-      // Update payment status
-      await supabase
-        .from("payments")
-        .update({ status: 'completed', updated_at: new Date().toISOString() })
-        .eq("id", paymentId);
-      
-      // Update application
-      const updateField = paymentType === 'application_fee' 
-        ? { application_fee_paid: true } 
-        : { registration_fee_paid: true };
-      
-      await supabase
-        .from("applications")
-        .update({ ...updateField, updated_at: new Date().toISOString() })
-        .eq("id", applicationId);
-      
+      // Mark payment completed on server (creates receipt)
+      await apiFetch(`/api/payments/${paymentId}/mark-complete`, { method: 'POST' });
+      // Mark application payment complete (handles application updates and notifications)
+      await apiFetch(`/api/applications/${applicationId}/mark-payment-complete`, { method: 'POST', body: JSON.stringify({ paymentType }) });
       return { paymentType };
     },
     onSuccess: (data) => {

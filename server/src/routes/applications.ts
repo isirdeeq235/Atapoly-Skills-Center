@@ -2,6 +2,7 @@ import { Router } from "express";
 import prisma from "../lib/prisma";
 import { requireAdmin } from "../middleware/admin";
 import { requireAuth, AuthRequest } from "../middleware/auth";
+import { publishToUser } from "../lib/notifications";
 
 const router = Router();
 
@@ -77,7 +78,8 @@ router.put("/:id", requireAuth, async (req: AuthRequest, res) => {
       try {
         const admins = await prisma.profile.findMany({ where: {} }); // TODO: use user_roles table if exists
         for (const a of admins) {
-          await prisma.notification.create({ data: { user_id: a.id, type: 'new_application_for_review', title: 'New Application Submitted', message: 'A new application has been submitted for review', metadata: { application_id: id } as any } as any });
+          const note = await prisma.notification.create({ data: { user_id: a.id, type: 'new_application_for_review', title: 'New Application Submitted', message: 'A new application has been submitted for review', metadata: { application_id: id } as any } as any });
+          try { publishToUser(a.id, 'notification', note); } catch (e) { }
         }
       } catch (e) {
         console.error('Error notifying admins', e);
@@ -94,11 +96,12 @@ router.put("/:id", requireAuth, async (req: AuthRequest, res) => {
 // List applications (admin or trainee own list)
 router.get("/", requireAuth, async (req: AuthRequest, res) => {
   try {
-    const { trainee_id, status } = req.query as any;
+    const { trainee_id, status, registration_fee_paid } = req.query as any;
 
     let where: any = {};
     if (trainee_id) where.trainee_id = trainee_id;
     if (status) where.status = status;
+    if (typeof registration_fee_paid !== 'undefined') where.registration_fee_paid = registration_fee_paid === 'true' || registration_fee_paid === true;
 
     // If not provided, try to limit to current user
     if (!where.trainee_id && req.userId) {
@@ -121,7 +124,15 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
 router.get("/admin", requireAdmin, async (req: AuthRequest, res) => {
   try {
     const apps = await prisma.application.findMany({ orderBy: { created_at: 'desc' } as any, include: { programs: true, profiles: true } as any });
-    res.json(apps);
+
+    // attach certificates and batch info
+    const enriched = await Promise.all(apps.map(async (a: any) => {
+      const certs = await prisma.certificate.findMany({ where: { application_id: a.id } });
+      const batch = a?.batch_id ? await prisma.batch.findUnique({ where: { id: a.batch_id } as any }) : null;
+      return { ...a, certificate: certs, batch };
+    }));
+
+    res.json(enriched);
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });

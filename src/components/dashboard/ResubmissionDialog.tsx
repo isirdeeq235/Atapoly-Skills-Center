@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
@@ -40,11 +39,11 @@ export function ResubmissionDialog({
   const handleResubmit = async () => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.rpc('resubmit_application', {
-        p_application_id: applicationId
+      await fetch(`/api/applications/${applicationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submitted: true, admin_notes: additionalNotes }),
       });
-
-      if (error) throw error;
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['onboarding-status'] });

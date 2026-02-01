@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { 
   History, 
@@ -67,50 +66,8 @@ const AdminStatusHistory = () => {
   const { data: history, isLoading } = useQuery({
     queryKey: ['status-history-admin'],
     queryFn: async () => {
-      // Fetch status history using REST API for newly created table
-      const session = await supabase.auth.getSession();
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/status_history?order=created_at.desc&limit=500`,
-        {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${session.data.session?.access_token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch status history');
-      }
-
-      const historyData = await response.json() as any[];
-      
-      // Get unique trainee IDs and application IDs
-      const traineeIds = [...new Set(historyData.map(h => h.trainee_id))];
-      const applicationIds = [...new Set(historyData.map(h => h.application_id))];
-      
-      // Fetch profiles
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .in("id", traineeIds);
-      
-      // Fetch applications with programs
-      const { data: applications } = await supabase
-        .from("applications")
-        .select("id, programs(title)")
-        .in("id", applicationIds);
-      
-      // Create lookup maps
-      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
-      const appMap = new Map((applications || []).map(a => [a.id, a]));
-      
-      // Merge data
-      return historyData.map(h => ({
-        ...h,
-        profiles: profileMap.get(h.trainee_id) || null,
-        applications: appMap.get(h.application_id) || null,
-      })) as StatusHistoryEntry[];
+      const res: any = await apiFetch('/api/status-history/admin?limit=500');
+      return res as StatusHistoryEntry[];
     },
   });
 

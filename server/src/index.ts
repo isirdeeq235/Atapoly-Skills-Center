@@ -8,6 +8,8 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import postsRouter from "./routes/posts";
 import emailRouter from "./routes/email";
+import emailTemplatesRouter from "./routes/emailTemplates";
+import siteConfigRouter from "./routes/siteConfig";
 import uploadsRouter from "./routes/uploads";
 import paymentsRouter from "./routes/payments";
 import systemRouter from "./routes/system";
@@ -54,12 +56,28 @@ app.use("/api/payments", paymentsRouter);
 
 app.use("/api/system", systemRouter);
 app.use("/api/functions", functionsPublicRouter);
+app.use("/api/email-templates", emailTemplatesRouter);
+app.use("/api/site-config", siteConfigRouter);
 import profileRouter from "./routes/profile";
 import programsRouter from "./routes/programs";
 import applicationsRouter from "./routes/applications";
+import batchesRouter from "./routes/batches";
+import adminRouter from "./routes/admin";
 app.use("/api/profile", profileRouter);
 app.use("/api/programs", programsRouter);
 app.use("/api/applications", applicationsRouter);
+app.use("/api/batches", batchesRouter);
+app.use("/api/admin", adminRouter);
+import notificationsRouter from "./routes/notifications";
+import customFormFieldsRouter from "./routes/customFormFields";
+import statusHistoryRouter from "./routes/statusHistory";
+app.use("/api/notifications", notificationsRouter);
+app.use("/api/custom-fields", customFormFieldsRouter);
+app.use("/api/status-history", statusHistoryRouter);
+import rolePermissionsRouter from "./routes/rolePermissions";
+import certificatesRouter from "./routes/certificates";
+app.use("/api/role-permissions", rolePermissionsRouter);
+app.use("/api/certificates", certificatesRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

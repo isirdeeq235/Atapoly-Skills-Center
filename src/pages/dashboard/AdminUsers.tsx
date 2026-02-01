@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
@@ -51,9 +51,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Database } from "@/integrations/supabase/types";
-
-type AppRole = Database["public"]["Enums"]["app_role"];
+type AppRole = 'trainee' | 'instructor' | 'admin' | 'super_admin';
 
 interface UserWithRole {
   id: string;
@@ -77,36 +75,14 @@ const AdminUsers = () => {
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (profilesError) throw profilesError;
-
-      const { data: userRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-
-      if (rolesError) throw rolesError;
-
-      const roleMap = new Map(userRoles.map(r => [r.user_id, r.role]));
-
-      return profiles.map(profile => ({
-        ...profile,
-        role: roleMap.get(profile.id) || 'trainee' as AppRole,
-      })) as UserWithRole[];
+      const res: any = await apiFetch('/api/admin/users');
+      return res.users as UserWithRole[];
     },
   });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      const { error } = await supabase
-        .from("user_roles")
-        .update({ role })
-        .eq("user_id", userId);
-
-      if (error) throw error;
+      await apiFetch(`/api/admin/users/${userId}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });

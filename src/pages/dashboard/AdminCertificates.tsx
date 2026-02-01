@@ -26,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   Award, 
@@ -74,68 +74,29 @@ const AdminCertificates = () => {
   const { data: applications, isLoading } = useQuery({
     queryKey: ['admin-enrollments'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('applications')
-        .select(`
-          id,
-          status,
-          registration_number,
-          completion_status,
-          completed_at,
-          trainee:profiles!applications_trainee_id_fkey (
-            id,
-            full_name,
-            email
-          ),
-          program:programs!applications_program_id_fkey (
-            id,
-            title
-          ),
-          batch:batches!applications_batch_id_fkey (
-            id,
-            batch_name
-          ),
-          certificate:certificates!certificates_application_id_fkey (
-            id,
-            certificate_number
-          )
-        `)
-        .eq('status', 'approved')
-        .eq('registration_fee_paid', true)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as unknown as ApplicationWithDetails[];
+      const res: any = await apiFetch('/api/applications/admin');
+      return res as ApplicationWithDetails[];
     },
   });
 
   const markCompletedMutation = useMutation({
     mutationFn: async (applicationId: string) => {
-      const { error } = await supabase
-        .from('applications')
-        .update({
-          completion_status: 'completed',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', applicationId);
-      if (error) throw error;
+      await apiFetch(`/api/applications/${applicationId}/admin`, { method: 'PUT', body: JSON.stringify({ completion_status: 'completed', completed_at: new Date().toISOString() }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-enrollments'] });
       toast.success("Trainee marked as completed!");
     },
     onError: (error) => {
-      toast.error("Failed to update: " + error.message);
+      toast.error("Failed to update: " + (error.message || error));
     },
   });
 
   const issueCertificateMutation = useMutation({
     mutationFn: async (applicationId: string) => {
       setIsIssuing(true);
-      const { data, error } = await supabase
-        .rpc('issue_certificate', { p_application_id: applicationId });
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/certificates/issue', { method: 'POST', body: JSON.stringify({ application_id: applicationId }) });
+      return res.certificate;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-enrollments'] });
@@ -143,7 +104,7 @@ const AdminCertificates = () => {
       toast.success("Certificate issued successfully!");
     },
     onError: (error) => {
-      toast.error("Failed to issue certificate: " + error.message);
+      toast.error("Failed to issue certificate: " + (error.message || error));
     },
     onSettled: () => {
       setIsIssuing(false);

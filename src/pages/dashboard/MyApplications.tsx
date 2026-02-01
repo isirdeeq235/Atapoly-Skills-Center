@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -49,16 +49,7 @@ const MyApplications = () => {
   const { data: applications, isLoading, refetch } = useQuery({
     queryKey: ['my-applications', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("applications")
-        .select(`
-          *,
-          programs(id, title, registration_fee)
-        `)
-        .eq("trainee_id", user?.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await apiFetch(`/api/applications`);
       return data as Application[];
     },
     enabled: !!user,

@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Loader2, User, Award, Calendar, Hash, Building } from "lucide-react";
 import { format } from "date-fns";
@@ -26,21 +26,8 @@ const TraineeIDCard = () => {
   const { data: enrolledPrograms, isLoading } = useQuery({
     queryKey: ['enrolled-programs', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("applications")
-        .select(`
-          id,
-          registration_number,
-          created_at,
-          programs(id, title, duration)
-        `)
-        .eq("trainee_id", user?.id)
-        .eq("status", "approved")
-        .eq("registration_fee_paid", true)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as EnrolledProgram[];
+      const res: any = await apiFetch('/api/applications?status=approved&registration_fee_paid=true');
+      return res as EnrolledProgram[];
     },
     enabled: !!user,
   });

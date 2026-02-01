@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { apiFetch } from '@/lib/apiClient';
 
 export interface EmailTemplate {
   id: string;
@@ -18,12 +18,7 @@ export function useEmailTemplates() {
   return useQuery({
     queryKey: ['email-templates'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .order('template_name');
-
-      if (error) throw error;
+      const data = await apiFetch('/api/email-templates');
       return data as EmailTemplate[];
     },
     staleTime: 1000 * 60 * 5,
@@ -34,13 +29,7 @@ export function useEmailTemplate(templateKey: string) {
   return useQuery({
     queryKey: ['email-template', templateKey],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
-        .eq('template_key', templateKey)
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch(`/api/email-templates/${encodeURIComponent(templateKey)}`);
       return data as EmailTemplate;
     },
     enabled: !!templateKey,
@@ -52,14 +41,7 @@ export function useUpdateEmailTemplate() {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<EmailTemplate> }) => {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const data = await apiFetch(`/api/email-templates/${id}`, { method: 'PUT', body: JSON.stringify({ ...updates }) });
       return data;
     },
     onSuccess: () => {

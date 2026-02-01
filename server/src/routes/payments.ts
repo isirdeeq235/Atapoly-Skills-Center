@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import prisma from "../lib/prisma";
 import { requireAdmin } from "../middleware/admin";
 import { requireAuth, AuthRequest } from "../middleware/auth";
+import { publishToUser } from "../lib/notifications";
 
 const router = Router();
 
@@ -29,7 +30,13 @@ router.get("/", requireAuth, async (req: AuthRequest, res: Response) => {
       include: { applications: { include: { programs: true } } as any, receipts: true },
     });
 
-    res.json(payments);
+    // Attach trainee profiles to each payment for admin UIs
+    const traineeIds = Array.from(new Set(payments.map((p: any) => p.trainee_id).filter(Boolean)));
+    const profiles = traineeIds.length > 0 ? await prisma.profile.findMany({ where: { id: { in: traineeIds } } }) : [];
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+    const paymentsWithProfiles = payments.map((p: any) => ({ ...p, profiles: profileMap.get(p.trainee_id) || null }));
+
+    res.json(paymentsWithProfiles);
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -57,7 +64,8 @@ router.post("/initialize", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const payment = await prisma.payment.create({ data: { application_id, trainee_id, provider, payment_type, status: "pending", updated_at: new Date() } });
+    const amountMinor = Math.round(amount * 100);
+    const payment = await prisma.payment.create({ data: { application_id, trainee_id, provider, payment_type, amount: amountMinor, status: "pending", updated_at: new Date() } });
 
     const reference = `PAY-${payment.id}-${Date.now()}`;
 
@@ -121,6 +129,12 @@ router.post("/verify", requireAdmin, async (req: Request, res: Response) => {
 
     if (payment?.status === "completed") return res.json({ success: true, status: "completed", already_processed: true, payment });
 
+    // Ensure idempotent processing by checking provider_reference uniqueness if provided
+    if (paymentReference) {
+      const existing = await prisma.payment.findFirst({ where: { provider_reference: paymentReference } });
+      if (existing && existing.status === 'completed') return res.json({ success: true, status: 'completed', already_processed: true, payment: existing });
+    }
+
     const paymentProvider = provider || payment?.provider;
     const paymentReference = reference || payment?.provider_reference;
     if (!paymentReference) return res.status(200).json({ error: "No payment reference found. Payment may still be processing.", status: "pending" });
@@ -164,7 +178,8 @@ router.post("/verify", requireAdmin, async (req: Request, res: Response) => {
     if (paymentType === "application_fee") {
       await prisma.application.update({ where: { id: applicationId }, data: { application_fee_paid: true, updated_at: new Date() } });
       // create notification
-      await prisma.notification.create({ data: { user_id: traineeId, type: "payment_success", title: "Application Fee Paid ✓", message: "Your application fee has been received.", metadata: { payment_id: metadata?.payment_id || payment_id, application_id: applicationId } } as any });
+      const note = await prisma.notification.create({ data: { user_id: traineeId, type: "payment_success", title: "Application Fee Paid ✓", message: "Your application fee has been received.", metadata: { payment_id: metadata?.payment_id || payment_id, application_id: applicationId } } as any });
+      try { publishToUser(traineeId, 'notification', note); } catch (e) { }
     } else if (paymentType === "registration_fee") {
       // generate registration number
       const registrationNumber = `R-${Date.now().toString().slice(-6)}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
@@ -215,6 +230,37 @@ router.post("/verify", requireAdmin, async (req: Request, res: Response) => {
     }
 
     res.json({ success: true, status: "completed", payment_type: paymentType, receipt_number: receiptNumber });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: manually mark a payment as completed and create a receipt
+router.post("/:id/mark-complete", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const payment = await prisma.payment.update({ where: { id }, data: { status: 'completed', updated_at: new Date() as any } });
+
+    // create receipt
+    const receiptNumber = `RCP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    await prisma.receipt.create({ data: { payment_id: payment.id, trainee_id: payment.trainee_id, receipt_number: receiptNumber } as any });
+
+    // attempt to send receipt email (best-effort)
+    try {
+      const traineeProfile = await prisma.profile.findUnique({ where: { id: payment.trainee_id } });
+      if (traineeProfile?.email) {
+        await fetch(`${process.env.SERVER_BASE_URL || `http://localhost:${process.env.PORT || 4000}`}/api/email/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-admin-key": process.env.ADMIN_API_KEY || "" },
+          body: JSON.stringify({ to: traineeProfile.email, template: "payment_receipt", data: { name: traineeProfile.full_name || "Trainee", amount: payment.metadata?.amount || payment.amount || 0, reference: payment.provider_reference || "N/A", receipt_number: receiptNumber } }),
+        });
+      }
+    } catch (e) {
+      console.error("Error sending receipt email", e);
+    }
+
+    res.json({ success: true, payment_id: payment.id, receipt_number: receiptNumber });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });

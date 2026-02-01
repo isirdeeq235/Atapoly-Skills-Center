@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { apiFetch } from '@/lib/apiClient';
 import { useQuery } from '@tanstack/react-query';
 
 export type OnboardingStep = 
@@ -60,12 +60,9 @@ export function useOnboardingStatus() {
         };
       }
 
-      // Check profile completion
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      // Fetch profile from server
+      const profileResp = await apiFetch('/api/profile');
+      const profileData = profileResp.profile ?? profileResp;
 
       const hasPhoto = !!profileData?.avatar_url;
       const isProfileComplete = !!(
@@ -78,17 +75,9 @@ export function useOnboardingStatus() {
         profileData?.onboarding_completed
       );
 
-      // Get the latest application
-      const { data: applicationData } = await supabase
-        .from('applications')
-        .select(`
-          *,
-          programs(id, title, registration_fee)
-        `)
-        .eq('trainee_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      // Get the latest application via server (it will default to current user)
+      const apps = await apiFetch('/api/applications');
+      const applicationData = (apps && apps.length > 0) ? apps[0] : null;
 
       const application = {
         exists: !!applicationData,

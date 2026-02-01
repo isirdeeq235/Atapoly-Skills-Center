@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 
 export interface CustomFormField {
   id: string;
@@ -25,26 +25,11 @@ export function useCustomFormFields(formType?: 'profile' | 'application', progra
   return useQuery({
     queryKey: ['custom-form-fields', formType, programId],
     queryFn: async () => {
-      let query = supabase
-        .from('custom_form_fields')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-
-      if (formType) {
-        query = query.eq('form_type', formType);
-      }
-
-      if (formType === 'application' && programId) {
-        query = query.or(`program_id.eq.${programId},program_id.is.null`);
-      } else if (formType === 'profile') {
-        query = query.is('program_id', null);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data as CustomFormField[];
+      const qs = new URLSearchParams();
+      if (formType) qs.set('form_type', formType);
+      if (programId) qs.set('program_id', programId);
+      const res: any = await apiFetch(`/api/custom-fields?${qs.toString()}`);
+      return res.fields as CustomFormField[];
     },
   });
 }
@@ -53,14 +38,8 @@ export function useAllCustomFormFields() {
   return useQuery({
     queryKey: ['custom-form-fields-all'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('custom_form_fields')
-        .select('*')
-        .order('form_type')
-        .order('display_order', { ascending: true });
-
-      if (error) throw error;
-      return data as CustomFormField[];
+      const res: any = await apiFetch('/api/custom-fields/admin/all');
+      return res.fields as CustomFormField[];
     },
   });
 }
@@ -70,14 +49,8 @@ export function useCreateCustomFormField() {
 
   return useMutation({
     mutationFn: async (field: FormFieldInput) => {
-      const { data, error } = await supabase
-        .from('custom_form_fields')
-        .insert(field)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/custom-fields', { method: 'POST', body: JSON.stringify(field) });
+      return res.field;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-form-fields'] });
@@ -91,15 +64,8 @@ export function useUpdateCustomFormField() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CustomFormField> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('custom_form_fields')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch(`/api/custom-fields/${id}`, { method: 'PUT', body: JSON.stringify(updates) });
+      return res.field;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-form-fields'] });
@@ -113,12 +79,7 @@ export function useDeleteCustomFormField() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('custom_form_fields')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await apiFetch(`/api/custom-fields/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-form-fields'] });

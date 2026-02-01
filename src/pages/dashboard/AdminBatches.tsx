@@ -28,8 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/apiClient";
 import { usePrograms } from "@/hooks/usePrograms";
 import { 
   Plus, 
@@ -81,32 +81,21 @@ const AdminBatches = () => {
   const { data: batches, isLoading } = useQuery({
     queryKey: ['admin-batches'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('batches')
-        .select(`
-          *,
-          program:programs!batches_program_id_fkey (title)
-        `)
-        .order('start_date', { ascending: false });
-      
-      if (error) throw error;
+      const data = await apiFetch('/api/batches');
       return data as Batch[];
     },
   });
 
   const createBatchMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase
-        .from('batches')
-        .insert({
-          program_id: data.program_id,
-          batch_name: data.batch_name,
-          start_date: data.start_date,
-          end_date: data.end_date || null,
-          max_capacity: data.max_capacity ? parseInt(data.max_capacity) : null,
-          status: data.status,
-        });
-      if (error) throw error;
+      await apiFetch('/api/batches', { method: 'POST', body: JSON.stringify({
+        program_id: data.program_id,
+        batch_name: data.batch_name,
+        start_date: data.start_date,
+        end_date: data.end_date || null,
+        max_capacity: data.max_capacity ? parseInt(data.max_capacity) : null,
+        status: data.status,
+      }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-batches'] });
@@ -114,25 +103,21 @@ const AdminBatches = () => {
       resetForm();
       toast.success("Batch created successfully!");
     },
-    onError: (error) => {
-      toast.error("Failed to create batch: " + error.message);
+    onError: (error: any) => {
+      toast.error("Failed to create batch: " + (error.message || String(error)));
     },
   });
 
   const updateBatchMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      const { error } = await supabase
-        .from('batches')
-        .update({
-          program_id: data.program_id,
-          batch_name: data.batch_name,
-          start_date: data.start_date,
-          end_date: data.end_date || null,
-          max_capacity: data.max_capacity ? parseInt(data.max_capacity) : null,
-          status: data.status,
-        })
-        .eq('id', id);
-      if (error) throw error;
+      await apiFetch(`/api/batches/${id}`, { method: 'PUT', body: JSON.stringify({
+        program_id: data.program_id,
+        batch_name: data.batch_name,
+        start_date: data.start_date,
+        end_date: data.end_date || null,
+        max_capacity: data.max_capacity ? parseInt(data.max_capacity) : null,
+        status: data.status,
+      }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-batches'] });
@@ -141,25 +126,21 @@ const AdminBatches = () => {
       resetForm();
       toast.success("Batch updated successfully!");
     },
-    onError: (error) => {
-      toast.error("Failed to update batch: " + error.message);
+    onError: (error: any) => {
+      toast.error("Failed to update batch: " + (error.message || String(error)));
     },
   });
 
   const deleteBatchMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('batches')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+      await apiFetch(`/api/batches/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-batches'] });
       toast.success("Batch deleted successfully!");
     },
-    onError: (error) => {
-      toast.error("Failed to delete batch: " + error.message);
+    onError: (error: any) => {
+      toast.error("Failed to delete batch: " + (error.message || String(error)));
     },
   });
 
@@ -390,13 +371,13 @@ const AdminBatches = () => {
                   {batches.map((batch) => (
                     <TableRow key={batch.id}>
                       <TableCell className="font-medium">{batch.batch_name}</TableCell>
-                      <TableCell>{batch.program?.title}</TableCell>
-                      <TableCell>{format(new Date(batch.start_date), 'MMM dd, yyyy')}</TableCell>
+                      <TableCell>{programs?.find(p => p.id === batch.program_id)?.title}</TableCell>
+                      <TableCell>{batch.start_date ? format(new Date(batch.start_date), 'MMM dd, yyyy') : '-'}</TableCell>
                       <TableCell>
                         {batch.end_date ? format(new Date(batch.end_date), 'MMM dd, yyyy') : '-'}
                       </TableCell>
                       <TableCell>
-                        {batch.enrolled_count}/{batch.max_capacity || '∞'}
+                        {0}/{batch.max_capacity || '∞'}
                       </TableCell>
                       <TableCell>{getStatusBadge(batch.status)}</TableCell>
                       <TableCell>

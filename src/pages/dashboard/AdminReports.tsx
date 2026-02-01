@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Loader2, 
@@ -40,36 +40,24 @@ const AdminReports = () => {
   const { data: applications, isLoading: loadingApps } = useQuery({
     queryKey: ['report-applications'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("applications")
-        .select("*, programs(title)")
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/applications/admin');
+      return res;
     },
   });
 
   const { data: payments, isLoading: loadingPayments } = useQuery({
     queryKey: ['report-payments'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("status", "completed")
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/payments?status=completed');
+      return res;
     },
   });
 
   const { data: programs, isLoading: loadingPrograms } = useQuery({
     queryKey: ['report-programs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("programs")
-        .select("*");
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/programs');
+      return res;
     },
   });
 

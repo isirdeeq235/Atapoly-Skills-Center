@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { usePrograms } from "@/hooks/usePrograms";
 import { 
   BookOpen, 
   Users, 
@@ -45,41 +45,14 @@ const InstructorDashboard = () => {
     }
   }, [location.state]);
 
-  // Fetch programs assigned to this instructor
-  const { data: assignedPrograms, isLoading } = useQuery({
-    queryKey: ['instructor-programs', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("programs")
-        .select("*")
-        .eq("instructor_id", user?.id)
-        .order("created_at", { ascending: false });
+  // Fetch programs assigned to this instructor (client-side filter)
+  const { data: programs } = usePrograms(true);
+  const assignedPrograms = programs?.filter((p: any) => p.instructor_id === user?.id) as AssignedProgram[] | undefined;
 
-      if (error) throw error;
-      return data as AssignedProgram[];
-    },
-    enabled: !!user,
-  });
+  const isLoading = programs === undefined;
 
-  // Get enrolled trainees count
-  const { data: traineesCount } = useQuery({
-    queryKey: ['instructor-trainees-count', user?.id],
-    queryFn: async () => {
-      if (!assignedPrograms?.length) return 0;
-      
-      const programIds = assignedPrograms.map(p => p.id);
-      const { count, error } = await supabase
-        .from("applications")
-        .select("*", { count: 'exact', head: true })
-        .in("program_id", programIds)
-        .eq("status", "approved")
-        .eq("registration_fee_paid", true);
-
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!assignedPrograms?.length,
-  });
+  // Use enrolled_count on programs as an approximation for trainees/enrolled counts
+  const traineesCount = assignedPrograms?.reduce((sum, p) => sum + (p.enrolled_count || 0), 0) || 0;
 
   const stats = {
     assignedPrograms: assignedPrograms?.length || 0,

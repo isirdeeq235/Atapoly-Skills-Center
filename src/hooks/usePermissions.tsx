@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { apiFetch } from '@/lib/apiClient';
 import { useAuth } from './useAuth';
 import { logger } from '@/lib/logger';
 
@@ -56,17 +56,13 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
         return [];
       }
 
-      const { data, error } = await supabase
-        .from('role_permissions')
-        .select('permission_key, is_enabled')
-        .eq('role', role as string);
-
-      if (error) {
-        logger.error('Error fetching permissions:', error);
+      try {
+        const data = await apiFetch(`/api/role-permissions?role=${encodeURIComponent(role as string)}`);
+        return (data || []) as Permission[];
+      } catch (e) {
+        logger.error('Error fetching permissions:', e);
         return [];
       }
-
-      return data as Permission[];
     },
     enabled: !!user && !!role && role !== 'super_admin' && role !== 'trainee',
     staleTime: 30000, // Cache for 30 seconds
@@ -112,4 +108,4 @@ export function usePermissions() {
     throw new Error('usePermissions must be used within a PermissionsProvider');
   }
   return context;
-}
+} 

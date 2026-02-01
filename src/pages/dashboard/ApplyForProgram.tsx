@@ -11,7 +11,7 @@ import { useBatches } from "@/hooks/useBatches";
 import { useActivePaymentProvider } from "@/hooks/useActivePaymentProvider";
 import { useCustomFormFields } from "@/hooks/useCustomFormFields";
 import { DynamicFormField } from "@/components/forms/DynamicFormField";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
 import { invokeFunction } from "@/lib/functionsClient";
@@ -55,12 +55,9 @@ const ApplyForProgram = () => {
   const { data: existingApplications } = useQuery({
     queryKey: ['existing-applications', user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("applications")
-        .select("id, program_id, batch_id, application_fee_paid, status, programs(title)")
-        .eq("trainee_id", user?.id)
-        .eq("application_fee_paid", false);
-      return data || [];
+      const data = await apiFetch(`/api/applications`);
+      // filter to unpaid applications for current user
+      return (data || []).filter((a: any) => a.application_fee_paid === false);
     },
     enabled: !!user,
   });
@@ -101,25 +98,11 @@ const ApplyForProgram = () => {
 
       // Only create new application if one doesn't exist
       if (!applicationId) {
-        const { data: application, error: appError } = await supabase
-          .from("applications")
-          .insert({
-            program_id: selectedProgram,
-            batch_id: selectedBatch,
-            trainee_id: user.id,
-            status: "pending",
-          })
-          .select()
-          .single();
-
-        if (appError) throw appError;
+        const application = await apiFetch('/api/applications', { method: 'POST', body: JSON.stringify({ program_id: selectedProgram, batch_id: selectedBatch, trainee_id: user.id, status: 'pending' }) });
         applicationId = application.id;
       } else if (selectedBatch) {
         // Update existing application with selected batch
-        await supabase
-          .from("applications")
-          .update({ batch_id: selectedBatch })
-          .eq("id", applicationId);
+        await apiFetch(`/api/applications/${applicationId}`, { method: 'PUT', body: JSON.stringify({ batch_id: selectedBatch }) });
       }
 
       if (!hasActiveProvider || !provider) {

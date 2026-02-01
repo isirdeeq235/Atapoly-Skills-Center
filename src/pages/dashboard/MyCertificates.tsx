@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { logger } from "@/lib/logger";
@@ -53,13 +53,8 @@ const MyCertificates = () => {
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-      if (error) throw error;
-      return data;
+      const res: any = await apiFetch('/api/profile');
+      return res.profile;
     },
     enabled: !!user?.id,
   });
@@ -67,34 +62,8 @@ const MyCertificates = () => {
   const { data: certificates, isLoading } = useQuery({
     queryKey: ['my-certificates', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('certificates')
-        .select(`
-          id,
-          certificate_number,
-          issued_at,
-          application:applications!certificates_application_id_fkey (
-            id,
-            registration_number,
-            completed_at
-          ),
-          program:programs!certificates_program_id_fkey (
-            id,
-            title,
-            duration
-          ),
-          batch:batches!certificates_batch_id_fkey (
-            id,
-            batch_name,
-            start_date,
-            end_date
-          )
-        `)
-        .eq('trainee_id', user?.id)
-        .order('issued_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as unknown as Certificate[];
+      const res: any = await apiFetch('/api/certificates');
+      return res as Certificate[];
     },
     enabled: !!user?.id,
   });

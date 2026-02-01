@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
@@ -135,12 +135,7 @@ const AdminPrograms = () => {
   const { data: programs, isLoading } = useQuery({
     queryKey: ['admin-programs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("programs")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await apiFetch('/api/programs?showAll=true');
       return data as Program[];
     },
   });
@@ -149,12 +144,7 @@ const AdminPrograms = () => {
   const { data: allBatches } = useQuery({
     queryKey: ['admin-all-batches'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("batches")
-        .select("*")
-        .order("start_date", { ascending: true });
-
-      if (error) throw error;
+      const data = await apiFetch('/api/batches');
       return data as Batch[];
     },
   });
@@ -166,19 +156,15 @@ const AdminPrograms = () => {
 
   const createProgramMutation = useMutation({
     mutationFn: async (data: typeof defaultProgram) => {
-      const { error } = await supabase
-        .from("programs")
-        .insert([{
-          title: data.title,
-          description: data.description || null,
-          duration: data.duration,
-          application_fee: data.application_fee,
-          registration_fee: data.registration_fee,
-          status: data.status as 'draft' | 'published' | 'archived',
-          max_capacity: data.max_capacity || null,
-        }]);
-
-      if (error) throw error;
+      await apiFetch('/api/programs', { method: 'POST', body: JSON.stringify({
+        title: data.title,
+        description: data.description || null,
+        duration: data.duration,
+        application_fee: data.application_fee,
+        registration_fee: data.registration_fee,
+        status: data.status as 'draft' | 'published' | 'archived',
+        max_capacity: data.max_capacity || null,
+      }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-programs'] });
@@ -193,20 +179,15 @@ const AdminPrograms = () => {
 
   const updateProgramMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof defaultProgram }) => {
-      const { error } = await supabase
-        .from("programs")
-        .update({
-          title: data.title,
-          description: data.description || null,
-          duration: data.duration,
-          application_fee: data.application_fee,
-          registration_fee: data.registration_fee,
-          status: data.status as 'draft' | 'published' | 'archived',
-          max_capacity: data.max_capacity || null,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
+      await apiFetch(`/api/programs/${id}`, { method: 'PUT', body: JSON.stringify({
+        title: data.title,
+        description: data.description || null,
+        duration: data.duration,
+        application_fee: data.application_fee,
+        registration_fee: data.registration_fee,
+        status: data.status as 'draft' | 'published' | 'archived',
+        max_capacity: data.max_capacity || null,
+      }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-programs'] });
@@ -221,12 +202,7 @@ const AdminPrograms = () => {
 
   const deleteProgramMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("programs")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      await apiFetch(`/api/programs/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-programs'] });
@@ -243,18 +219,14 @@ const AdminPrograms = () => {
   // Batch mutations
   const createBatchMutation = useMutation({
     mutationFn: async (data: { programId: string; batch: typeof defaultBatch }) => {
-      const { error } = await supabase
-        .from("batches")
-        .insert({
-          program_id: data.programId,
-          batch_name: data.batch.batch_name,
-          start_date: data.batch.start_date,
-          end_date: data.batch.end_date || null,
-          max_capacity: data.batch.max_capacity ? parseInt(data.batch.max_capacity) : null,
-          status: data.batch.status,
-        });
-
-      if (error) throw error;
+      await apiFetch('/api/batches', { method: 'POST', body: JSON.stringify({
+        program_id: data.programId,
+        batch_name: data.batch.batch_name,
+        start_date: data.batch.start_date,
+        end_date: data.batch.end_date || null,
+        max_capacity: data.batch.max_capacity ? parseInt(data.batch.max_capacity) : null,
+        status: data.batch.status,
+      }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-all-batches'] });
@@ -269,18 +241,13 @@ const AdminPrograms = () => {
 
   const updateBatchMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof defaultBatch }) => {
-      const { error } = await supabase
-        .from("batches")
-        .update({
-          batch_name: data.batch_name,
-          start_date: data.start_date,
-          end_date: data.end_date || null,
-          max_capacity: data.max_capacity ? parseInt(data.max_capacity) : null,
-          status: data.status,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
+      await apiFetch(`/api/batches/${id}`, { method: 'PUT', body: JSON.stringify({
+        batch_name: data.batch_name,
+        start_date: data.start_date,
+        end_date: data.end_date || null,
+        max_capacity: data.max_capacity ? parseInt(data.max_capacity) : null,
+        status: data.status,
+      }) });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-all-batches'] });
@@ -295,12 +262,7 @@ const AdminPrograms = () => {
 
   const deleteBatchMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("batches")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      await apiFetch(`/api/batches/${id}`, { method: 'DELETE' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-all-batches'] });
